@@ -39,6 +39,24 @@ contextBridge.exposeInMainWorld('launcher', {
     libraryDelete: id => call('skin:library-delete', id)
   },
 
+  detectHardware: () => call('detect-hardware'),
+  votes: {
+    status: () => call('votes:status'),
+    open: url => call('votes:open', url)
+  },
+  profiles: {
+    list: v => call('profiles:list', v),
+    apply: (v, n) => call('profiles:apply', v, n),
+    save: (v, n) => call('profiles:save', v, n),
+    remove: (v, n) => call('profiles:delete', v, n)
+  },
+  shots: {
+    list: v => call('shots:list', v),
+    full: (v, n) => call('shots:full', v, n),
+    copy: (v, n) => call('shots:copy', v, n),
+    remove: (v, n) => call('shots:delete', v, n),
+    reveal: (v, n) => call('shots:reveal', v, n)
+  },
   openUrl: url => call('open-url', url),
   openWebsite: () => call('open-website'),
   openGameFolder: () => call('open-game-folder'),

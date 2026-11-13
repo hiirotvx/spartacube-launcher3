@@ -15,6 +15,7 @@ const { installBundledMods } = require('./bundled');
 const { instanceDir, isSafeVersion } = require('./versions');
 const auth = require('./auth');
 const bridge = require('./bridge');
+const graphics = require('./graphics');
 
 let running = null;
 
@@ -72,10 +73,14 @@ async function launch(cfg, settings, emit) {
   }
   const bundled = await installBundledMods(gameDir, version);
   if (bundled.length) log.info('Mods intégrés mis à jour', bundled);
-  const extras = await installDefaultMods(gameDir, version, cfg.defaultMods, progress);
+  const skip = Array.isArray(settings.skipDefaultMods) ? settings.skipDefaultMods : [];
+  const defaults = (cfg.defaultMods || []).filter(d => d.always || !skip.includes(d.project));
+  const extras = await installDefaultMods(gameDir, version, defaults, progress);
   if (extras.length) log.info('Mods par défaut', extras);
+  await graphics.applyPreset(gameDir, settings.graphicsPreset || 'medium');
   await ensureDefaultOptions(gameDir);
-  await bridge.writeBridgeFile(gameDir).catch(() => {});
+  const dest = official && Array.isArray(cfg.destinations) ? cfg.destinations.find(d => d.command === settings.destination) : null;
+  await bridge.writeBridgeFile(gameDir, { joinCommand: dest ? dest.command : '' }).catch(() => {});
 
   progress({ step: 'auth', label: 'Vérification du compte…', done: 0, total: 1 });
   const authorization = await auth.getLaunchAuth();

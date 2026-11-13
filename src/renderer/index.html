@@ -43,8 +43,14 @@
         <button class="nav-btn" data-page="news" title="Actualités">
           <svg viewBox="0 0 24 24"><path d="M4 4h13v16H6a2 2 0 0 1-2-2zm13 4h3v10a2 2 0 0 1-2 2h-1zM7 8h7v2H7zm0 4h7v2H7zm0 4h5v2H7z"/></svg><span>Actualités</span><i class="badge hidden" id="newsBadge"></i>
         </button>
+        <button class="nav-btn" data-page="vote" title="Voter">
+          <svg viewBox="0 0 24 24"><path d="m12 2 3 6.5 7 .8-5.2 4.8 1.4 7L12 17.6 5.8 21.1l1.4-7L2 9.3l7-.8z"/></svg><span>Voter</span><i class="badge hidden" id="voteBadge"></i>
+        </button>
         <button class="nav-btn" data-page="mods" title="Mods">
           <svg viewBox="0 0 24 24"><path d="M10 2h4v3a2 2 0 1 0 4 0V4h4v6h-1a2 2 0 1 0 0 4h1v6h-6v-1a2 2 0 1 0-4 0v1H4v-6h1a2 2 0 1 0 0-4H4V4h6z"/></svg><span>Mods</span>
+        </button>
+        <button class="nav-btn" data-page="shots" title="Captures">
+          <svg viewBox="0 0 24 24"><path d="M4 5h3l2-2h6l2 2h3a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm8 3.5A4.5 4.5 0 1 0 12 17.5 4.5 4.5 0 0 0 12 8.5zm0 2a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg><span>Captures</span>
         </button>
         <button class="nav-btn" data-page="skin" title="Skin">
           <svg viewBox="0 0 24 24"><path d="M8 2h8l5 4-3 4-2-1v13H8V9l-2 1-3-4z"/></svg><span>Skin</span>
@@ -75,6 +81,10 @@
             <label for="versionSelect">Version</label>
             <select id="versionSelect"></select>
             <small id="versionHint"></small>
+            <div id="destBox" class="hidden">
+              <label for="destSelect">Rejoindre directement</label>
+              <select id="destSelect"></select>
+            </div>
           </div>
           <div class="center">
             <div id="progressBox" class="progress hidden">
@@ -86,6 +96,7 @@
           </div>
           <div class="right">
             <div class="status" id="status"><span class="dot"></span><span id="statusText">Connexion au serveur…</span></div>
+            <div class="online-heads" id="onlineHeads"></div>
             <button id="btnWebsite" class="btn-secondary">🌐 spartacube.fr</button>
           </div>
         </footer>
@@ -111,6 +122,15 @@
           <button class="tab" data-tab="explore">Explorer (Modrinth)</button>
         </div>
         <div class="tab-panel active" id="tab-installed">
+          <div class="profile-bar card">
+            <span>Profil</span>
+            <select id="profileSelect"></select>
+            <button id="btnProfileApply" class="btn-primary">Appliquer</button>
+            <span class="spacer"></span>
+            <input type="text" id="profileName" placeholder="Nom d'un nouveau profil" maxlength="30">
+            <button id="btnProfileSave" class="btn-secondary">Enregistrer l'actuel</button>
+            <button id="btnProfileDelete" class="btn-secondary" title="Supprimer ce profil">🗑</button>
+          </div>
           <p class="hint" id="modsHint"></p>
           <div id="modsList" class="mod-list"></div>
         </div>
@@ -122,6 +142,25 @@
           <div id="modResults" class="mod-list"></div>
           <button id="btnModMore" class="btn-secondary more hidden">Voir plus</button>
         </div>
+      </div>
+
+      <!-- ---------- Voter ---------- -->
+      <div class="page" id="page-vote">
+        <div class="page-head">
+          <h1>Voter pour SpartaCube</h1>
+          <div class="vote-month card"><b id="voteMonth">0</b><span>vote(s) ce mois-ci</span></div>
+        </div>
+        <p class="hint">Chaque vote soutient le serveur et te rapporte des récompenses en jeu. Le site s'ouvre dans une fenêtre du launcher, au-dessus du jeu.</p>
+        <div id="voteSites" class="vote-grid"></div>
+      </div>
+
+      <!-- ---------- Captures ---------- -->
+      <div class="page" id="page-shots">
+        <div class="page-head">
+          <h1>Captures <small>F2 en jeu · Minecraft <span id="shotsVersion"></span></small></h1>
+          <div class="head-actions"><button id="btnShotsFolder" class="btn-secondary">Ouvrir le dossier</button></div>
+        </div>
+        <div id="shotsGrid" class="shots-grid"></div>
       </div>
 
       <!-- ---------- Skin ---------- -->
@@ -196,6 +235,21 @@
           <label>Mémoire minimale : <b id="ramMinLabel"></b>
             <input type="range" id="ramMin" min="512" step="512">
           </label>
+          <label>Qualité graphique (appliquée aux nouvelles versions)
+            <select id="graphicsPreset">
+              <option value="low">PC modeste — fluide avant tout</option>
+              <option value="medium">Équilibré</option>
+              <option value="high">PC costaud — shaders activés</option>
+            </select>
+          </label>
+          <label>Thème du launcher
+            <select id="themeSelect">
+              <option value="auto">Automatique (saisons et événements)</option>
+              <option value="fire">Feu</option>
+              <option value="snow">Hiver</option>
+              <option value="halloween">Halloween</option>
+            </select>
+          </label>
           <label class="check"><input type="checkbox" id="autoConnect"> Rejoindre SpartaCube automatiquement au lancement (version officielle)</label>
           <label class="check"><input type="checkbox" id="closeOnStart"> Cacher le launcher pendant que je joue</label>
           <label>Arguments JVM avancés (optionnel)
@@ -204,6 +258,7 @@
           <div class="modal-actions">
             <button id="btnFolder" class="btn-secondary">Dossier du jeu</button>
             <button id="btnLogs" class="btn-secondary">Logs</button>
+            <button id="btnOnboarding" class="btn-secondary">Revoir l'accueil</button>
             <span class="spacer"></span>
             <button id="btnSaveSettings" class="btn-primary">Enregistrer</button>
           </div>
@@ -221,6 +276,55 @@
   <div id="updateBar" class="update-bar hidden">
     <span id="updateText"></span>
     <button id="btnUpdate" class="btn-primary hidden">Redémarrer et mettre à jour</button>
+  </div>
+
+  <div id="lightbox" class="lightbox hidden">
+    <img id="lightboxImg" alt="">
+    <div class="lightbox-bar">
+      <span id="lightboxName"></span>
+      <span class="spacer"></span>
+      <button id="lbCopy" class="btn-secondary">Copier</button>
+      <button id="lbReveal" class="btn-secondary">Afficher dans le dossier</button>
+      <button id="lbDelete" class="btn-danger">Mettre à la corbeille</button>
+      <button id="lbClose" class="btn-primary">Fermer</button>
+    </div>
+  </div>
+
+  <div id="onboarding" class="onboarding hidden">
+    <div class="card onb-card">
+      <div class="onb-steps"><i class="on"></i><i></i><i></i></div>
+      <div class="onb-step" data-step="1">
+        <h2>Bienvenue sur SpartaCube !</h2>
+        <p>On règle le launcher pour ton PC en 30 secondes.</p>
+        <div class="onb-hw" id="onbHardware">Analyse de ton PC…</div>
+        <label>Mémoire pour Minecraft : <b id="onbRamLabel"></b>
+          <input type="range" id="onbRam" min="2048" step="512">
+        </label>
+        <p class="hint" id="onbRamHint"></p>
+      </div>
+      <div class="onb-step hidden" data-step="2">
+        <h2>Graphismes et mods</h2>
+        <div class="onb-presets" id="onbPresets"></div>
+        <label class="check"><input type="checkbox" id="onbMinimap" checked> Minimap (Xaero's Minimap)</label>
+        <label class="check"><input type="checkbox" id="onbShaders"> Shaders (Iris) — plus beau, plus gourmand</label>
+        <p class="hint">Sodium, Lithium et Fabric API sont toujours installés pour les performances.</p>
+      </div>
+      <div class="onb-step hidden" data-step="3">
+        <h2>Les raccourcis à connaître</h2>
+        <div class="onb-keys">
+          <div><kbd>Shift droit</kbd><span>Menu des modules (HUD, FPS, minimap…)</span></div>
+          <div><kbd>C</kbd><span>Zoom</span></div>
+          <div><kbd>F5</kbd><span>Vue à la 3e personne (avec ton pseudo)</span></div>
+          <div><kbd>F2</kbd><span>Capture d'écran (onglet Captures)</span></div>
+          <div><kbd>Échap</kbd><span>Bouton ★ Voter pour SpartaCube</span></div>
+        </div>
+      </div>
+      <div class="onb-actions">
+        <button id="onbBack" class="btn-secondary hidden">Retour</button>
+        <span class="spacer"></span>
+        <button id="onbNext" class="btn-primary">Suivant</button>
+      </div>
+    </div>
   </div>
 
   <div id="toasts" class="toasts"></div>

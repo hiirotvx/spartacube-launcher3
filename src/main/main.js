@@ -15,6 +15,11 @@ const skin = require('./skin');
 const { listVersions, isSafeVersion } = require('./versions');
 const { ping } = require('./status');
 const bridge = require('./bridge');
+const discord = require('./discord');
+const graphics = require('./graphics');
+const votes = require('./votes');
+const shots = require('./screenshots');
+const profiles = require('./profiles');
 
 log.initialize();
 log.transports.file.level = 'info';
@@ -31,7 +36,7 @@ let settings = null;
 // Clés que la config distante (spartacube.fr/launcher/launcher.json) a le droit de modifier.
 const REMOTE_KEYS = [
   'minecraftVersion', 'fabricLoaderVersion', 'modpackManifestUrl', 'managedFolders',
-  'news', 'message', 'serverAddress', 'serverPort', 'versions', 'allowOtherVersions', 'allowUserMods', 'defaultMods', 'voteUrl'
+  'news', 'message', 'serverAddress', 'serverPort', 'versions', 'allowOtherVersions', 'allowUserMods', 'defaultMods', 'voteUrl', 'voteSites', 'destinations', 'theme', 'discordClientId'
 ];
 
 async function loadRemoteConfig() {
@@ -44,6 +49,18 @@ async function loadRemoteConfig() {
   } catch (e) {
     log.warn(`Config distante indisponible, config embarquée utilisée : ${e.message}`);
   }
+}
+
+function cleanDestinations(list) {
+  return (Array.isArray(list) ? list : []).slice(0, 12)
+    .filter(d => d && typeof d.command === 'string' && /^\/[\w :.\-]{1,60}$/.test(d.command))
+    .map(d => ({ name: String(d.name || d.command).slice(0, 30), command: d.command }));
+}
+
+let discordState = { playing: false };
+function refreshDiscord(patch = {}) {
+  discordState = { ...discordState, ...patch, version: game.selectedVersion(cfg, settings), website: cfg.website };
+  discord.update(discordState);
 }
 
 /** Nettoie les news (texte brut uniquement, liens/images en HTTPS). */
@@ -139,6 +156,9 @@ function registerIpc() {
       message: typeof cfg.message === 'string' ? cfg.message.slice(0, 500) : '',
       news: cleanNews(cfg.news),
       totalRamMb: Math.floor(os.totalmem() / 1024 / 1024),
+      destinations: cleanDestinations(cfg.destinations),
+      hasVoteSites: votes.cleanSites(cfg.voteSites).length > 0,
+      theme: ['auto', 'fire', 'snow', 'halloween'].includes(cfg.theme) ? cfg.theme : 'auto',
       settings,
       profile
     };
@@ -165,7 +185,12 @@ function registerIpc() {
       autoConnect: !!s.autoConnect,
       closeLauncherOnStart: !!s.closeLauncherOnStart,
       jvmArgs: String(s.jvmArgs || '').slice(0, 500),
-      selectedVersion: isSafeVersion(s.selectedVersion) ? s.selectedVersion : ''
+      selectedVersion: isSafeVersion(s.selectedVersion) ? s.selectedVersion : '',
+      graphicsPreset: ['low', 'medium', 'high'].includes(s.graphicsPreset) ? s.graphicsPreset : 'medium',
+      skipDefaultMods: Array.isArray(s.skipDefaultMods) ? s.skipDefaultMods.filter(x => /^[A-Za-z0-9]{1,16}$/.test(x)).slice(0, 20) : [],
+      destination: cleanDestinations(cfg.destinations).some(d => d.command === s.destination) ? s.destination : '',
+      onboarded: !!s.onboarded,
+      theme: ['auto', 'fire', 'snow', 'halloween'].includes(s.theme) ? s.theme : 'auto'
     };
     if (clean.ramMinMb > clean.ramMaxMb) clean.ramMinMb = clean.ramMaxMb;
     settings = clean;
@@ -177,6 +202,8 @@ function registerIpc() {
     try {
       await game.launch(cfg, settings, (ev, data) => {
         send(ev, data);
+        if (ev === 'game-started') refreshDiscord({ playing: true, startedAt: Date.now() });
+        if (ev === 'game-closed') refreshDiscord({ playing: false });
         if (ev === 'game-started' && settings.closeLauncherOnStart && win) win.hide();
         if (ev === 'game-closed' && win) win.show();
       });
@@ -187,7 +214,37 @@ function registerIpc() {
     }
   });
 
-  ipcMain.handle('status', async () => ping(cfg.serverAddress, cfg.serverPort || 25565));
+  ipcMain.handle('status', async () => {
+    const st = await ping(cfg.serverAddress, cfg.serverPort || 25565);
+    refreshDiscord(st.online && st.players ? { players: st.players.online, max: st.players.max } : { players: null });
+    return st;
+  });
+
+  /* ----- Premier lancement ----- */
+  handle('detect-hardware', () => graphics.detect());
+
+  /* ----- Votes ----- */
+  handle('votes:status', () => votes.status(cfg.voteSites));
+  handle('votes:open', url => {
+    const site = votes.cleanSites(cfg.voteSites).find(x => x.url === url);
+    if (!site) throw new Error('Site de vote inconnu');
+    votes.markVoted(site.url);
+    bridge.openVoteWindow(path.join(__dirname, '../renderer/assets/icon.png'), site.url);
+    return votes.status(cfg.voteSites);
+  });
+
+  /* ----- Profils de mods ----- */
+  handle('profiles:list', v => profiles.list(game.gameDirFor(cfg, versionArg(v))));
+  handle('profiles:apply', (v, name) => { ensureNotRunning(); return profiles.apply(game.gameDirFor(cfg, versionArg(v)), name); });
+  handle('profiles:save', (v, name) => profiles.saveCurrent(game.gameDirFor(cfg, versionArg(v)), name));
+  handle('profiles:delete', (v, name) => profiles.remove(game.gameDirFor(cfg, versionArg(v)), name));
+
+  /* ----- Captures d'écran ----- */
+  handle('shots:list', v => shots.list(game.gameDirFor(cfg, versionArg(v))));
+  handle('shots:full', (v, n) => shots.full(game.gameDirFor(cfg, versionArg(v)), n));
+  handle('shots:copy', (v, n) => shots.copy(game.gameDirFor(cfg, versionArg(v)), n));
+  handle('shots:delete', (v, n) => shots.remove(game.gameDirFor(cfg, versionArg(v)), n));
+  handle('shots:reveal', (v, n) => shots.reveal(game.gameDirFor(cfg, versionArg(v)), n));
 
   /* ----- Mods ----- */
   handle('mods:list', v => mods.listMods(game.gameDirFor(cfg, versionArg(v))));
@@ -252,6 +309,8 @@ app.whenReady().then(() => {
   settings = store.readSettings(embedded.defaults);
   if (embedded.voteUrl) bridge.setVoteUrl(embedded.voteUrl);
   bridge.start(path.join(__dirname, '../renderer/assets/icon.png')).then(p => log.info(`Pont de vote local sur le port ${p}`));
+  bridge.setVoteStatusProvider(() => votes.nextAvailable(cfg.voteSites));
+  loadRemoteConfig().finally(() => { discord.init(cfg.discordClientId); refreshDiscord(); });
   registerIpc();
   createWindow();
   setupUpdater();

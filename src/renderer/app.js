@@ -64,6 +64,8 @@ function goto(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === `page-${page}`));
   if (page === 'news') { $('newsBadge').classList.add('hidden'); try { localStorage.setItem('newsSeen', String(state.news.length)); } catch { /* */ } }
   if (page === 'mods') loadMods();
+  if (page === 'vote') loadVotes();
+  if (page === 'shots') loadShots();
   if (page === 'skin') initSkinPage();
   if (page === 'settings') fillSettings();
 }
@@ -104,7 +106,7 @@ $('btnLogin').onclick = async () => {
   $('loginError').textContent = '';
   const r = await L.login();
   $('btnLogin').disabled = false;
-  if (r.ok) setProfile(r.profile);
+  if (r.ok) { setProfile(r.profile); if (!state.settings.onboarded) startOnboarding(); }
   else $('loginError').textContent = r.error;
 };
 $('btnLogout').onclick = async () => { await L.logout(); state.skinLoaded = false; showView('login'); };
@@ -194,6 +196,11 @@ async function refreshStatus() {
   $('statusText').textContent = s.online
     ? `${s.players ? `${s.players.online}/${s.players.max} joueurs` : 'En ligne'} · ${s.latency} ms`
     : 'Serveur hors ligne';
+  const heads = $('onlineHeads');
+  heads.replaceChildren();
+  for (const p of (s.online && s.players && s.players.sample) || []) {
+    heads.append(el('img', { src: `https://mc-heads.net/avatar/${encodeURIComponent(p.id)}/32`, alt: p.name, title: p.name }));
+  }
 }
 
 /* ===================== Jouer ===================== */
@@ -254,6 +261,7 @@ async function loadMods(force = false) {
       ? 'Les mods marqués « Serveur » sont fournis par SpartaCube et mis à jour automatiquement. Tu peux ajouter les tiens (mods côté client uniquement).'
       : `Mods de ton instance Minecraft ${state.version}.`;
 
+  loadProfiles();
   const list = await api(L.mods.list(state.version));
   const box = $('modsList');
   box.replaceChildren();
@@ -314,6 +322,176 @@ async function searchMods(reset) {
 $('btnModSearch').onclick = () => searchMods(true);
 $('modSearch').addEventListener('keydown', e => { if (e.key === 'Enter') searchMods(true); });
 $('btnModMore').onclick = () => searchMods(false);
+
+/* ===================== Profils de mods ===================== */
+
+async function loadProfiles() {
+  const p = await api(L.profiles.list(state.version));
+  if (!p) return;
+  const sel = $('profileSelect');
+  const keep = sel.value;
+  sel.replaceChildren();
+  const g1 = el('optgroup', { label: 'Profils SpartaCube' });
+  for (const n of p.builtin) g1.append(el('option', { value: n, text: n }));
+  sel.append(g1);
+  if (p.custom.length) {
+    const g2 = el('optgroup', { label: 'Mes profils' });
+    for (const n of p.custom) g2.append(el('option', { value: n, text: n }));
+    sel.append(g2);
+  }
+  if ([...sel.options].some(o => o.value === keep)) sel.value = keep;
+  $('btnProfileDelete').disabled = !p.custom.includes(sel.value);
+  sel.onchange = () => { $('btnProfileDelete').disabled = !p.custom.includes(sel.value); };
+}
+$('btnProfileApply').onclick = async () => {
+  const name = $('profileSelect').value;
+  const n = await api(L.profiles.apply(state.version, name));
+  if (n !== null) { toast(n ? `Profil « ${name} » appliqué (${n} mod(s) modifié(s))` : `Profil « ${name} » déjà actif`, 'ok'); loadMods(true); }
+};
+$('btnProfileSave').onclick = async () => {
+  const name = $('profileName').value.trim();
+  if (!name) { toast('Donne un nom au profil (ex. Mon PvP)'); $('profileName').focus(); return; }
+  $('profileName').value = '';
+  if (await api(L.profiles.save(state.version, name), `Profil « ${name.trim()} » enregistré`)) { await loadProfiles(); $('profileSelect').value = name.trim(); }
+};
+$('btnProfileDelete').onclick = async () => {
+  const name = $('profileSelect').value;
+  if (await api(L.profiles.remove(state.version, name), `Profil « ${name} » supprimé`)) loadProfiles();
+};
+
+/* ===================== Voter ===================== */
+
+let voteTimer = null;
+function fmtDuration(ms) {
+  const m = Math.ceil(ms / 60000);
+  return m >= 60 ? `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}` : `${m} min`;
+}
+async function loadVotes() {
+  const st = await api(L.votes.status());
+  if (!st) return;
+  renderVotes(st);
+  clearInterval(voteTimer);
+  voteTimer = setInterval(() => { if ($('page-vote').classList.contains('active')) renderVotes(st); else clearInterval(voteTimer); }, 1000);
+}
+function renderVotes(st) {
+  $('voteMonth').textContent = st.monthCount;
+  const box = $('voteSites');
+  box.replaceChildren();
+  if (!st.sites.length) box.append(el('div', { class: 'empty', text: 'Aucun site de vote configuré pour le moment.' }));
+  const now = Date.now();
+  for (const site of st.sites) {
+    const ready = !site.nextAt || site.nextAt <= now;
+    const btn = el('button', { class: ready ? 'btn-primary' : 'btn-secondary', text: ready ? '★ Voter maintenant' : 'Voter quand même' });
+    btn.onclick = async () => { const s2 = await api(L.votes.open(site.url)); if (s2) { toast('Merci pour ton vote ! 🔥', 'ok'); loadVotes(); updateVoteBadge(s2); } };
+    box.append(el('div', { class: 'card vote-card' },
+      el('h3', { text: site.name }),
+      el('div', { class: `timer ${ready ? 'ready' : ''}`, text: ready ? '● Disponible' : `Prochain vote dans ${fmtDuration(site.nextAt - now)}` }),
+      btn));
+  }
+}
+function updateVoteBadge(st) {
+  const now = Date.now();
+  $('voteBadge').classList.toggle('hidden', !st || !st.sites.some(x => !x.nextAt || x.nextAt <= now));
+}
+
+/* ===================== Captures ===================== */
+
+let currentShot = null;
+async function loadShots() {
+  $('shotsVersion').textContent = state.version;
+  const grid = $('shotsGrid');
+  grid.replaceChildren(el('div', { class: 'empty', text: 'Chargement…' }));
+  const list = await api(L.shots.list(state.version));
+  grid.replaceChildren();
+  if (!list) return;
+  if (!list.length) grid.append(el('div', { class: 'empty', text: 'Aucune capture pour l\'instant : appuie sur F2 en jeu !' }));
+  for (const s of list) {
+    if (!s.thumb) continue;
+    grid.append(el('div', { class: 'shot', onclick: () => openShot(s.name) },
+      el('img', { src: s.thumb, alt: '', loading: 'lazy' }),
+      el('span', { text: new Date(s.mtime).toLocaleString('fr-FR') })));
+  }
+}
+async function openShot(name) {
+  const data = await api(L.shots.full(state.version, name));
+  if (!data) return;
+  currentShot = name;
+  $('lightboxImg').src = data;
+  $('lightboxName').textContent = name;
+  $('lightbox').classList.remove('hidden');
+}
+$('lbClose').onclick = () => $('lightbox').classList.add('hidden');
+$('lightbox').addEventListener('click', e => { if (e.target.id === 'lightbox') $('lightbox').classList.add('hidden'); });
+$('lbCopy').onclick = () => api(L.shots.copy(state.version, currentShot), 'Capture copiée : colle-la sur Discord (Ctrl+V)');
+$('lbReveal').onclick = () => L.shots.reveal(state.version, currentShot);
+$('lbDelete').onclick = async () => {
+  if (await api(L.shots.remove(state.version, currentShot), 'Capture mise à la corbeille')) { $('lightbox').classList.add('hidden'); loadShots(); }
+};
+$('btnShotsFolder').onclick = () => L.shots.reveal(state.version, null);
+
+/* ===================== Accueil guidé (premier lancement) ===================== */
+
+const onb = { step: 1, hw: null, preset: 'medium' };
+function onbShow(step) {
+  onb.step = step;
+  document.querySelectorAll('.onb-step').forEach(d => d.classList.toggle('hidden', Number(d.dataset.step) !== step));
+  document.querySelectorAll('.onb-steps i').forEach((d, i) => d.classList.toggle('on', i < step));
+  $('onbBack').classList.toggle('hidden', step === 1);
+  $('onbNext').textContent = step === 3 ? 'C\'est parti !' : 'Suivant';
+}
+function onbPresets() {
+  const box = $('onbPresets');
+  box.replaceChildren();
+  const desc = { low: 'Fluide avant tout', medium: 'Beau et fluide', high: 'Shaders et grande distance' };
+  for (const [k, p] of Object.entries(onb.hw.presets)) {
+    const b = el('button', { class: k === onb.preset ? 'active' : '' },
+      el('b', { text: p.label }), el('small', { text: desc[k] }), k === onb.hw.preset ? el('span', { class: 'rec', text: 'Conseillé' }) : null);
+    b.onclick = () => { onb.preset = k; $('onbShaders').checked = k === 'high'; onbPresets(); };
+    box.append(b);
+  }
+}
+async function startOnboarding() {
+  $('onboarding').classList.remove('hidden');
+  onbShow(1);
+  const r = await L.detectHardware();
+  onb.hw = r.ok ? r.data : { preset: 'medium', gpu: '?', ramGb: Math.round(state.totalRamMb / 1024), cores: '?', recommendedRamMb: 4096, presets: { low: { label: 'PC modeste' }, medium: { label: 'Équilibré' }, high: { label: 'PC costaud' } } };
+  onb.preset = onb.hw.preset;
+  $('onbHardware').replaceChildren(
+    el('div', { text: `Carte graphique : ${onb.hw.gpu}` }),
+    el('div', { text: `Mémoire : ${onb.hw.ramGb} Go · Processeur : ${onb.hw.cores} cœurs` }));
+  const max = Math.max(2048, Math.floor(state.totalRamMb * 0.75 / 512) * 512);
+  $('onbRam').max = max;
+  $('onbRam').value = Math.min(onb.hw.recommendedRamMb, max);
+  const upd = () => { $('onbRamLabel').textContent = fmtGo(+$('onbRam').value); $('onbRamHint').textContent = `Conseillé pour ton PC : ${fmtGo(Math.min(onb.hw.recommendedRamMb, max))}`; };
+  $('onbRam').oninput = upd;
+  upd();
+  $('onbShaders').checked = onb.preset === 'high';
+  onbPresets();
+}
+$('onbBack').onclick = () => onbShow(Math.max(1, onb.step - 1));
+$('onbNext').onclick = async () => {
+  if (onb.step < 3) { onbShow(onb.step + 1); return; }
+  const skip = [];
+  if (!$('onbMinimap').checked) skip.push('1bokaNcj');
+  if (!$('onbShaders').checked) skip.push('YL57xq9U');
+  const ram = +$('onbRam').value;
+  await saveSettings({ ramMaxMb: ram, ramMinMb: Math.min(2048, ram), graphicsPreset: onb.preset, skipDefaultMods: skip, onboarded: true });
+  $('onboarding').classList.add('hidden');
+  toast('Tout est prêt, bon jeu sur SpartaCube ! ⚔', 'ok');
+};
+
+/* ===================== Thème ===================== */
+
+function applyTheme(serverTheme) {
+  let t = state.settings.theme && state.settings.theme !== 'auto' ? state.settings.theme : serverTheme;
+  if (!t || t === 'auto') {
+    const d = new Date();
+    const m = d.getMonth() + 1, day = d.getDate();
+    t = (m === 10 && day >= 15) || (m === 11 && day <= 2) ? 'halloween' : (m === 12 || (m === 1 && day <= 7)) ? 'snow' : 'fire';
+  }
+  document.body.classList.remove('theme-fire', 'theme-snow', 'theme-halloween');
+  document.body.classList.add(`theme-${t}`);
+}
 
 /* ===================== Skin ===================== */
 
@@ -495,6 +673,8 @@ function fillSettings() {
   $('autoConnect').checked = s.autoConnect;
   $('closeOnStart').checked = s.closeLauncherOnStart;
   $('jvmArgs').value = s.jvmArgs || '';
+  $('graphicsPreset').value = s.graphicsPreset || 'medium';
+  $('themeSelect').value = s.theme || 'auto';
   updateRamLabels();
 }
 function updateRamLabels() {
@@ -510,12 +690,16 @@ $('btnSaveSettings').onclick = async () => {
     ramMinMb: +$('ramMin').value,
     autoConnect: $('autoConnect').checked,
     closeLauncherOnStart: $('closeOnStart').checked,
-    jvmArgs: $('jvmArgs').value
+    jvmArgs: $('jvmArgs').value,
+    graphicsPreset: $('graphicsPreset').value,
+    theme: $('themeSelect').value
   });
+  applyTheme(state.serverTheme);
   toast('Réglages enregistrés', 'ok');
 };
 $('btnFolder').onclick = () => L.openGameFolder();
 $('btnLogs').onclick = () => L.openLogs();
+$('btnOnboarding').onclick = () => startOnboarding();
 
 /* ===================== Mise à jour du launcher ===================== */
 
@@ -540,9 +724,20 @@ $('btnUpdate').onclick = () => L.installUpdate();
   state.version = info.selectedVersion;
   state.allowUserMods = info.allowUserMods;
   $('appVersion').textContent = `v${info.appVersion}`;
+  state.serverTheme = info.theme;
+  applyTheme(info.theme);
   renderNews(info);
-  if (info.profile) setProfile(info.profile);
+  if (info.destinations.length) {
+    const sel = $('destSelect');
+    sel.append(el('option', { value: '', text: 'Aucune (point de connexion habituel)' }));
+    for (const d of info.destinations) sel.append(el('option', { value: d.command, text: `${d.name}  (${d.command})` }));
+    sel.value = info.settings.destination || '';
+    sel.onchange = () => saveSettings({ destination: sel.value });
+    $('destBox').classList.remove('hidden');
+  }
+  if (info.profile) { setProfile(info.profile); if (!info.settings.onboarded) startOnboarding(); }
   else showView('login');
+  if (info.hasVoteSites) { L.votes.status().then(r => r.ok && updateVoteBadge(r.data)); setInterval(() => L.votes.status().then(r => r.ok && updateVoteBadge(r.data)), 60_000); }
   $('splash').classList.add('fade');
   loadVersions();
   refreshStatus();

@@ -58,7 +58,27 @@
     "autoConnect": true,
     "closeLauncherOnStart": false,
     "jvmArgs": "",
-    "selectedVersion": ""
+    "selectedVersion": "",
+    "graphicsPreset": "medium",
+    "skipDefaultMods": [],
+    "destination": "",
+    "onboarded": false,
+    "theme": "auto"
   },
-  "voteUrl": "https://spartacube.fr/vote"
+  "voteUrl": "https://spartacube.fr/vote",
+  "voteSites": [
+    {
+      "name": "Page de vote SpartaCube",
+      "url": "https://spartacube.fr/vote",
+      "cooldownMin": 90
+    }
+  ],
+  "destinations": [
+    {
+      "name": "Spawn",
+      "command": "/spawn"
+    }
+  ],
+  "theme": "auto",
+  "discordClientId": ""
 }

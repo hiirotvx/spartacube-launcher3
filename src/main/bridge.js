@@ -12,8 +12,9 @@ let port = 0;
 let voteUrl = 'https://spartacube.fr/vote';
 let voteWin = null;
 
-function openVoteWindow(iconPath) {
+function openVoteWindow(iconPath, url) {
   if (voteWin && !voteWin.isDestroyed()) {
+    if (url) voteWin.loadURL(url);
     voteWin.show();
     voteWin.focus();
     return;
@@ -38,7 +39,7 @@ function openVoteWindow(iconPath) {
   });
   voteWin.webContents.on('will-navigate', (e, url) => { if (!url.startsWith('https://')) e.preventDefault(); });
   voteWin.on('closed', () => { voteWin = null; });
-  voteWin.loadURL(voteUrl);
+  voteWin.loadURL(url || voteUrl);
   voteWin.focus();
 }
 
@@ -49,6 +50,14 @@ function start(iconPath) {
         && typeof req.headers['x-spartacube-token'] === 'string'
         && req.headers['x-spartacube-token'].length === token.length
         && crypto.timingSafeEqual(Buffer.from(req.headers['x-spartacube-token']), Buffer.from(token));
+      const authed = typeof req.headers['x-spartacube-token'] === 'string'
+        && req.headers['x-spartacube-token'].length === token.length
+        && crypto.timingSafeEqual(Buffer.from(req.headers['x-spartacube-token']), Buffer.from(token));
+      if (authed && req.method === 'GET' && req.url === '/vote-status') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(voteStatusProvider() || {}));
+        return;
+      }
       if (!ok) { res.writeHead(403); res.end(); return; }
       openVoteWindow(iconPath);
       res.writeHead(204);
@@ -67,10 +76,13 @@ function setVoteUrl(url) {
 }
 
 /** Écrit les infos du pont dans le dossier de l'instance (lu par le mod). */
-async function writeBridgeFile(gameDir) {
+async function writeBridgeFile(gameDir, extra = {}) {
   if (!port) return;
   const file = path.join(gameDir, '.spartacube-bridge.json');
-  await fsp.writeFile(file, JSON.stringify({ port, token, voteUrl }), { mode: 0o600 });
+  await fsp.writeFile(file, JSON.stringify({ port, token, voteUrl, ...extra }), { mode: 0o600 });
 }
 
-module.exports = { start, setVoteUrl, writeBridgeFile, openVoteWindow };
+let voteStatusProvider = () => null;
+function setVoteStatusProvider(fn) { voteStatusProvider = fn; }
+
+module.exports = { start, setVoteUrl, writeBridgeFile, openVoteWindow, setVoteStatusProvider };

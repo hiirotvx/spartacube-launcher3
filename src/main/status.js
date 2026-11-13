@@ -71,7 +71,13 @@ function pingDirect(host, port, timeout, handshakeHost) {
         const json = JSON.parse(data.slice(sl[1], sl[1] + sl[0]).toString('utf8'));
         done({
           online: true,
-          players: json.players ? { online: json.players.online, max: json.players.max } : null,
+          players: json.players ? {
+            online: json.players.online,
+            max: json.players.max,
+            sample: Array.isArray(json.players.sample)
+              ? json.players.sample.filter(p => p && /^\w{1,16}$/.test(p.name) && /^[0-9a-f-]{32,36}$/i.test(p.id)).slice(0, 20).map(p => ({ name: p.name, id: p.id }))
+              : []
+          } : null,
           version: json.version ? json.version.name : null,
           latency: Date.now() - t0
         });

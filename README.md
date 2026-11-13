@@ -9,7 +9,13 @@ Windows, macOS et Linux.
 - **Actualités** : toutes les news du serveur (texte, image, lien), gérées depuis `launcher.json`.
 - **Mods** : mods installés par version (activer/désactiver, supprimer, ajouter un .jar), recherche et installation depuis Modrinth avec dépendances. Les mods du modpack serveur sont verrouillés 🔒.
 - **Skin** : aperçu 3D, éditeur pixel (pinceau, gomme, remplissage, pipette, annuler), import PNG, copie du skin d'un joueur, bibliothèque locale, application directe sur le compte Minecraft et choix de la cape.
-- **Réglages** : RAM, connexion auto, arguments JVM, compte.
+- **Voter** : tous les sites de vote (`voteSites`), minuteur par site, compteur du mois, pastille quand un vote est disponible.
+- **Captures** : galerie des captures F2, copier (pour Discord), afficher, mettre à la corbeille.
+- **Réglages** : RAM, qualité graphique, thème (auto : feu / hiver / Halloween), connexion auto, arguments JVM, compte.
+- **Premier lancement guidé** : analyse du PC, RAM conseillée, préréglage graphique, choix minimap/shaders, raccourcis.
+- **Profils de mods** : Performances, PvP, Shaders, Tout activé + profils perso.
+- **Discord Rich Presence** : « Joue sur SpartaCube · 87/300 joueurs » + bouton (renseigner `discordClientId`).
+- **Rejoindre directement** : destination (`destinations`) exécutée à la connexion.
 
 Chaque version a son propre dossier (`instances/<version>`) : mods, options et mondes ne se mélangent pas. Au premier lancement d'une instance, le GUI scale est réglé sur 2.
 
@@ -111,6 +117,10 @@ Compiler à la main : `npm run dist:win`, `dist:mac` ou `dist:linux`. Les fichie
 | `allowUserMods` | `false` : les joueurs ne peuvent pas ajouter leurs mods sur la version officielle |
 | `defaultMods` | Mods Modrinth installés une fois par instance (Sodium, Lithium, Iris, Sodium Extra par défaut) |
 | `voteUrl` | Page de vote ouverte par le bouton « Voter » du menu Échap |
+| `voteSites` | `[{ "name", "url", "cooldownMin" }]` : sites du centre de vote |
+| `destinations` | `[{ "name", "command" }]` : choix « Rejoindre directement » (ex. `/warp survie`) |
+| `discordClientId` | Application ID Discord (Rich Presence), image `logo` dans Art Assets |
+| `theme` | `auto`, `fire`, `snow`, `halloween` |
 | `news` | Actualités : `title`, `text`, `date`, `tag`, `image` (HTTPS), `url` (HTTPS) |
 | `managedFolders` | Dossiers dont les fichiers non listés sont supprimés (par défaut `mods`) |
 | `microsoft.clientId` | Ton propre ID d'application Azure (voir ci-dessous) |
