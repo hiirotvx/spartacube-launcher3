@@ -16,7 +16,7 @@ Module._load = function (req, ...rest) {
   return origLoad.call(this, req, ...rest);
 };
 
-const mods = ['http', 'java', 'fabric', 'modpack', 'versions', 'mods', 'skin', 'store', 'auth', 'status', 'game'];
+const mods = ['http', 'java', 'fabric', 'modpack', 'versions', 'mods', 'skin', 'bundled', 'store', 'auth', 'status', 'game'];
 for (const m of mods) require(path.join(__dirname, '..', 'src', 'main', `${m}.js`));
 for (const dep of ['minecraft-launcher-core', 'msmc', 'request', 'request/lib/auth', 'request/lib/multipart', 'adm-zip', 'electron-updater']) {
   require(dep);

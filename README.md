@@ -13,6 +13,15 @@ Windows, macOS et Linux.
 
 Chaque version a son propre dossier (`instances/<version>`) : mods, options et mondes ne se mélangent pas. Au premier lancement d'une instance, le GUI scale est réglé sur 2.
 
+## Mod SpartaCube Client (en jeu)
+
+Le dossier `mod/` contient un mod Fabric 1.21.11 compilé par GitHub Actions et **intégré au launcher** (installé et verrouillé automatiquement sur la version officielle) :
+
+- **Menu principal SpartaCube** : fond et logo SpartaCube, bouton « ⚔ Rejoindre SpartaCube » (play.spartacube.fr), Solo, Multijoueur, Options, Mods (si Mod Menu est installé), Quitter.
+- **Shift droit en jeu** : menu SpartaCube pour activer les modules d'HUD (FPS, Ping, CPS, Coordonnées, Direction, Horloge, Serveur, Touches, Scoreboard), choisir la couleur, le fond, l'ombre.
+- **Déplacer l'HUD** : éditeur où l'on fait glisser chaque module à la souris.
+- Réglages enregistrés dans `config/spartacube-client.json`.
+
 ## Ce que fait le launcher, tout seul
 
 | Étape | Automatique |

@@ -11,6 +11,7 @@ const { ensureJava } = require('./java');
 const { getJavaComponent, ensureFabric } = require('./fabric');
 const { syncModpack } = require('./modpack');
 const { installDefaultMods } = require('./mods');
+const { installBundledMods } = require('./bundled');
 const { instanceDir, isSafeVersion } = require('./versions');
 const auth = require('./auth');
 
@@ -68,6 +69,8 @@ async function launch(cfg, settings, emit) {
     }, progress);
     log.info('Modpack synchronisé', res);
   }
+  const bundled = await installBundledMods(gameDir, version);
+  if (bundled.length) log.info('Mods intégrés mis à jour', bundled);
   const extras = await installDefaultMods(gameDir, version, cfg.defaultMods, progress);
   if (extras.length) log.info('Mods par défaut', extras);
   await ensureDefaultOptions(gameDir);

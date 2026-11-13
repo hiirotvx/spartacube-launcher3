@@ -40,7 +40,12 @@ async function readState(gameDir) {
 
 /** Chemins relatifs (ex. "mods/x.jar") installés par le modpack serveur. */
 async function requiredFiles(gameDir) {
-  return new Set((await readState(gameDir)).files || []);
+  const set = new Set((await readState(gameDir)).files || []);
+  try {
+    const bundled = JSON.parse(await fsp.readFile(path.join(gameDir, '.spartacube-bundled.json'), 'utf8'));
+    for (const f of bundled.files || []) set.add(`mods/${f}`);
+  } catch { /* aucun mod intégré */ }
+  return set;
 }
 
 async function syncModpack(gameDir, manifestUrl, { managedFolders = ['mods'], allowUserMods = true } = {}, onProgress = () => {}) {

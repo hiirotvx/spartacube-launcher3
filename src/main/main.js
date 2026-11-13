@@ -30,7 +30,7 @@ let settings = null;
 // Clés que la config distante (spartacube.fr/launcher/launcher.json) a le droit de modifier.
 const REMOTE_KEYS = [
   'minecraftVersion', 'fabricLoaderVersion', 'modpackManifestUrl', 'managedFolders',
-  'news', 'message', 'serverPort', 'versions', 'allowOtherVersions', 'allowUserMods', 'defaultMods'
+  'news', 'message', 'serverAddress', 'serverPort', 'versions', 'allowOtherVersions', 'allowUserMods', 'defaultMods'
 ];
 
 async function loadRemoteConfig() {
