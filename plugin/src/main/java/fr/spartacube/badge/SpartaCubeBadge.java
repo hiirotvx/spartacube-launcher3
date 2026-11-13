@@ -27,14 +27,23 @@ public final class SpartaCubeBadge extends JavaPlugin implements PluginMessageLi
     static final String HELLO = "spartacube:hello";
     static final String USERS = "spartacube:users";
     static final String TOAST = "spartacube:toast";
+    static final String COS_SELECT = "spartacube:cosmetic_select";
+    static final String COS_ALLOWED = "spartacube:cosmetic_allowed";
+    static final String COS_ACTIVE = "spartacube:cosmetics";
+    static final int WINGS = 1, AURA = 2;
 
     private final Set<UUID> users = ConcurrentHashMap.newKeySet();
+    private final java.util.Map<UUID, Integer> cosmetics = new ConcurrentHashMap<>();
 
     @Override
     public void onEnable() {
         getServer().getMessenger().registerIncomingPluginChannel(this, HELLO, this);
         getServer().getMessenger().registerOutgoingPluginChannel(this, USERS);
         getServer().getMessenger().registerOutgoingPluginChannel(this, TOAST);
+        getServer().getMessenger().registerIncomingPluginChannel(this, COS_SELECT, this);
+        getServer().getMessenger().registerOutgoingPluginChannel(this, COS_ALLOWED);
+        getServer().getMessenger().registerOutgoingPluginChannel(this, COS_ACTIVE);
+        saveDefaultConfig();
         getServer().getPluginManager().registerEvents(this, this);
         getLogger().info("Pastilles du launcher SpartaCube actives.");
     }
@@ -48,16 +57,89 @@ public final class SpartaCubeBadge extends JavaPlugin implements PluginMessageLi
 
     @Override
     public void onPluginMessageReceived(String channel, Player player, byte[] message) {
-        if (!HELLO.equals(channel) || message.length > 256) return;
-        if (users.add(player.getUniqueId())) {
-            // petit délai : le client doit avoir fini d'enregistrer ses canaux
-            Bukkit.getScheduler().runTaskLater(this, this::broadcast, 10L);
+        if (message.length > 256) return;
+        if (HELLO.equals(channel)) {
+            if (users.add(player.getUniqueId())) {
+                // petit délai : le client doit avoir fini d'enregistrer ses canaux
+                Bukkit.getScheduler().runTaskLater(this, () -> {
+                    broadcast();
+                    player.sendPluginMessage(this, COS_ALLOWED, varInt(allowedFlags(player)));
+                    broadcastCosmetics();
+                }, 10L);
+            }
+        } else if (COS_SELECT.equals(channel) && users.contains(player.getUniqueId())) {
+            int wanted = readVarInt(message);
+            int flags = wanted & allowedFlags(player); // le serveur vérifie les droits
+            if (flags == 0) cosmetics.remove(player.getUniqueId()); else cosmetics.put(player.getUniqueId(), flags);
+            broadcastCosmetics();
         }
+    }
+
+    /** Droits : permissions spartacube.cosmetic.wings / .aura, ou listes UUID/pseudos de config.yml. */
+    private int allowedFlags(Player p) {
+        int f = 0;
+        if (p.hasPermission("spartacube.cosmetic.wings") || listed(p, "cosmetics.wings")) f |= WINGS;
+        if (p.hasPermission("spartacube.cosmetic.aura") || listed(p, "cosmetics.aura")) f |= AURA;
+        return f;
+    }
+
+    private boolean listed(Player p, String path) {
+        for (String s : getConfig().getStringList(path)) {
+            if (s.equalsIgnoreCase(p.getUniqueId().toString()) || s.equalsIgnoreCase(p.getName())) return true;
+        }
+        return false;
+    }
+
+    private void broadcastCosmetics() {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        List<java.util.Map.Entry<UUID, Integer>> list = new ArrayList<>();
+        for (java.util.Map.Entry<UUID, Integer> e : cosmetics.entrySet()) {
+            Player p = Bukkit.getPlayer(e.getKey());
+            if (p != null && p.isOnline()) list.add(e); else cosmetics.remove(e.getKey());
+        }
+        try (DataOutputStream out = new DataOutputStream(bytes)) {
+            writeVarInt(out, list.size());
+            for (java.util.Map.Entry<UUID, Integer> e : list) {
+                out.writeLong(e.getKey().getMostSignificantBits());
+                out.writeLong(e.getKey().getLeastSignificantBits());
+                writeVarInt(out, e.getValue());
+            }
+        } catch (IOException ignored) {
+            return;
+        }
+        byte[] data = bytes.toByteArray();
+        for (UUID id : users) {
+            Player p = Bukkit.getPlayer(id);
+            if (p != null) p.sendPluginMessage(this, COS_ACTIVE, data);
+        }
+    }
+
+    private static void writeVarInt(DataOutputStream out, int n) throws IOException {
+        while ((n & ~0x7F) != 0) { out.writeByte((n & 0x7F) | 0x80); n >>>= 7; }
+        out.writeByte(n);
+    }
+
+    private static byte[] varInt(int n) {
+        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        try (DataOutputStream out = new DataOutputStream(b)) { writeVarInt(out, n); } catch (IOException ignored) { }
+        return b.toByteArray();
+    }
+
+    private static int readVarInt(byte[] data) {
+        int value = 0, shift = 0;
+        for (byte b : data) {
+            value |= (b & 0x7F) << shift;
+            if ((b & 0x80) == 0) return value;
+            shift += 7;
+            if (shift > 28) break;
+        }
+        return 0;
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
-        if (users.remove(e.getPlayer().getUniqueId())) Bukkit.getScheduler().runTask(this, this::broadcast);
+        cosmetics.remove(e.getPlayer().getUniqueId());
+        if (users.remove(e.getPlayer().getUniqueId())) Bukkit.getScheduler().runTask(this, () -> { broadcast(); broadcastCosmetics(); });
     }
 
     private void broadcast() {

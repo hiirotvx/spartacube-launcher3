@@ -26,13 +26,16 @@ public enum HudModule {
     FREELOOK("Freelook", "Maintiens Alt gauche pour regarder autour de toi", Category.MECHANIC, "direction", Kind.MECHANIC, true, 0, 0),
     LOADING_SCREEN("Écran de chargement", "Écran SpartaCube avec astuces pendant la connexion", Category.MECHANIC, "server", Kind.MECHANIC, true, 0, 0),
     NOTIFICATIONS("Notifications", "Notifications animées du serveur et rappels de vote", Category.SERVER, "join", Kind.MECHANIC, true, 0, 0),
+    // ---- Cosmétiques (exclusifs au launcher) ----
+    WINGS("Ailes de feu", "Ailes de flammes dans ton dos, visibles par les joueurs du launcher", Category.COSMETIC, "join", Kind.MECHANIC, false, 0, 0),
+    AURA("Aura de flammes", "Flammes qui tournent autour de toi", Category.COSMETIC, "fps", Kind.MECHANIC, false, 0, 0),
     // ---- Serveur ----
     PING("Ping", "Latence avec le serveur", Category.SERVER, "ping", Kind.TEXT, true, 4, 130),
     SERVER("Serveur", "Adresse du serveur", Category.SERVER, "server", Kind.TEXT, false, 4, 144),
     SCOREBOARD("Scoreboard", "Affiche le scoreboard du serveur", Category.SERVER, "scoreboard", Kind.MECHANIC, true, 0, 0);
 
     public enum Category {
-        ALL("Tous"), HUD("HUD"), PLAYER("Joueur"), MECHANIC("Mécaniques"), SERVER("Serveur");
+        ALL("Tous"), HUD("HUD"), PLAYER("Joueur"), MECHANIC("Mécaniques"), COSMETIC("Cosmétiques"), SERVER("Serveur");
         public final String label;
         Category(String label) { this.label = label; }
     }

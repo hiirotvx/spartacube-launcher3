@@ -1,0 +1,12 @@
+# Cosmétiques exclusifs au launcher SpartaCube.
+# Accès par UUID ou pseudo ci-dessous, OU par permission :
+#   spartacube.cosmetic.wings  (ailes de feu)
+#   spartacube.cosmetic.aura   (aura de flammes)
+# Après modification : redémarrer le serveur (ou /reload confirm).
+cosmetics:
+  wings:
+    - 6eb277d7-48c3-41c8-a3ba-bf5339f59cd4   # Hiirowh
+    - Hiirowh
+  aura:
+    - 6eb277d7-48c3-41c8-a3ba-bf5339f59cd4   # Hiirowh
+    - Hiirowh

@@ -9,6 +9,7 @@ import fr.spartacube.client.hud.HudRenderer;
 import fr.spartacube.client.hud.Mechanics;
 import fr.spartacube.client.hud.PlayerCard;
 import fr.spartacube.client.hud.Toasts;
+import fr.spartacube.client.cosmetics.Cosmetics;
 import fr.spartacube.client.hud.Freelook;
 import fr.spartacube.client.gui.LoadingOverlay;
 import fr.spartacube.client.net.ToastPayload;
@@ -49,6 +50,7 @@ public class SpartaCubeClient implements ClientModInitializer {
     public void onInitializeClient() {
         HudConfig.get();
         LauncherUsers.init();
+        Cosmetics.init();
 
         // HUD (FPS, ping, CPS, minimap…)
         HudElementRegistry.addLast(Identifier.of("spartacube", "hud"), (ctx, tickCounter) -> {
@@ -122,6 +124,7 @@ public class SpartaCubeClient implements ClientModInitializer {
             HudRenderer.tick(client);
             PlayerCard.tick(client);
             Freelook.tick(client);
+            Cosmetics.tick(client);
 
             if (joinTicks > 0 && client.player != null && --joinTicks == 0 && !pendingCommand.isEmpty()) {
                 client.player.networkHandler.sendChatCommand(pendingCommand.substring(1));

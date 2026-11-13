@@ -4,6 +4,8 @@ import fr.spartacube.client.hud.HudConfig;
 import fr.spartacube.client.hud.HudConfig.ModuleSettings;
 import fr.spartacube.client.hud.HudModule;
 import fr.spartacube.client.hud.HudModule.Category;
+import fr.spartacube.client.cosmetics.Cosmetics;
+import fr.spartacube.client.hud.Toasts;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -231,8 +233,20 @@ public class SpartaModsScreen extends Screen {
             this.hoverMisc.put("sw" + m.name(), sw);
             toggle(ctx, x2 - 27, by + 1, on, sw);
 
-            if (click && overGear) { Ui.click(); this.optionsFor = m; }
-            else if (click && overCard) { Ui.click(); cfg.toggle(m); }
+            boolean locked = !Cosmetics.isAllowed(m);
+            if (locked) {
+                Ui.round(ctx, x1, y1, x2, y2, 7, Ui.alpha(0x90140B12, fade));
+                Ui.icon(ctx, "armor", (x1 + x2) / 2 - 7, y1 + 44, 14, Ui.alpha(0xFFB3A39A, fade));
+            }
+            if (click && overCard && locked) {
+                Ui.click();
+                Toasts.show("info", "Cosmétique verrouillé", "Ce cosmétique n'est pas encore disponible pour ton compte.");
+            } else if (click && overGear) { Ui.click(); this.optionsFor = m; }
+            else if (click && overCard) {
+                Ui.click();
+                cfg.toggle(m);
+                if (Cosmetics.flagOf(m) != 0) Cosmetics.sync();
+            }
         }
         // Barre de défilement
         if (maxScroll > 0) {
@@ -264,7 +278,11 @@ public class SpartaModsScreen extends Screen {
         y += 32;
 
         // Activé
-        y = optionRow(ctx, mouseX, mouseY, x, gx2, y, "Activé", st.enabled, click, () -> cfg.toggle(m), dt, a);
+        y = optionRow(ctx, mouseX, mouseY, x, gx2, y, "Activé", st.enabled, click, () -> {
+            if (!Cosmetics.isAllowed(m)) { Toasts.show("info", "Cosmétique verrouillé", "Ce cosmétique n'est pas encore disponible pour ton compte."); return; }
+            cfg.toggle(m);
+            if (Cosmetics.flagOf(m) != 0) Cosmetics.sync();
+        }, dt, a);
 
         if (m == HudModule.ZOOM) {
             y = slider(ctx, mouseX, mouseY, x, gx2, y, "Puissance du zoom", (60 - cfg.zoomFov) / 55f,
