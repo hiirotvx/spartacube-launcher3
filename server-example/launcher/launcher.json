@@ -1,0 +1,14 @@
+{
+  "minecraftVersion": "1.21.1",
+  "fabricLoaderVersion": "latest",
+  "modpackManifestUrl": "https://spartacube.fr/launcher/manifest.json",
+  "managedFolders": ["mods"],
+  "message": "Bienvenue sur SpartaCube ! Rejoins notre Discord pour les annonces.",
+  "news": [
+    {
+      "title": "Ouverture du launcher officiel",
+      "text": "Le launcher installe Java, Fabric et les mods tout seul. Clique sur JOUER !",
+      "date": "13/11/2026"
+    }
+  ]
+}
