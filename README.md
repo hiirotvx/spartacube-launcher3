@@ -21,7 +21,13 @@ Le dossier `mod/` contient un mod Fabric 1.21.11 compilé par GitHub Actions et 
 - **Shift droit en jeu** : menu des modules en cartes (ACTIVÉ / DÉSACTIVÉ, OPTIONS), catégories, recherche, options par module (taille, couleur, fond, ombre).
 - **Modules** : FPS, CPS, Touches, Horloge, Mémoire, Minimap, Coordonnées, Direction, Vitesse, Biome, Jour, Armure, Effets, Ping, Serveur, Scoreboard, Toggle Sprint, Toggle Sneak, Zoom (touche C).
 - **Éditer l'HUD** : glisser-déposer, molette pour la taille, aimantation aux bords et au centre.
+- **Pseudo en F5** : ton pseudo s'affiche au-dessus de ta tête en vue à la 3e personne.
+- **Pastille SpartaCube dans la tab** : un petit « S » à droite du pseudo des joueurs qui utilisent le launcher (nécessite le plugin serveur ci-dessous).
 - Réglages enregistrés dans `config/spartacube-client.json`.
+
+### Plugin serveur SpartaCubeBadge
+
+Le dossier `plugin/` contient un plugin Paper/Spigot 1.21 qui relaie la liste des joueurs équipés du launcher. Le fichier `SpartaCubeBadge.jar` est joint à chaque Release : place-le dans `plugins/` puis redémarre le serveur. Commande admin : `/launcherusers`.
 
 ## Ce que fait le launcher, tout seul
 
@@ -83,8 +89,8 @@ launcher/
 2. Dans `package.json`, remplace `hiirotvx` par ton pseudo ou ton organisation GitHub.
 3. Pour sortir une version, augmente `"version"` dans `package.json` (ex. 1.0.1 → 1.0.2) et pousse sur `main` :
    ```bash
-   npm version patch --no-git-tag-version
-   git commit -am "v1.0.2" && git push
+   npm version patch --no-git-tag-version   # 1.3.1 → 1.3.2 → 1.3.3…
+   git commit -am "v1.3.2" && git push
    ```
    GitHub Actions voit la nouvelle version, compile les 3 plateformes et crée la Release `v1.0.2`. Les launchers installés se mettent à jour tout seuls.
    (Bouton manuel : onglet **Actions → Build & Release → Run workflow**.)
