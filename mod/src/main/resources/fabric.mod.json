@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "spartacube-client",
+  "version": "${version}",
+  "name": "SpartaCube Client",
+  "description": "Menu principal SpartaCube, menu Shift droit et HUD personnalisable (FPS, ping, CPS, coordonnées…).",
+  "authors": ["SpartaCube"],
+  "contact": { "homepage": "https://spartacube.fr" },
+  "license": "MIT",
+  "icon": "assets/spartacube/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["fr.spartacube.client.SpartaCubeClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.1",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

@@ -1,7 +1,7 @@
 {
   "_commentaire": "Config embarquée. Tout ce qui est dans remoteConfigUrl la remplace au démarrage : tu peux changer la version / le modpack / les news sans recompiler le launcher.",
   "serverName": "SpartaCube",
-  "serverAddress": "spartacube.fr",
+  "serverAddress": "play.spartacube.fr",
   "serverPort": 25565,
   "website": "https://spartacube.fr",
   "remoteConfigUrl": "https://spartacube.fr/launcher/launcher.json",

@@ -1,6 +1,7 @@
 'use strict';
 // Ping du serveur (protocole « Server List Ping ») pour afficher joueurs en ligne / MOTD.
 const net = require('net');
+const dns = require('dns').promises;
 
 function varInt(n) {
   const out = [];
@@ -30,7 +31,22 @@ function packet(id, payload) {
   return Buffer.concat([varInt(body.length), body]);
 }
 
-function ping(host, port = 25565, timeout = 4000) {
+/** Résout l'enregistrement SRV _minecraft._tcp (comme le jeu) si le port par défaut est utilisé. */
+async function resolveTarget(host, port) {
+  if (port !== 25565 || net.isIP(host)) return { host, port };
+  try {
+    const [srv] = await dns.resolveSrv(`_minecraft._tcp.${host}`);
+    if (srv && srv.name) return { host: srv.name, port: srv.port };
+  } catch { /* pas de SRV : adresse directe */ }
+  return { host, port };
+}
+
+async function ping(address, port = 25565, timeout = 4000) {
+  const t = await resolveTarget(address, port);
+  return pingDirect(t.host, t.port, timeout, address);
+}
+
+function pingDirect(host, port, timeout, handshakeHost) {
   return new Promise(resolve => {
     const sock = net.createConnection({ host, port });
     let data = Buffer.alloc(0);
@@ -39,7 +55,7 @@ function ping(host, port = 25565, timeout = 4000) {
     sock.setTimeout(timeout, () => done({ online: false }));
     sock.on('error', () => done({ online: false }));
     sock.on('connect', () => {
-      const h = Buffer.from(host, 'utf8');
+      const h = Buffer.from(handshakeHost || host, 'utf8');
       const p = Buffer.alloc(2); p.writeUInt16BE(port);
       sock.write(packet(0x00, Buffer.concat([varInt(767), varInt(h.length), h, p, varInt(1)])));
       sock.write(packet(0x00, Buffer.alloc(0)));

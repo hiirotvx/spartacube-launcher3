@@ -25,6 +25,8 @@ Chaque version a son propre dossier (`instances/<version>`) : mods, options et m
 | Mises à jour du launcher | Téléchargées depuis GitHub Releases et installées à la fermeture. |
 | Statut serveur | Joueurs en ligne et ping affichés en direct. |
 
+Adresse du serveur : `play.spartacube.fr` (ping + connexion auto).
+
 Le jeu est installé dans `%APPDATA%\.spartacube` (Windows), `~/Library/Application Support/.spartacube` (macOS) ou `~/.config/.spartacube` (Linux). Il reste séparé du `.minecraft` du joueur.
 
 ---
