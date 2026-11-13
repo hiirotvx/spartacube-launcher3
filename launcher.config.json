@@ -1,0 +1,24 @@
+{
+  "_commentaire": "Config embarquée. Tout ce qui est dans remoteConfigUrl la remplace au démarrage : tu peux changer la version / le modpack sans recompiler le launcher.",
+  "serverName": "SpartaCube",
+  "serverAddress": "spartacube.fr",
+  "serverPort": 25565,
+  "website": "https://spartacube.fr",
+  "remoteConfigUrl": "https://spartacube.fr/launcher/launcher.json",
+  "minecraftVersion": "1.21.1",
+  "fabricLoaderVersion": "latest",
+  "modpackManifestUrl": "",
+  "managedFolders": ["mods"],
+  "instanceFolder": "spartacube",
+  "microsoft": {
+    "clientId": "",
+    "redirect": ""
+  },
+  "defaults": {
+    "ramMinMb": 2048,
+    "ramMaxMb": 4096,
+    "autoConnect": true,
+    "closeLauncherOnStart": false,
+    "jvmArgs": ""
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "name": "spartacube-launcher",
+  "productName": "SpartaCube Launcher",
+  "version": "1.0.0",
+  "description": "Launcher officiel SpartaCube (spartacube.fr) – Minecraft Java + Fabric, compte Microsoft uniquement",
+  "main": "src/main/main.js",
+  "author": "SpartaCube",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "check": "node tools/check-syntax.js",
+    "manifest": "node tools/generate-manifest.js",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux",
+    "release": "electron-builder --publish always"
+  },
+  "dependencies": {
+    "electron-log": "^5.4.3",
+    "electron-updater": "^6.8.11",
+    "minecraft-launcher-core": "^3.18.2",
+    "msmc": "^5.0.5"
+  },
+  "devDependencies": {
+    "electron": "^45.3.2",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "fr.spartacube.launcher",
+    "productName": "SpartaCube Launcher",
+    "artifactName": "SpartaCube-Launcher-${version}-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "launcher.config.json",
+      "package.json"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "hiirotvx",
+        "repo": "spartacube-launcher3",
+        "releaseType": "release"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "shortcutName": "SpartaCube"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.games",
+      "icon": "build/icon.png"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Game",
+      "icon": "build/icon.png"
+    }
+  },
+  "overrides": {
+    "minecraft-launcher-core": {
+      "adm-zip": "^0.6.1",
+      "uuid": "^11.1.1"
+    },
+    "form-data": "^2.5.5",
+    "qs": "^6.14.1",
+    "tough-cookie": "^4.1.4"
+  }
+}
