@@ -66,18 +66,27 @@ async function listMods(gameDir) {
       description: typeof meta.description === 'string' ? meta.description.slice(0, 200) : '',
       icon: meta.icon || null,
       enabled,
-      required: required.has(`mods/${base}`),
+      required: required.has(`mods/${base}`) || meta.id === 'fabric-api',
       size: stat.size
     });
   }
   return out.sort((a, b) => (b.required - a.required) || a.name.localeCompare(b.name));
 }
 
+async function isLocked(gameDir, file) {
+  const base = file.replace(/\.disabled$/i, '');
+  if ((await requiredFiles(gameDir)).has(`mods/${base}`)) return true;
+  try {
+    const full = path.join(modsDir(gameDir), file);
+    return readMeta(full, await fsp.stat(full)).id === 'fabric-api';
+  } catch { return false; }
+}
+
 async function toggleMod(gameDir, file, enabled) {
   safeModFile(file);
   const dir = modsDir(gameDir);
   const base = file.replace(/\.disabled$/i, '');
-  if ((await requiredFiles(gameDir)).has(`mods/${base}`)) throw new Error('Ce mod est requis par le serveur SpartaCube');
+  if (await isLocked(gameDir, file)) throw new Error('Ce mod est indispensable (serveur SpartaCube / Fabric API)');
   const from = path.join(dir, file);
   const to = path.join(dir, enabled ? base : `${base}.disabled`);
   if (from !== to) await fsp.rename(from, to);
@@ -86,7 +95,7 @@ async function toggleMod(gameDir, file, enabled) {
 async function deleteMod(gameDir, file) {
   safeModFile(file);
   const base = file.replace(/\.disabled$/i, '');
-  if ((await requiredFiles(gameDir)).has(`mods/${base}`)) throw new Error('Ce mod est requis par le serveur SpartaCube');
+  if (await isLocked(gameDir, file)) throw new Error('Ce mod est indispensable (serveur SpartaCube / Fabric API)');
   await fsp.rm(path.join(modsDir(gameDir), file), { force: true });
   const st = await readModrinthState(gameDir);
   for (const [pid, f] of Object.entries(st)) if (f === base) delete st[pid];
@@ -185,10 +194,11 @@ async function installDefaultMods(gameDir, version, defaults, onProgress = () =>
   const markerFile = path.join(gameDir, '.spartacube-defaults.json');
   let done = [];
   try { done = JSON.parse(await fsp.readFile(markerFile, 'utf8')); } catch { /* premier lancement */ }
-  const todo = defaults.filter(d => d && d.project && !done.includes(d.project));
+  const presentIds = new Set((await listMods(gameDir)).filter(m => m.enabled).map(m => m.id).filter(Boolean));
+  // "always" : mod indispensable (ex. Fabric API) réinstallé s'il manque, même après suppression
+  const todo = defaults.filter(d => d && d.project && (!done.includes(d.project) || (d.always && d.fabricId && !presentIds.has(d.fabricId))));
   if (!todo.length) return [];
 
-  const presentIds = new Set((await listMods(gameDir)).map(m => m.id).filter(Boolean));
   const installed = [];
   let i = 0;
   for (const d of todo) {
@@ -198,7 +208,7 @@ async function installDefaultMods(gameDir, version, defaults, onProgress = () =>
     } catch (e) {
       installed.push(`! ${d.name || d.project} : ${e.message}`);
     }
-    done.push(d.project);
+    if (!done.includes(d.project)) done.push(d.project);
   }
   await fsp.writeFile(markerFile, JSON.stringify(done, null, 2));
   return installed;

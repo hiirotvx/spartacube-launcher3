@@ -76,10 +76,15 @@ public class HudEditorScreen extends Screen {
                 if (!m.movable() || !cfg.isEnabled(m)) continue;
                 int[] p = HudRenderer.clampedPos(m, this.client);
                 int[] s = HudRenderer.size(m, this.client);
-                if (Ui.inside(mouseX, mouseY, p[0], p[1], p[0] + s[0], p[1] + s[1])) this.hovered = m;
+                if (Ui.inside(mouseX, mouseY, p[0] - 6, p[1] - 8, p[0] + s[0] + 8, p[1] + s[1] + 4)) this.hovered = m;
             }
         }
 
+        if (this.mouse.pressed && this.hovered != null && overClose(this.hovered, mouseX, mouseY)) {
+            Ui.click();
+            cfg.toggle(this.hovered);
+            this.hovered = null;
+        }
         if (this.mouse.pressed && this.hovered != null) {
             int[] p = HudRenderer.clampedPos(this.hovered, this.client);
             this.dragging = this.hovered;
@@ -116,6 +121,12 @@ public class HudEditorScreen extends Screen {
             Ui.round(ctx, p[0] - 2, p[1] - 2, p[0] + s[0] + 2, p[1] + s[1] + 2, 3, active ? 0x30FF8C2E : 0x18FFFFFF);
             HudRenderer.render(ctx, this.client, m, p[0], p[1]);
             Ui.outline(ctx, p[0] - 2, p[1] - 2, p[0] + s[0] + 2, p[1] + s[1] + 2, 3, active ? 0xFFFF8C2E : 0x50FFFFFF);
+            if (m == this.hovered && this.dragging == null) {
+                int[] c = closeRect(m);
+                boolean overX = overClose(m, mouseX, mouseY);
+                Ui.round(ctx, c[0], c[1], c[0] + 11, c[1] + 11, 5, overX ? 0xFFE0324F : 0xE0C4253F);
+                Ui.icon(ctx, "close", c[0] + 3, c[1] + 3, 5);
+            }
             if (active) {
                 Text label = Ui.t(m.label + "  " + Math.round(cfg.settings(m).scale * 100) + " %");
                 int lw = Ui.width(label) + 8;
@@ -126,7 +137,7 @@ public class HudEditorScreen extends Screen {
         }
 
         // Aide + bouton Terminé
-        Text help = Ui.t("Glisse pour déplacer · Molette sur un module pour la taille · Échap pour terminer");
+        Text help = Ui.t("Glisse pour déplacer  ·  Molette : taille  ·  ✕ : désactiver  ·  Échap pour terminer");
         int hw = Ui.width(help) + 16;
         Ui.round(ctx, cx - hw / 2, 8, cx + hw / 2, 24, 6, Ui.alpha(0xD0140B12, open));
         Ui.centered(ctx, help, cx, 12, Ui.alpha(Ui.TEXT, open));
@@ -136,6 +147,18 @@ public class HudEditorScreen extends Screen {
 
         super.render(ctx, mouseX, mouseY, delta);
         if (this.mouse.released && overDone) { Ui.click(); this.close(); }
+    }
+
+    /** Croix « désactiver » en haut à droite du module. */
+    private int[] closeRect(HudModule m) {
+        int[] p = HudRenderer.clampedPos(m, this.client);
+        int[] s = HudRenderer.size(m, this.client);
+        return new int[]{p[0] + s[0] - 5, p[1] - 7};
+    }
+
+    private boolean overClose(HudModule m, int mx, int my) {
+        int[] c = closeRect(m);
+        return Ui.inside(mx, my, c[0] - 1, c[1] - 1, c[0] + 12, c[1] + 12);
     }
 
     @Override

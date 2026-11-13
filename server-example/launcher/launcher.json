@@ -9,6 +9,12 @@
   "allowUserMods": true,
   "defaultMods": [
     {
+      "name": "Fabric API",
+      "project": "P7dR8mSH",
+      "fabricId": "fabric-api",
+      "always": true
+    },
+    {
       "name": "Sodium",
       "project": "AANobbMI",
       "fabricId": "sodium"
@@ -27,6 +33,11 @@
       "name": "Sodium Extra",
       "project": "PtjYWJkn",
       "fabricId": "sodium-extra"
+    },
+    {
+      "name": "Xaero's Minimap",
+      "project": "1bokaNcj",
+      "fabricId": "xaerominimap"
     }
   ],
   "message": "Bienvenue sur SpartaCube ! Rejoins notre Discord pour les annonces.",
@@ -39,5 +50,6 @@
       "image": "https://spartacube.fr/launcher/news/launcher.jpg",
       "url": "https://spartacube.fr"
     }
-  ]
+  ],
+  "voteUrl": "https://spartacube.fr/vote"
 }

@@ -11,6 +11,7 @@ public final class Mechanics {
     private static float zoomProgress;
     private static boolean zoomTarget;
     private static long lastFrame;
+    private static boolean flyBoosted;
 
     private Mechanics() {}
 
@@ -27,6 +28,17 @@ public final class Mechanics {
         if (appliedSneak == null || appliedSneak != sneak) {
             o.getSneakToggled().setValue(sneak);
             appliedSneak = sneak;
+        }
+
+        // Fly boost (option du Toggle Sprint) : vitesse de vol augmentée
+        if (mc.player != null) {
+            var ab = mc.player.getAbilities();
+            boolean boost = ab.flying && sprint && cfg.flyBoost;
+            float wanted = boost ? 0.05f * cfg.flyBoostMult : 0.05f;
+            if (boost || flyBoosted) {
+                if (Math.abs(ab.getFlySpeed() - wanted) > 1e-4f) ab.setFlySpeed(wanted);
+                flyBoosted = boost;
+            }
         }
 
         // Zoom : maintenir C (hors menus). Le champ de vision est modifié par MixinGameRenderer.

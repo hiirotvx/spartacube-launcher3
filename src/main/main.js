@@ -14,6 +14,7 @@ const mods = require('./mods');
 const skin = require('./skin');
 const { listVersions, isSafeVersion } = require('./versions');
 const { ping } = require('./status');
+const bridge = require('./bridge');
 
 log.initialize();
 log.transports.file.level = 'info';
@@ -30,7 +31,7 @@ let settings = null;
 // Clés que la config distante (spartacube.fr/launcher/launcher.json) a le droit de modifier.
 const REMOTE_KEYS = [
   'minecraftVersion', 'fabricLoaderVersion', 'modpackManifestUrl', 'managedFolders',
-  'news', 'message', 'serverAddress', 'serverPort', 'versions', 'allowOtherVersions', 'allowUserMods', 'defaultMods'
+  'news', 'message', 'serverAddress', 'serverPort', 'versions', 'allowOtherVersions', 'allowUserMods', 'defaultMods', 'voteUrl'
 ];
 
 async function loadRemoteConfig() {
@@ -39,6 +40,7 @@ async function loadRemoteConfig() {
     const remote = await getJson(embedded.remoteConfigUrl);
     for (const k of REMOTE_KEYS) if (remote[k] !== undefined) cfg[k] = remote[k];
     log.info('Config distante chargée');
+    if (cfg.voteUrl) bridge.setVoteUrl(cfg.voteUrl);
   } catch (e) {
     log.warn(`Config distante indisponible, config embarquée utilisée : ${e.message}`);
   }
@@ -248,11 +250,14 @@ app.on('second-instance', () => {
 
 app.whenReady().then(() => {
   settings = store.readSettings(embedded.defaults);
+  if (embedded.voteUrl) bridge.setVoteUrl(embedded.voteUrl);
+  bridge.start(path.join(__dirname, '../renderer/assets/icon.png')).then(p => log.info(`Pont de vote local sur le port ${p}`));
   registerIpc();
   createWindow();
   setupUpdater();
 });
 
 app.on('window-all-closed', () => {
-  if (!game.isRunning()) app.quit();
+  // La fenêtre de vote peut se fermer pendant que le jeu tourne : on ne quitte que si le jeu est fermé
+  if (!game.isRunning() && !(win && !win.isDestroyed())) app.quit();
 });

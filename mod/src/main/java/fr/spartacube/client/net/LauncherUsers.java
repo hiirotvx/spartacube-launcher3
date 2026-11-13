@@ -6,6 +6,10 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.Style;
+import net.minecraft.text.StyleSpriteSource;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 
 import java.util.Set;
 import java.util.UUID;
@@ -16,7 +20,14 @@ public final class LauncherUsers {
     private static final Set<UUID> USERS = ConcurrentHashMap.newKeySet();
     private static boolean helloSent;
 
+    private static final Style BADGE = Style.EMPTY.withFont(new StyleSpriteSource.Font(Identifier.of("spartacube", "badge")));
+
     private LauncherUsers() {}
+
+    /** Pastille « S » (police bitmap spartacube:badge). */
+    public static Text badge() {
+        return Text.literal("\uE000").setStyle(BADGE);
+    }
 
     public static boolean contains(UUID id) {
         if (id == null) return false;

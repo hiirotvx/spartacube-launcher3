@@ -7,7 +7,15 @@ import fr.spartacube.client.hud.HudConfig;
 import fr.spartacube.client.hud.HudModule;
 import fr.spartacube.client.hud.HudRenderer;
 import fr.spartacube.client.hud.Mechanics;
-import fr.spartacube.client.hud.Minimap;
+import fr.spartacube.client.hud.PlayerCard;
+import fr.spartacube.client.net.VoteBridge;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.fabric.api.client.screen.v1.Screens;
+import net.minecraft.client.gui.screen.GameMenuScreen;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.ClickableWidget;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import fr.spartacube.client.net.LauncherUsers;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -36,6 +44,24 @@ public class SpartaCubeClient implements ClientModInitializer {
             HudRenderer.renderAll(ctx, mc);
         });
 
+        // Carte joueur au survol (façon Dofus)
+        HudElementRegistry.addLast(Identifier.of("spartacube", "player_card"), (ctx, tickCounter) -> {
+            MinecraftClient mc = MinecraftClient.getInstance();
+            if (mc.options.hudHidden || mc.currentScreen != null) return;
+            PlayerCard.render(ctx, mc);
+        });
+
+        // Bouton « Voter » dans le menu Échap
+        ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
+            if (!(screen instanceof GameMenuScreen)) return;
+            int maxY = -1;
+            for (ClickableWidget b : Screens.getButtons(screen)) maxY = Math.max(maxY, b.getY() + b.getHeight());
+            if (maxY < 0) return; // menu réduit (F3 + Échap)
+            Screens.getButtons(screen).add(ButtonWidget.builder(
+                    Text.literal("★ Voter pour SpartaCube").formatted(Formatting.GOLD),
+                    b -> VoteBridge.openVote()).dimensions(w / 2 - 102, maxY + 8, 204, 20).build());
+        });
+
         // Scoreboard affichable / masquable
         HudElementRegistry.replaceElement(VanillaHudElements.SCOREBOARD, original -> (ctx, tickCounter) -> {
             if (HudConfig.get().isEnabled(HudModule.SCOREBOARD)) original.render(ctx, tickCounter);
@@ -49,7 +75,7 @@ public class SpartaCubeClient implements ClientModInitializer {
 
             Mechanics.tick(client);
             HudRenderer.tick(client);
-            if (HudConfig.get().isEnabled(HudModule.MINIMAP)) Minimap.tick(client);
+            PlayerCard.tick(client);
 
             // Shift droit : ouvre / ferme le menu des modules en jeu
             long window = GLFW.glfwGetCurrentContext();

@@ -14,6 +14,7 @@ const { installDefaultMods } = require('./mods');
 const { installBundledMods } = require('./bundled');
 const { instanceDir, isSafeVersion } = require('./versions');
 const auth = require('./auth');
+const bridge = require('./bridge');
 
 let running = null;
 
@@ -74,6 +75,7 @@ async function launch(cfg, settings, emit) {
   const extras = await installDefaultMods(gameDir, version, cfg.defaultMods, progress);
   if (extras.length) log.info('Mods par défaut', extras);
   await ensureDefaultOptions(gameDir);
+  await bridge.writeBridgeFile(gameDir).catch(() => {});
 
   progress({ step: 'auth', label: 'Vérification du compte…', done: 0, total: 1 });
   const authorization = await auth.getLaunchAuth();

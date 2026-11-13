@@ -269,6 +269,11 @@ public class SpartaModsScreen extends Screen {
         if (m == HudModule.ZOOM) {
             y = slider(ctx, mouseX, mouseY, x, gx2, y, "Puissance du zoom", (60 - cfg.zoomFov) / 55f,
                     v -> cfg.zoomFov = Math.round(60 - v * 55), "x" + String.format(Locale.ROOT, "%.1f", 70f / cfg.zoomFov), a);
+        } else if (m == HudModule.TOGGLE_SPRINT) {
+            y = optionRow(ctx, mouseX, mouseY, x, gx2, y, "Fly boost", cfg.flyBoost, click, () -> { cfg.flyBoost = !cfg.flyBoost; cfg.save(); }, dt, a);
+            y = slider(ctx, mouseX, mouseY, x, gx2, y, "Vitesse de vol", (cfg.flyBoostMult - 1f) / 4f,
+                    v -> cfg.flyBoostMult = Math.round((1f + v * 4f) * 10f) / 10f, "x" + String.format(Locale.ROOT, "%.1f", cfg.flyBoostMult), a);
+            Ui.text(ctx, Ui.t("Le fly boost s'applique quand tu voles (créatif ou /fly)."), x, y + 4, Ui.alpha(Ui.MUTED, a));
         } else if (m.movable()) {
             y = slider(ctx, mouseX, mouseY, x, gx2, y, "Taille", (st.scale - 0.5f) / 1.5f,
                     v -> st.scale = Math.round((0.5f + v * 1.5f) * 20f) / 20f, Math.round(st.scale * 100) + " %", a);

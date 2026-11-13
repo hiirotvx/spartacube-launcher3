@@ -11,6 +11,12 @@
   "allowUserMods": true,
   "defaultMods": [
     {
+      "name": "Fabric API",
+      "project": "P7dR8mSH",
+      "fabricId": "fabric-api",
+      "always": true
+    },
+    {
       "name": "Sodium",
       "project": "AANobbMI",
       "fabricId": "sodium"
@@ -29,6 +35,11 @@
       "name": "Sodium Extra",
       "project": "PtjYWJkn",
       "fabricId": "sodium-extra"
+    },
+    {
+      "name": "Xaero's Minimap",
+      "project": "1bokaNcj",
+      "fabricId": "xaerominimap"
     }
   ],
   "modpackManifestUrl": "",
@@ -48,5 +59,6 @@
     "closeLauncherOnStart": false,
     "jvmArgs": "",
     "selectedVersion": ""
-  }
+  },
+  "voteUrl": "https://spartacube.fr/vote"
 }

@@ -41,11 +41,15 @@ public final class HudConfig {
         Map<String, ModuleSettings> modules = new HashMap<>();
         boolean customTitleScreen = true;
         int zoomFov = 15;
+        boolean flyBoost = true;
+        float flyBoostMult = 2.5f;
     }
 
     private final Map<HudModule, ModuleSettings> modules = new EnumMap<>(HudModule.class);
     public boolean customTitleScreen = true;
     public int zoomFov = 15;
+    public boolean flyBoost = true;
+    public float flyBoostMult = 2.5f;
 
     public static HudConfig get() {
         if (instance == null) instance = load();
@@ -79,6 +83,8 @@ public final class HudConfig {
         if (data != null) {
             cfg.customTitleScreen = data.customTitleScreen;
             cfg.zoomFov = Math.max(5, Math.min(60, data.zoomFov == 0 ? 15 : data.zoomFov));
+            cfg.flyBoost = data.flyBoost;
+            cfg.flyBoostMult = Math.max(1f, Math.min(5f, data.flyBoostMult == 0 ? 2.5f : data.flyBoostMult));
         }
         return cfg;
     }
@@ -88,6 +94,8 @@ public final class HudConfig {
         for (HudModule m : HudModule.values()) data.modules.put(m.name(), settings(m));
         data.customTitleScreen = customTitleScreen;
         data.zoomFov = zoomFov;
+        data.flyBoost = flyBoost;
+        data.flyBoostMult = flyBoostMult;
         try {
             Files.createDirectories(FILE.getParent());
             try (Writer w = Files.newBufferedWriter(FILE, StandardCharsets.UTF_8)) {

@@ -6,7 +6,9 @@
   "client": [
     "MixinGameRenderer",
     "MixinLivingEntityRenderer",
-    "MixinPlayerListHud"
+    "MixinPlayerListHud",
+    "MixinEntityRenderer",
+    "MixinGameOptions"
   ],
   "injectors": {
     "defaultRequire": 0

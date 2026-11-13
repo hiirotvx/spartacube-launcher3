@@ -140,7 +140,6 @@ public final class HudRenderer {
         TextRenderer tr = mc.textRenderer;
         switch (m) {
             case KEYSTROKES: return new int[]{KEY * 3 + GAP * 2, KEY * 2 + GAP * 3 + 10 + 14};
-            case MINIMAP: return new int[]{Minimap.SIZE + 4, Minimap.SIZE + 4};
             case ARMOR: return new int[]{20, 5 * 17 + 2};
             case EFFECTS: {
                 List<String> lines = effectLines(mc);
@@ -192,7 +191,6 @@ public final class HudRenderer {
         ctx.getMatrices().scale(st.scale, st.scale);
         switch (m) {
             case KEYSTROKES -> renderKeystrokes(ctx, mc, st);
-            case MINIMAP -> Minimap.render(ctx, mc, st.background);
             case ARMOR -> renderArmor(ctx, mc, st);
             case EFFECTS -> renderEffects(ctx, mc, st);
             default -> {

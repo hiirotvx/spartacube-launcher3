@@ -8,7 +8,6 @@ public enum HudModule {
     KEYSTROKES("Touches", "Affiche Z Q S D, espace et clics", Category.HUD, "keystrokes", Kind.SPECIAL, false, 4, 110),
     CLOCK("Horloge", "Heure réelle", Category.HUD, "clock", Kind.TEXT, false, 4, 32),
     MEMORY("Mémoire", "RAM utilisée par le jeu", Category.HUD, "memory", Kind.TEXT, false, 4, 46),
-    MINIMAP("Minimap", "Carte vue du dessus autour de toi", Category.HUD, "coords", Kind.SPECIAL, false, -90, 4),
     // ---- Joueur ----
     COORDS("Coordonnées", "Position X / Y / Z", Category.PLAYER, "coords", Kind.TEXT, false, 4, 60),
     DIRECTION("Direction", "Orientation (Nord, Sud…)", Category.PLAYER, "direction", Kind.TEXT, false, 4, 74),
@@ -16,10 +15,12 @@ public enum HudModule {
     BIOME("Biome", "Biome actuel", Category.PLAYER, "biome", Kind.TEXT, false, 4, 102),
     DAY("Jour", "Numéro du jour dans le monde", Category.PLAYER, "day", Kind.TEXT, false, 4, 116),
     ARMOR("Armure", "Pièces d'armure et objet en main", Category.PLAYER, "armor", Kind.SPECIAL, false, -40, -90),
+    PLAYER_CARD("Carte joueur", "Vise un joueur pour voir son pseudo et son titre", Category.PLAYER, "solo", Kind.MECHANIC, true, 0, 0),
+    NAMETAG_STYLE("Nametags SpartaCube", "Nametags aux couleurs de SpartaCube + pastille launcher", Category.PLAYER, "multi", Kind.MECHANIC, false, 0, 0),
     NAMETAG("Pseudo en F5", "Affiche ton pseudo au-dessus de ta tête en vue F5", Category.PLAYER, "solo", Kind.MECHANIC, true, 0, 0),
     EFFECTS("Effets", "Effets de potion actifs et durée", Category.PLAYER, "fps", Kind.SPECIAL, false, -110, 40),
     // ---- Mécaniques ----
-    TOGGLE_SPRINT("Toggle Sprint", "Le sprint reste activé sans maintenir la touche", Category.MECHANIC, "speed", Kind.MECHANIC, false, 0, 0),
+    TOGGLE_SPRINT("Toggle Sprint", "Sprint sans maintenir la touche + fly boost (options)", Category.MECHANIC, "speed", Kind.MECHANIC, false, 0, 0),
     TOGGLE_SNEAK("Toggle Sneak", "S'accroupir reste activé sans maintenir la touche", Category.MECHANIC, "solo", Kind.MECHANIC, false, 0, 0),
     ZOOM("Zoom", "Maintiens C pour zoomer", Category.MECHANIC, "search", Kind.MECHANIC, true, 0, 0),
     // ---- Serveur ----
