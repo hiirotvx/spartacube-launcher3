@@ -8,7 +8,9 @@
     "MixinLivingEntityRenderer",
     "MixinPlayerListHud",
     "MixinEntityRenderer",
-    "MixinGameOptions"
+    "MixinGameOptions",
+    "MixinEntity",
+    "MixinCamera"
   ],
   "injectors": {
     "defaultRequire": 0

@@ -23,6 +23,9 @@ public enum HudModule {
     TOGGLE_SPRINT("Toggle Sprint", "Sprint sans maintenir la touche + fly boost (options)", Category.MECHANIC, "speed", Kind.MECHANIC, false, 0, 0),
     TOGGLE_SNEAK("Toggle Sneak", "S'accroupir reste activé sans maintenir la touche", Category.MECHANIC, "solo", Kind.MECHANIC, false, 0, 0),
     ZOOM("Zoom", "Maintiens C pour zoomer", Category.MECHANIC, "search", Kind.MECHANIC, true, 0, 0),
+    FREELOOK("Freelook", "Maintiens Alt gauche pour regarder autour de toi", Category.MECHANIC, "direction", Kind.MECHANIC, true, 0, 0),
+    LOADING_SCREEN("Écran de chargement", "Écran SpartaCube avec astuces pendant la connexion", Category.MECHANIC, "server", Kind.MECHANIC, true, 0, 0),
+    NOTIFICATIONS("Notifications", "Notifications animées du serveur et rappels de vote", Category.SERVER, "join", Kind.MECHANIC, true, 0, 0),
     // ---- Serveur ----
     PING("Ping", "Latence avec le serveur", Category.SERVER, "ping", Kind.TEXT, true, 4, 130),
     SERVER("Serveur", "Adresse du serveur", Category.SERVER, "server", Kind.TEXT, false, 4, 144),

@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class SpartaCubeBadge extends JavaPlugin implements PluginMessageListener, Listener {
     static final String HELLO = "spartacube:hello";
     static final String USERS = "spartacube:users";
+    static final String TOAST = "spartacube:toast";
 
     private final Set<UUID> users = ConcurrentHashMap.newKeySet();
 
@@ -33,6 +34,7 @@ public final class SpartaCubeBadge extends JavaPlugin implements PluginMessageLi
     public void onEnable() {
         getServer().getMessenger().registerIncomingPluginChannel(this, HELLO, this);
         getServer().getMessenger().registerOutgoingPluginChannel(this, USERS);
+        getServer().getMessenger().registerOutgoingPluginChannel(this, TOAST);
         getServer().getPluginManager().registerEvents(this, this);
         getLogger().info("Pastilles du launcher SpartaCube actives.");
     }
@@ -85,8 +87,60 @@ public final class SpartaCubeBadge extends JavaPlugin implements PluginMessageLi
         return bytes.toByteArray();
     }
 
+    /** VarInt + UTF-8 (format PacketCodecs.string). */
+    private static void writeString(DataOutputStream out, String s) throws IOException {
+        byte[] b = s.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        int n = b.length;
+        while ((n & ~0x7F) != 0) { out.writeByte((n & 0x7F) | 0x80); n >>>= 7; }
+        out.writeByte(n);
+        out.write(b);
+    }
+
+    /**
+     * Notification animée chez les joueurs équipés du launcher.
+     * Utilisable par d'autres plugins : Bukkit.getPluginManager().getPlugin("SpartaCubeBadge") puis sendToast(...).
+     */
+    public void sendToast(Player target, String type, String title, String text) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (DataOutputStream out = new DataOutputStream(bytes)) {
+            writeString(out, type.length() > 16 ? type.substring(0, 16) : type);
+            writeString(out, title.length() > 64 ? title.substring(0, 64) : title);
+            writeString(out, text.length() > 256 ? text.substring(0, 256) : text);
+        } catch (IOException ignored) {
+            return;
+        }
+        byte[] data = bytes.toByteArray();
+        if (target != null) {
+            if (users.contains(target.getUniqueId())) target.sendPluginMessage(this, TOAST, data);
+            return;
+        }
+        for (UUID id : users) {
+            Player p = Bukkit.getPlayer(id);
+            if (p != null) p.sendPluginMessage(this, TOAST, data);
+        }
+    }
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (command.getName().equalsIgnoreCase("sctoast")) {
+            // /sctoast <joueur|all> <info|event|vote|boss|staff> <titre> | <message>
+            if (args.length < 3) {
+                sender.sendMessage("§cUsage : /sctoast <joueur|all> <info|event|vote|boss|staff> <titre> | <message>");
+                return true;
+            }
+            String rest = String.join(" ", java.util.Arrays.copyOfRange(args, 2, args.length));
+            String[] parts = rest.split("\\|", 2);
+            String title = parts[0].trim();
+            String text = parts.length > 1 ? parts[1].trim() : "";
+            Player target = args[0].equalsIgnoreCase("all") ? null : Bukkit.getPlayerExact(args[0]);
+            if (!args[0].equalsIgnoreCase("all") && target == null) {
+                sender.sendMessage("§cJoueur introuvable : " + args[0]);
+                return true;
+            }
+            sendToast(target, args[1].toLowerCase(java.util.Locale.ROOT), title, text);
+            sender.sendMessage("§6[SpartaCube] §fNotification envoyée.");
+            return true;
+        }
         List<String> names = new ArrayList<>();
         for (UUID id : users) {
             Player p = Bukkit.getPlayer(id);

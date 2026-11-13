@@ -8,6 +8,15 @@ import fr.spartacube.client.hud.HudModule;
 import fr.spartacube.client.hud.HudRenderer;
 import fr.spartacube.client.hud.Mechanics;
 import fr.spartacube.client.hud.PlayerCard;
+import fr.spartacube.client.hud.Toasts;
+import fr.spartacube.client.hud.Freelook;
+import fr.spartacube.client.gui.LoadingOverlay;
+import fr.spartacube.client.net.ToastPayload;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.minecraft.client.gui.screen.DownloadingTerrainScreen;
+import net.minecraft.client.gui.screen.multiplayer.ConnectScreen;
 import fr.spartacube.client.net.VoteBridge;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
@@ -31,6 +40,10 @@ import org.lwjgl.glfw.GLFW;
 public class SpartaCubeClient implements ClientModInitializer {
     public static final String SERVER_ADDRESS = "play.spartacube.fr";
     private static boolean rightShiftWasDown;
+    private static int joinTicks = -1;
+    private static String pendingCommand = "";
+    private static int voteCheckTicks = 0;
+    private static boolean voteNotified;
 
     @Override
     public void onInitializeClient() {
@@ -49,6 +62,38 @@ public class SpartaCubeClient implements ClientModInitializer {
             MinecraftClient mc = MinecraftClient.getInstance();
             if (mc.options.hudHidden || mc.currentScreen != null) return;
             PlayerCard.render(ctx, mc);
+        });
+
+        // Notifications animées
+        HudElementRegistry.addLast(Identifier.of("spartacube", "toasts"), (ctx, tickCounter) -> {
+            MinecraftClient mc = MinecraftClient.getInstance();
+            if (mc.options.hudHidden || !HudConfig.get().isEnabled(HudModule.NOTIFICATIONS)) return;
+            Toasts.render(ctx, mc);
+        });
+        PayloadTypeRegistry.playS2C().register(ToastPayload.ID, ToastPayload.CODEC);
+        ClientPlayNetworking.registerGlobalReceiver(ToastPayload.ID, (payload, context) ->
+                context.client().execute(() -> {
+                    if (HudConfig.get().isEnabled(HudModule.NOTIFICATIONS)) Toasts.show(payload.type(), payload.title(), payload.text());
+                }));
+
+        // Écran de chargement SpartaCube
+        ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
+            if (!HudConfig.get().isEnabled(HudModule.LOADING_SCREEN)) return;
+            String status = screen instanceof ConnectScreen ? "Connexion à SpartaCube…"
+                    : screen instanceof DownloadingTerrainScreen ? "Chargement du monde…" : null;
+            if (status == null) return;
+            LoadingOverlay.onOpen();
+            ScreenEvents.afterRender(screen).register((s, ctx, mx, my, d) -> LoadingOverlay.render(s, ctx, mx, my, d, status));
+        });
+
+        // Connexion : destination choisie dans le launcher + rappel de vote
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+            var entry = client.getCurrentServerEntry();
+            boolean sparta = entry != null && entry.address.toLowerCase(java.util.Locale.ROOT).contains("spartacube");
+            pendingCommand = sparta ? VoteBridge.joinCommand() : "";
+            joinTicks = 60;
+            voteCheckTicks = 200;
+            voteNotified = false;
         });
 
         // Bouton « Voter » dans le menu Échap
@@ -76,6 +121,23 @@ public class SpartaCubeClient implements ClientModInitializer {
             Mechanics.tick(client);
             HudRenderer.tick(client);
             PlayerCard.tick(client);
+            Freelook.tick(client);
+
+            if (joinTicks > 0 && client.player != null && --joinTicks == 0 && !pendingCommand.isEmpty()) {
+                client.player.networkHandler.sendChatCommand(pendingCommand.substring(1));
+                pendingCommand = "";
+            }
+            if (client.world != null && HudConfig.get().isEnabled(HudModule.NOTIFICATIONS) && --voteCheckTicks <= 0) {
+                voteCheckTicks = 20 * 60 * 5;
+                VoteBridge.fetchVoteAvailable(available -> client.execute(() -> {
+                    if (available && !voteNotified) {
+                        Toasts.show("vote", "Vote disponible !", "Échap → ★ Voter pour SpartaCube pour gagner tes récompenses.");
+                        voteNotified = true;
+                    } else if (!available) {
+                        voteNotified = false;
+                    }
+                }));
+            }
 
             // Shift droit : ouvre / ferme le menu des modules en jeu
             long window = GLFW.glfwGetCurrentContext();

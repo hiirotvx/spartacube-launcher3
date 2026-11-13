@@ -8,6 +8,12 @@ commands:
   launcherusers:
     description: Liste les joueurs connectés qui utilisent le launcher SpartaCube
     permission: spartacube.badge.list
+  sctoast:
+    description: Envoie une notification animée aux joueurs du launcher SpartaCube
+    usage: /sctoast <joueur|all> <info|event|vote|boss|staff> <titre> | <message>
+    permission: spartacube.badge.toast
 permissions:
+  spartacube.badge.toast:
+    default: op
   spartacube.badge.list:
     default: op
