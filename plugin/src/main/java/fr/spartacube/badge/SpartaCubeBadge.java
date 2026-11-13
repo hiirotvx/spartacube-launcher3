@@ -60,6 +60,7 @@ public final class SpartaCubeBadge extends JavaPlugin implements PluginMessageLi
         if (message.length > 256) return;
         if (HELLO.equals(channel)) {
             if (users.add(player.getUniqueId())) {
+                getLogger().info(player.getName() + " utilise le launcher SpartaCube.");
                 // petit délai : le client doit avoir fini d'enregistrer ses canaux
                 Bukkit.getScheduler().runTaskLater(this, () -> {
                     broadcast();
@@ -182,24 +183,27 @@ public final class SpartaCubeBadge extends JavaPlugin implements PluginMessageLi
      * Notification animée chez les joueurs équipés du launcher.
      * Utilisable par d'autres plugins : Bukkit.getPluginManager().getPlugin("SpartaCubeBadge") puis sendToast(...).
      */
-    public void sendToast(Player target, String type, String title, String text) {
+    public int sendToast(Player target, String type, String title, String text) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         try (DataOutputStream out = new DataOutputStream(bytes)) {
             writeString(out, type.length() > 16 ? type.substring(0, 16) : type);
             writeString(out, title.length() > 64 ? title.substring(0, 64) : title);
             writeString(out, text.length() > 256 ? text.substring(0, 256) : text);
         } catch (IOException ignored) {
-            return;
+            return 0;
         }
         byte[] data = bytes.toByteArray();
         if (target != null) {
-            if (users.contains(target.getUniqueId())) target.sendPluginMessage(this, TOAST, data);
-            return;
+            if (!users.contains(target.getUniqueId())) return 0;
+            target.sendPluginMessage(this, TOAST, data);
+            return 1;
         }
+        int n = 0;
         for (UUID id : users) {
             Player p = Bukkit.getPlayer(id);
-            if (p != null) p.sendPluginMessage(this, TOAST, data);
+            if (p != null) { p.sendPluginMessage(this, TOAST, data); n++; }
         }
+        return n;
     }
 
     @Override
@@ -219,8 +223,9 @@ public final class SpartaCubeBadge extends JavaPlugin implements PluginMessageLi
                 sender.sendMessage("§cJoueur introuvable : " + args[0]);
                 return true;
             }
-            sendToast(target, args[1].toLowerCase(java.util.Locale.ROOT), title, text);
-            sender.sendMessage("§6[SpartaCube] §fNotification envoyée.");
+            int n = sendToast(target, args[1].toLowerCase(java.util.Locale.ROOT), title, text);
+            if (n == 0) sender.sendMessage("§c[SpartaCube] Aucun joueur avec le launcher n'a reçu la notification (vérifie /launcherusers).");
+            else sender.sendMessage("§6[SpartaCube] §fNotification envoyée à §e" + n + "§f joueur(s) du launcher.");
             return true;
         }
         List<String> names = new ArrayList<>();

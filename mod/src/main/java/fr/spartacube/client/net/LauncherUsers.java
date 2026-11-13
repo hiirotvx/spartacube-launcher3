@@ -36,8 +36,16 @@ public final class LauncherUsers {
         return USERS.contains(id);
     }
 
+    private static int retryTicks = -1;
+
     private static void sendHello() {
-        if (helloSent || !ClientPlayNetworking.canSend(HelloPayload.ID)) return;
+        sendHello(false);
+    }
+
+    /** force = true : envoi même si le serveur n'a pas annoncé le canal (proxy, ViaVersion…). */
+    private static void sendHello(boolean force) {
+        if (helloSent || (!force && !ClientPlayNetworking.canSend(HelloPayload.ID))) return;
+        if (MinecraftClient.getInstance().getNetworkHandler() == null) return;
         String version = FabricLoader.getInstance().getModContainer("spartacube-client")
                 .map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
         ClientPlayNetworking.send(new HelloPayload(version));
@@ -52,13 +60,20 @@ public final class LauncherUsers {
             USERS.clear();
             USERS.addAll(payload.users());
         });
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> sendHello());
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+            sendHello();
+            retryTicks = 60; // 3 s plus tard : envoi forcé si toujours rien
+        });
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (retryTicks > 0 && --retryTicks == 0) sendHello(true);
+        });
         C2SPlayChannelEvents.REGISTER.register((handler, sender, client, channels) -> {
             if (channels.contains(HelloPayload.ID.id())) sendHello();
         });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             USERS.clear();
             helloSent = false;
+            retryTicks = -1;
         });
     }
 }
