@@ -15,11 +15,12 @@ Chaque version a son propre dossier (`instances/<version>`) : mods, options et m
 
 ## Mod SpartaCube Client (en jeu)
 
-Le dossier `mod/` contient un mod Fabric 1.21.11 compilé par GitHub Actions et **intégré au launcher** (installé et verrouillé automatiquement sur la version officielle) :
+Le dossier `mod/` contient un mod Fabric 1.21.11 compilé par GitHub Actions et **intégré au launcher** (installé et verrouillé automatiquement sur la version officielle). Interface en police Montserrat (OFL), icônes originales, animations.
 
-- **Menu principal SpartaCube** : fond et logo SpartaCube, bouton « ⚔ Rejoindre SpartaCube » (play.spartacube.fr), Solo, Multijoueur, Options, Mods (si Mod Menu est installé), Quitter.
-- **Shift droit en jeu** : menu SpartaCube pour activer les modules d'HUD (FPS, Ping, CPS, Coordonnées, Direction, Horloge, Serveur, Touches, Scoreboard), choisir la couleur, le fond, l'ombre.
-- **Déplacer l'HUD** : éditeur où l'on fait glisser chaque module à la souris.
+- **Menu principal SpartaCube** : fond animé (parallaxe), logo, « ⚔ Rejoindre SpartaCube » (play.spartacube.fr), Solo, Multijoueur, Options, Modules, barre d'icônes (éditer l'HUD, Mod Menu, site, quitter).
+- **Shift droit en jeu** : menu des modules en cartes (ACTIVÉ / DÉSACTIVÉ, OPTIONS), catégories, recherche, options par module (taille, couleur, fond, ombre).
+- **Modules** : FPS, CPS, Touches, Horloge, Mémoire, Minimap, Coordonnées, Direction, Vitesse, Biome, Jour, Armure, Effets, Ping, Serveur, Scoreboard, Toggle Sprint, Toggle Sneak, Zoom (touche C).
+- **Éditer l'HUD** : glisser-déposer, molette pour la taille, aimantation aux bords et au centre.
 - Réglages enregistrés dans `config/spartacube-client.json`.
 
 ## Ce que fait le launcher, tout seul
