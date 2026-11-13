@@ -28,6 +28,10 @@ Le dossier `mod/` contient un mod Fabric 1.21.11 compilé par GitHub Actions et 
 - **Modules** : FPS, CPS, Touches, Horloge, Mémoire, Coordonnées, Direction, Vitesse, Biome, Jour, Armure, Effets, Ping, Serveur, Scoreboard, Toggle Sprint (+ fly boost), Toggle Sneak, Zoom (touche C), Carte joueur au survol, Nametags SpartaCube.
 - **Minimap** : Xaero's Minimap est installée automatiquement par le launcher.
 - **Bouton « Voter »** dans le menu Échap : le launcher ouvre la page `voteUrl` (launcher.json) dans une fenêtre au-dessus du jeu.
+- **Notifications animées** : rappel quand un vote est disponible + messages du serveur via `/sctoast <joueur|all> <info|event|vote|boss|staff> <titre> | <message>` (plugin SpartaCubeBadge).
+- **Écran de chargement SpartaCube** avec astuces pendant la connexion.
+- **Freelook** : maintenir Alt gauche.
+- **Rejoindre directement** : la commande choisie dans le launcher est exécutée à l'arrivée sur play.spartacube.fr.
 - **Éditer l'HUD** : glisser-déposer, molette pour la taille, aimantation aux bords et au centre.
 - **Pseudo en F5** : ton pseudo s'affiche au-dessus de ta tête en vue à la 3e personne.
 - **Pastille SpartaCube dans la tab** : un petit « S » à droite du pseudo des joueurs qui utilisent le launcher (nécessite le plugin serveur ci-dessous).

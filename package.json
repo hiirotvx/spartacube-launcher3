@@ -1,7 +1,7 @@
 {
   "name": "spartacube-launcher",
   "productName": "SpartaCube Launcher",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "description": "Launcher officiel SpartaCube (spartacube.fr) – Minecraft Java + Fabric, compte Microsoft uniquement",
   "main": "src/main/main.js",
   "author": "SpartaCube",
