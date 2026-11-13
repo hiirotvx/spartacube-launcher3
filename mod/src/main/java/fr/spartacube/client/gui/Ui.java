@@ -6,6 +6,7 @@ import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
+import net.minecraft.text.StyleSpriteSource;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
@@ -27,11 +28,11 @@ public final class Ui {
     /* ---------- Texte ---------- */
 
     public static MutableText t(String s) {
-        return Text.literal(s).setStyle(Style.EMPTY.withFont(FONT));
+        return Text.literal(s).setStyle(Style.EMPTY.withFont(new StyleSpriteSource.Font(FONT)));
     }
 
     public static MutableText b(String s) {
-        return Text.literal(s).setStyle(Style.EMPTY.withFont(FONT_BOLD));
+        return Text.literal(s).setStyle(Style.EMPTY.withFont(new StyleSpriteSource.Font(FONT_BOLD)));
     }
 
     public static void text(DrawContext ctx, Text t, int x, int y, int color) {
