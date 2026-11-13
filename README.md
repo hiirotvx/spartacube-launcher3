@@ -19,7 +19,9 @@ Le dossier `mod/` contient un mod Fabric 1.21.11 compilé par GitHub Actions et 
 
 - **Menu principal SpartaCube** : fond animé (parallaxe), logo, « ⚔ Rejoindre SpartaCube » (play.spartacube.fr), Solo, Multijoueur, Options, Modules, barre d'icônes (éditer l'HUD, Mod Menu, site, quitter).
 - **Shift droit en jeu** : menu des modules en cartes (ACTIVÉ / DÉSACTIVÉ, OPTIONS), catégories, recherche, options par module (taille, couleur, fond, ombre).
-- **Modules** : FPS, CPS, Touches, Horloge, Mémoire, Minimap, Coordonnées, Direction, Vitesse, Biome, Jour, Armure, Effets, Ping, Serveur, Scoreboard, Toggle Sprint, Toggle Sneak, Zoom (touche C).
+- **Modules** : FPS, CPS, Touches, Horloge, Mémoire, Coordonnées, Direction, Vitesse, Biome, Jour, Armure, Effets, Ping, Serveur, Scoreboard, Toggle Sprint (+ fly boost), Toggle Sneak, Zoom (touche C), Carte joueur au survol, Nametags SpartaCube.
+- **Minimap** : Xaero's Minimap est installée automatiquement par le launcher.
+- **Bouton « Voter »** dans le menu Échap : le launcher ouvre la page `voteUrl` (launcher.json) dans une fenêtre au-dessus du jeu.
 - **Éditer l'HUD** : glisser-déposer, molette pour la taille, aimantation aux bords et au centre.
 - **Pseudo en F5** : ton pseudo s'affiche au-dessus de ta tête en vue à la 3e personne.
 - **Pastille SpartaCube dans la tab** : un petit « S » à droite du pseudo des joueurs qui utilisent le launcher (nécessite le plugin serveur ci-dessous).
@@ -108,6 +110,7 @@ Compiler à la main : `npm run dist:win`, `dist:mac` ou `dist:linux`. Les fichie
 | `allowOtherVersions` | `true` : le sélecteur propose toutes les versions Fabric (sans modpack serveur) |
 | `allowUserMods` | `false` : les joueurs ne peuvent pas ajouter leurs mods sur la version officielle |
 | `defaultMods` | Mods Modrinth installés une fois par instance (Sodium, Lithium, Iris, Sodium Extra par défaut) |
+| `voteUrl` | Page de vote ouverte par le bouton « Voter » du menu Échap |
 | `news` | Actualités : `title`, `text`, `date`, `tag`, `image` (HTTPS), `url` (HTTPS) |
 | `managedFolders` | Dossiers dont les fichiers non listés sont supprimés (par défaut `mods`) |
 | `microsoft.clientId` | Ton propre ID d'application Azure (voir ci-dessous) |
