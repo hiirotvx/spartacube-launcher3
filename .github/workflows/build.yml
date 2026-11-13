@@ -1,18 +1,50 @@
-# Compile le launcher pour Windows, macOS et Linux et publie une Release GitHub
-# dès que tu pousses un tag "v1.0.1", "v1.0.2"… Les launchers déjà installés
-# se mettent alors à jour automatiquement.
+# Compile le launcher pour Windows, macOS et Linux et publie une Release GitHub.
+#
+# Déclencheurs :
+#  - push sur main qui modifie package.json : si la "version" n'a pas encore
+#    de Release (tag vX.Y.Z), elle est compilée et publiée automatiquement ;
+#  - bouton "Run workflow" (manuel).
+# Les launchers déjà installés se mettent alors à jour tout seuls.
 name: Build & Release
 
 on:
   push:
-    tags: ['v*']
+    branches: [main]
+    paths: ['package.json']
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.v.outputs.build }}
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" != "push" ] || [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          elif git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null; then
+            echo "La version v$VERSION existe déjà : rien à publier."
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Nouvelle version v$VERSION : compilation."
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
+    needs: check
+    if: needs.check.outputs.build == 'true'
     strategy:
       fail-fast: false
       matrix:

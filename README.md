@@ -59,12 +59,13 @@ launcher/
 
 1. Crée un dépôt GitHub `spartacube-launcher3` et pousse ce projet dedans.
 2. Dans `package.json`, remplace `hiirotvx` par ton pseudo ou ton organisation GitHub.
-3. Pour sortir une version :
+3. Pour sortir une version, augmente `"version"` dans `package.json` (ex. 1.0.1 → 1.0.2) et pousse sur `main` :
    ```bash
-   npm version patch        # 1.0.0 → 1.0.1
-   git push --follow-tags
+   npm version patch --no-git-tag-version
+   git commit -am "v1.0.2" && git push
    ```
-   GitHub Actions compile les 3 plateformes et crée la Release. Les launchers installés se mettent à jour tout seuls.
+   GitHub Actions voit la nouvelle version, compile les 3 plateformes et crée la Release `v1.0.2`. Les launchers installés se mettent à jour tout seuls.
+   (Bouton manuel : onglet **Actions → Build & Release → Run workflow**.)
 4. Lien de téléchargement à mettre sur le site : `https://github.com/hiirotvx/spartacube-launcher3/releases/latest`.
 
 Compiler à la main : `npm run dist:win`, `dist:mac` ou `dist:linux`. Les fichiers sont créés dans `dist/`.
