@@ -15,7 +15,7 @@ import fr.spartacube.client.net.ToastPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.minecraft.client.gui.screen.DownloadingTerrainScreen;
+import net.minecraft.client.gui.screen.world.LevelLoadingScreen;
 import net.minecraft.client.gui.screen.multiplayer.ConnectScreen;
 import fr.spartacube.client.net.VoteBridge;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
@@ -80,7 +80,7 @@ public class SpartaCubeClient implements ClientModInitializer {
         ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             if (!HudConfig.get().isEnabled(HudModule.LOADING_SCREEN)) return;
             String status = screen instanceof ConnectScreen ? "Connexion à SpartaCube…"
-                    : screen instanceof DownloadingTerrainScreen ? "Chargement du monde…" : null;
+                    : screen instanceof LevelLoadingScreen ? "Chargement du monde…" : null;
             if (status == null) return;
             LoadingOverlay.onOpen();
             ScreenEvents.afterRender(screen).register((s, ctx, mx, my, d) -> LoadingOverlay.render(s, ctx, mx, my, d, status));
