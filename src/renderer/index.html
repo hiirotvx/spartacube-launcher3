@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' https://mc-heads.net data:; style-src 'self'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>SpartaCube Launcher</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="embers" aria-hidden="true"></div>
+
+  <header class="titlebar">
+    <div class="brand"><img src="assets/icon.png" alt=""><span>SpartaCube Launcher</span><small id="appVersion"></small></div>
+    <div class="win-btns">
+      <button id="btnMin" title="Réduire">&#x2013;</button>
+      <button id="btnClose" class="close" title="Fermer">&#x2715;</button>
+    </div>
+  </header>
+
+  <!-- Écran de connexion -->
+  <main id="loginView" class="view hidden">
+    <img class="logo big" src="assets/logo.png" alt="SpartaCube">
+    <div class="card login-card">
+      <h1>Bienvenue, guerrier</h1>
+      <p>Connecte-toi avec ton compte Microsoft qui possède Minecraft: Java Edition.</p>
+      <button id="btnLogin" class="btn-ms">
+        <span class="ms-logo"><i></i><i></i><i></i><i></i></span>
+        Se connecter avec Microsoft
+      </button>
+      <p id="loginError" class="error"></p>
+    </div>
+  </main>
+
+  <!-- Écran principal -->
+  <main id="homeView" class="view hidden">
+    <img class="logo" src="assets/logo.png" alt="SpartaCube">
+
+    <section class="side">
+      <div id="serverMessage" class="card message hidden"></div>
+      <div id="newsList"></div>
+    </section>
+
+    <footer class="bottombar">
+      <div class="account">
+        <img id="avatar" alt="">
+        <div>
+          <strong id="playerName"></strong>
+          <button id="btnLogout" class="link">Se déconnecter</button>
+        </div>
+      </div>
+
+      <div class="center">
+        <div id="progressBox" class="progress hidden">
+          <div class="progress-label" id="progressLabel"></div>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+        <button id="btnPlay" class="btn-play">JOUER</button>
+        <p id="playError" class="error"></p>
+      </div>
+
+      <div class="right">
+        <div class="status" id="status"><span class="dot"></span><span id="statusText">Connexion au serveur…</span></div>
+        <div class="right-btns">
+          <button id="btnWebsite" class="icon-btn" title="Site web">🌐</button>
+          <button id="btnSettings" class="icon-btn" title="Paramètres">⚙</button>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Paramètres -->
+  <div id="settingsModal" class="modal hidden">
+    <div class="card modal-card">
+      <h2>Paramètres</h2>
+      <label>Mémoire maximale : <b id="ramMaxLabel"></b>
+        <input type="range" id="ramMax" min="1024" step="512">
+      </label>
+      <label>Mémoire minimale : <b id="ramMinLabel"></b>
+        <input type="range" id="ramMin" min="512" step="512">
+      </label>
+      <label class="check"><input type="checkbox" id="autoConnect"> Rejoindre SpartaCube automatiquement au lancement</label>
+      <label class="check"><input type="checkbox" id="closeOnStart"> Cacher le launcher pendant que je joue</label>
+      <label>Arguments JVM avancés (optionnel)
+        <input type="text" id="jvmArgs" placeholder="-XX:+UseG1GC">
+      </label>
+      <div class="modal-actions">
+        <button id="btnFolder" class="btn-secondary">Dossier du jeu</button>
+        <button id="btnLogs" class="btn-secondary">Logs</button>
+        <span class="spacer"></span>
+        <button id="btnCancelSettings" class="btn-secondary">Annuler</button>
+        <button id="btnSaveSettings" class="btn-primary">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bandeau de mise à jour du launcher -->
+  <div id="updateBar" class="update-bar hidden">
+    <span id="updateText"></span>
+    <button id="btnUpdate" class="btn-primary hidden">Redémarrer et mettre à jour</button>
+  </div>
+
+  <div id="splash" class="splash"><img src="assets/icon.png" alt=""><p>Chargement…</p></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
