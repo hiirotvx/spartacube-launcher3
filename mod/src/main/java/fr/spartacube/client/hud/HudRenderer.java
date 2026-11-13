@@ -1,5 +1,6 @@
 package fr.spartacube.client.hud;
 
+import fr.spartacube.client.hud.HudConfig.ModuleSettings;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -9,28 +10,38 @@ import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.option.KeyBinding;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 
-/** Dessin des modules d'HUD (utilisé en jeu et dans l'éditeur de position). */
+/** Dessin des modules d'HUD (en jeu et dans l'éditeur de position). */
 public final class HudRenderer {
     private static final DateTimeFormatter CLOCK = DateTimeFormatter.ofPattern("HH:mm");
+    private static final String[] ROMAN = {"", "", " II", " III", " IV", " V", " VI", " VII", " VIII", " IX", " X"};
     private static final int PAD = 3;
     private static final int KEY = 20;
     private static final int GAP = 2;
+    private static final EquipmentSlot[] ARMOR_SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
 
     private static final Deque<Long> LEFT_CLICKS = new ArrayDeque<>();
     private static final Deque<Long> RIGHT_CLICKS = new ArrayDeque<>();
-    private static boolean leftWasDown;
-    private static boolean rightWasDown;
+    private static boolean leftWasDown, rightWasDown;
+
+    private static double lastX, lastZ;
+    private static double speed;
 
     private HudRenderer() {}
 
-    /** À appeler à chaque image : compte les clics (CPS). */
+    /* ---------- Mesures mises à jour en continu ---------- */
+
     public static void pollClicks() {
         long window = GLFW.glfwGetCurrentContext();
         if (window == 0L) return;
@@ -45,23 +56,36 @@ public final class HudRenderer {
         while (!RIGHT_CLICKS.isEmpty() && now - RIGHT_CLICKS.peekFirst() > 1000) RIGHT_CLICKS.pollFirst();
     }
 
-    /** Texte d'un module (null pour les modules dessinés autrement). */
+    /** Tick client : vitesse du joueur. */
+    public static void tick(MinecraftClient mc) {
+        if (mc.player == null) return;
+        double x = mc.player.getX(), z = mc.player.getZ();
+        double inst = Math.hypot(x - lastX, z - lastZ) * 20.0;
+        speed = inst > 200 ? 0 : speed * 0.6 + inst * 0.4;
+        lastX = x;
+        lastZ = z;
+    }
+
+    /* ---------- Contenu ---------- */
+
+    private static String prettify(String id) {
+        String s = id.replace('_', ' ');
+        return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    }
+
     public static String text(HudModule m, MinecraftClient mc) {
         ClientPlayerEntity p = mc.player;
         switch (m) {
-            case FPS:
-                return mc.getCurrentFps() + " FPS";
+            case FPS: return mc.getCurrentFps() + " FPS";
             case PING: {
                 ClientPlayNetworkHandler net = mc.getNetworkHandler();
                 PlayerListEntry e = net != null && p != null ? net.getPlayerListEntry(p.getUuid()) : null;
                 return (e != null ? e.getLatency() : 0) + " ms";
             }
-            case CPS:
-                return LEFT_CLICKS.size() + " | " + RIGHT_CLICKS.size() + " CPS";
-            case COORDS:
-                return p == null ? "X 0  Y 0  Z 0" : "X " + p.getBlockX() + "  Y " + p.getBlockY() + "  Z " + p.getBlockZ();
+            case CPS: return LEFT_CLICKS.size() + " | " + RIGHT_CLICKS.size() + " CPS";
+            case COORDS: return p == null ? "X 0  Y 64  Z 0" : "X " + p.getBlockX() + "  Y " + p.getBlockY() + "  Z " + p.getBlockZ();
             case DIRECTION:
-                if (p == null) return "Nord";
+                if (p == null) return "Nord (-Z)";
                 switch (p.getHorizontalFacing()) {
                     case NORTH: return "Nord (-Z)";
                     case SOUTH: return "Sud (+Z)";
@@ -69,35 +93,87 @@ public final class HudRenderer {
                     case WEST: return "Ouest (-X)";
                     default: return "";
                 }
-            case CLOCK:
-                return LocalTime.now().format(CLOCK);
+            case CLOCK: return LocalTime.now().format(CLOCK);
             case SERVER: {
                 ServerInfo info = mc.getCurrentServerEntry();
                 return info != null ? info.address : "Solo";
             }
-            default:
-                return null;
+            case MEMORY: {
+                Runtime rt = Runtime.getRuntime();
+                long used = (rt.totalMemory() - rt.freeMemory()) / 1048576L;
+                return used + " / " + rt.maxMemory() / 1048576L + " Mo";
+            }
+            case SPEED: return String.format("%.1f b/s", speed);
+            case BIOME:
+                if (p == null || mc.world == null) return "Plaines";
+                return mc.world.getBiome(p.getBlockPos()).getKey().map(k -> prettify(k.getValue().getPath())).orElse("?");
+            case DAY: return "Jour " + (mc.world == null ? 1 : mc.world.getTimeOfDay() / 24000L + 1);
+            default: return null;
         }
     }
 
-    /** Largeur / hauteur d'un module à l'écran. */
-    public static int[] size(HudModule m, MinecraftClient mc) {
-        if (m == HudModule.KEYSTROKES) return new int[]{KEY * 3 + GAP * 2, KEY * 2 + GAP * 3 + 10 + 14};
-        String t = text(m, mc);
-        if (t == null) return new int[]{0, 0};
-        return new int[]{mc.textRenderer.getWidth(t) + PAD * 2, mc.textRenderer.fontHeight + PAD * 2 - 1};
+    private static List<String> effectLines(MinecraftClient mc) {
+        List<String> out = new ArrayList<>();
+        if (mc.player == null) {
+            out.add("Force II  1:30");
+            out.add("Vitesse  3:00");
+            return out;
+        }
+        for (StatusEffectInstance e : mc.player.getStatusEffects()) {
+            String name = e.getEffectType().value().getName().getString();
+            int amp = e.getAmplifier() + 1;
+            String lvl = amp < ROMAN.length ? ROMAN[amp] : " " + amp;
+            String time;
+            if (e.isInfinite()) time = "∞";
+            else {
+                int s = e.getDuration() / 20;
+                time = (s / 60) + ":" + String.format("%02d", s % 60);
+            }
+            out.add(name + lvl + "  " + time);
+        }
+        return out;
     }
 
-    /** Position réelle (bornée à l'écran). */
+    /** Taille non mise à l'échelle. */
+    private static int[] baseSize(HudModule m, MinecraftClient mc) {
+        TextRenderer tr = mc.textRenderer;
+        switch (m) {
+            case KEYSTROKES: return new int[]{KEY * 3 + GAP * 2, KEY * 2 + GAP * 3 + 10 + 14};
+            case MINIMAP: return new int[]{Minimap.SIZE + 4, Minimap.SIZE + 4};
+            case ARMOR: return new int[]{20, 5 * 17 + 2};
+            case EFFECTS: {
+                List<String> lines = effectLines(mc);
+                int w = 0;
+                for (String l : lines) w = Math.max(w, tr.getWidth(l));
+                return new int[]{lines.isEmpty() ? 0 : w + PAD * 2, lines.isEmpty() ? 0 : lines.size() * 11 + PAD * 2 - 2};
+            }
+            default: {
+                String t = text(m, mc);
+                if (t == null) return new int[]{0, 0};
+                return new int[]{tr.getWidth(t) + PAD * 2, tr.fontHeight + PAD * 2 - 1};
+            }
+        }
+    }
+
+    public static int[] size(HudModule m, MinecraftClient mc) {
+        int[] s = baseSize(m, mc);
+        float k = HudConfig.get().settings(m).scale;
+        return new int[]{(int) Math.ceil(s[0] * k), (int) Math.ceil(s[1] * k)};
+    }
+
+    /** Position réelle à l'écran (les valeurs négatives partent du bord droit / bas). */
     public static int[] clampedPos(HudModule m, MinecraftClient mc) {
-        int[] pos = HudConfig.get().position(m);
+        ModuleSettings st = HudConfig.get().settings(m);
         int[] s = size(m, mc);
         int w = mc.getWindow().getScaledWidth();
         int h = mc.getWindow().getScaledHeight();
-        return new int[]{Math.max(0, Math.min(pos[0], w - s[0])), Math.max(0, Math.min(pos[1], h - s[1]))};
+        int x = st.x < 0 ? w - s[0] + st.x + 4 : st.x;
+        int y = st.y < 0 ? h - s[1] + st.y + 4 : st.y;
+        return new int[]{Math.max(0, Math.min(x, w - s[0])), Math.max(0, Math.min(y, h - s[1]))};
     }
 
-    /** Dessine tous les modules actifs. */
+    /* ---------- Dessin ---------- */
+
     public static void renderAll(DrawContext ctx, MinecraftClient mc) {
         pollClicks();
         HudConfig cfg = HudConfig.get();
@@ -109,45 +185,86 @@ public final class HudRenderer {
     }
 
     public static void render(DrawContext ctx, MinecraftClient mc, HudModule m, int x, int y) {
-        HudConfig cfg = HudConfig.get();
-        TextRenderer tr = mc.textRenderer;
-        if (m == HudModule.KEYSTROKES) {
-            renderKeystrokes(ctx, mc, x, y);
-            return;
+        ModuleSettings st = HudConfig.get().settings(m);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate((float) x, (float) y);
+        ctx.getMatrices().scale(st.scale, st.scale);
+        switch (m) {
+            case KEYSTROKES -> renderKeystrokes(ctx, mc, st);
+            case MINIMAP -> Minimap.render(ctx, mc, st.background);
+            case ARMOR -> renderArmor(ctx, mc, st);
+            case EFFECTS -> renderEffects(ctx, mc, st);
+            default -> {
+                String t = text(m, mc);
+                if (t != null) {
+                    int[] s = baseSize(m, mc);
+                    if (st.background) ctx.fill(0, 0, s[0], s[1], 0x80000000);
+                    ctx.drawText(mc.textRenderer, t, PAD, PAD, st.textColor(), st.shadow);
+                }
+            }
         }
-        String t = text(m, mc);
-        if (t == null) return;
-        int[] s = size(m, mc);
-        if (cfg.background) ctx.fill(x, y, x + s[0], y + s[1], 0x80000000);
-        ctx.drawText(tr, t, x + PAD, y + PAD, cfg.textColor(), cfg.shadow);
+        ctx.getMatrices().popMatrix();
     }
 
-    private static void renderKeystrokes(DrawContext ctx, MinecraftClient mc, int x, int y) {
+    private static void renderEffects(DrawContext ctx, MinecraftClient mc, ModuleSettings st) {
+        List<String> lines = effectLines(mc);
+        if (lines.isEmpty()) return;
+        int[] s = baseSize(HudModule.EFFECTS, mc);
+        if (st.background) ctx.fill(0, 0, s[0], s[1], 0x80000000);
+        int y = PAD;
+        for (String l : lines) {
+            ctx.drawText(mc.textRenderer, l, PAD, y, st.textColor(), st.shadow);
+            y += 11;
+        }
+    }
+
+    private static void renderArmor(DrawContext ctx, MinecraftClient mc, ModuleSettings st) {
+        int[] s = baseSize(HudModule.ARMOR, mc);
+        if (st.background) ctx.fill(0, 0, s[0], s[1], 0x60000000);
+        ClientPlayerEntity p = mc.player;
+        int y = 2;
+        if (p != null) {
+            ItemStack hand = p.getMainHandStack();
+            for (EquipmentSlot slot : ARMOR_SLOTS) {
+                ItemStack it = p.getEquippedStack(slot);
+                if (!it.isEmpty()) {
+                    ctx.drawItem(it, 2, y);
+                    ctx.drawStackOverlay(mc.textRenderer, it, 2, y);
+                }
+                y += 17;
+            }
+            if (!hand.isEmpty()) {
+                ctx.drawItem(hand, 2, y);
+                ctx.drawStackOverlay(mc.textRenderer, hand, 2, y);
+            }
+        }
+    }
+
+    private static void renderKeystrokes(DrawContext ctx, MinecraftClient mc, ModuleSettings st) {
         GameOptions o = mc.options;
         int full = KEY * 3 + GAP * 2;
-        key(ctx, mc, o.forwardKey, x + KEY + GAP, y, KEY, KEY);
-        key(ctx, mc, o.leftKey, x, y + KEY + GAP, KEY, KEY);
-        key(ctx, mc, o.backKey, x + KEY + GAP, y + KEY + GAP, KEY, KEY);
-        key(ctx, mc, o.rightKey, x + (KEY + GAP) * 2, y + KEY + GAP, KEY, KEY);
-        int yRow = y + (KEY + GAP) * 2;
+        key(ctx, mc, st, o.forwardKey, KEY + GAP, 0, KEY, KEY);
+        key(ctx, mc, st, o.leftKey, 0, KEY + GAP, KEY, KEY);
+        key(ctx, mc, st, o.backKey, KEY + GAP, KEY + GAP, KEY, KEY);
+        key(ctx, mc, st, o.rightKey, (KEY + GAP) * 2, KEY + GAP, KEY, KEY);
+        int yRow = (KEY + GAP) * 2;
         int half = (full - GAP) / 2;
-        box(ctx, mc, x, yRow, half, 14, o.attackKey.isPressed(), LEFT_CLICKS.size() + " G");
-        box(ctx, mc, x + half + GAP, yRow, full - half - GAP, 14, o.useKey.isPressed(), RIGHT_CLICKS.size() + " D");
-        box(ctx, mc, x, yRow + 14 + GAP, full, 10, o.jumpKey.isPressed(), "———");
+        box(ctx, mc, st, 0, yRow, half, 14, o.attackKey.isPressed(), LEFT_CLICKS.size() + " CPS");
+        box(ctx, mc, st, half + GAP, yRow, full - half - GAP, 14, o.useKey.isPressed(), RIGHT_CLICKS.size() + " CPS");
+        box(ctx, mc, st, 0, yRow + 14 + GAP, full, 10, o.jumpKey.isPressed(), "▬▬▬");
     }
 
-    private static void key(DrawContext ctx, MinecraftClient mc, KeyBinding k, int x, int y, int w, int h) {
+    private static void key(DrawContext ctx, MinecraftClient mc, ModuleSettings st, KeyBinding k, int x, int y, int w, int h) {
         String label = k.getBoundKeyLocalizedText().getString();
         if (label.length() > 3) label = label.substring(0, 3);
-        box(ctx, mc, x, y, w, h, k.isPressed(), label.toUpperCase());
+        box(ctx, mc, st, x, y, w, h, k.isPressed(), label.toUpperCase());
     }
 
-    private static void box(DrawContext ctx, MinecraftClient mc, int x, int y, int w, int h, boolean pressed, String label) {
-        HudConfig cfg = HudConfig.get();
-        ctx.fill(x, y, x + w, y + h, pressed ? 0xC0FFFFFF : 0x80000000);
+    private static void box(DrawContext ctx, MinecraftClient mc, ModuleSettings st, int x, int y, int w, int h, boolean pressed, String label) {
+        ctx.fill(x, y, x + w, y + h, pressed ? 0xD0FFFFFF : (st.background ? 0x80000000 : 0x30000000));
         TextRenderer tr = mc.textRenderer;
         int tw = tr.getWidth(label);
-        int color = pressed ? 0xFF140B12 : cfg.textColor();
-        ctx.drawText(tr, label, x + (w - tw) / 2, y + (h - tr.fontHeight) / 2 + 1, color, !pressed && cfg.shadow);
+        int color = pressed ? 0xFF140B12 : st.textColor();
+        ctx.drawText(tr, label, x + (w - tw) / 2, y + (h - tr.fontHeight) / 2 + 1, color, !pressed && st.shadow);
     }
 }

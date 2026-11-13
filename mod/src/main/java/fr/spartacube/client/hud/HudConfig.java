@@ -14,35 +14,50 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
-/** Réglages de l'HUD, sauvegardés dans config/spartacube-client.json. */
+/** Réglages du mod, sauvegardés dans config/spartacube-client.json. */
 public final class HudConfig {
-    public static final int[] COLORS = {0xFFFFFFFF, 0xFFFFB02E, 0xFFFF5A1F, 0xFF4ADE80, 0xFF60A5FA, 0xFFF472B6};
-    public static final String[] COLOR_NAMES = {"Blanc", "Or", "Feu", "Vert", "Bleu", "Rose"};
+    public static final int[] COLORS = {0xFFFFFFFF, 0xFFFFB02E, 0xFFFF5A1F, 0xFFFF4D6D, 0xFF4ADE80, 0xFF60A5FA, 0xFFC084FC, 0xFF9CA3AF};
+    public static final String[] COLOR_NAMES = {"Blanc", "Or", "Feu", "Rouge", "Vert", "Bleu", "Violet", "Gris"};
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path FILE = FabricLoader.getInstance().getConfigDir().resolve("spartacube-client.json");
     private static HudConfig instance;
 
-    /** Données sérialisées. */
-    private static final class Data {
-        Map<String, Boolean> enabled = new HashMap<>();
-        Map<String, int[]> positions = new HashMap<>();
-        int color = 0;
-        boolean background = true;
-        boolean shadow = true;
-        boolean customTitleScreen = true;
+    /** Options propres à un module. */
+    public static final class ModuleSettings {
+        public boolean enabled;
+        public int x, y;
+        public float scale = 1.0f;
+        public int color = 0;
+        public boolean background = true;
+        public boolean shadow = true;
+
+        public int textColor() {
+            return COLORS[Math.floorMod(color, COLORS.length)];
+        }
     }
 
-    private final Map<HudModule, Boolean> enabled = new EnumMap<>(HudModule.class);
-    private final Map<HudModule, int[]> positions = new EnumMap<>(HudModule.class);
-    public int color = 0;
-    public boolean background = true;
-    public boolean shadow = true;
+    private static final class Data {
+        Map<String, ModuleSettings> modules = new HashMap<>();
+        boolean customTitleScreen = true;
+        int zoomFov = 15;
+    }
+
+    private final Map<HudModule, ModuleSettings> modules = new EnumMap<>(HudModule.class);
     public boolean customTitleScreen = true;
+    public int zoomFov = 15;
 
     public static HudConfig get() {
         if (instance == null) instance = load();
         return instance;
+    }
+
+    private static ModuleSettings defaults(HudModule m) {
+        ModuleSettings s = new ModuleSettings();
+        s.enabled = m.defaultEnabled;
+        s.x = m.defaultX;
+        s.y = m.defaultY;
+        return s;
     }
 
     private static HudConfig load() {
@@ -52,67 +67,69 @@ public final class HudConfig {
             try (Reader r = Files.newBufferedReader(FILE, StandardCharsets.UTF_8)) {
                 data = GSON.fromJson(r, Data.class);
             } catch (Exception ignored) {
-                // fichier corrompu : on repart des valeurs par défaut
+                // fichier ancien ou corrompu : valeurs par défaut
             }
         }
         for (HudModule m : HudModule.values()) {
-            Boolean on = data != null && data.enabled != null ? data.enabled.get(m.name()) : null;
-            cfg.enabled.put(m, on != null ? on : m.defaultEnabled);
-            int[] pos = data != null && data.positions != null ? data.positions.get(m.name()) : null;
-            cfg.positions.put(m, pos != null && pos.length == 2 ? pos : new int[]{m.defaultX, m.defaultY});
+            ModuleSettings s = data != null && data.modules != null ? data.modules.get(m.name()) : null;
+            if (s == null) s = defaults(m);
+            s.scale = Math.max(0.5f, Math.min(2.0f, s.scale == 0 ? 1.0f : s.scale));
+            cfg.modules.put(m, s);
         }
         if (data != null) {
-            cfg.color = Math.floorMod(data.color, COLORS.length);
-            cfg.background = data.background;
-            cfg.shadow = data.shadow;
             cfg.customTitleScreen = data.customTitleScreen;
+            cfg.zoomFov = Math.max(5, Math.min(60, data.zoomFov == 0 ? 15 : data.zoomFov));
         }
         return cfg;
     }
 
     public void save() {
         Data data = new Data();
-        for (HudModule m : HudModule.values()) {
-            data.enabled.put(m.name(), isEnabled(m));
-            data.positions.put(m.name(), position(m));
-        }
-        data.color = color;
-        data.background = background;
-        data.shadow = shadow;
+        for (HudModule m : HudModule.values()) data.modules.put(m.name(), settings(m));
         data.customTitleScreen = customTitleScreen;
+        data.zoomFov = zoomFov;
         try {
             Files.createDirectories(FILE.getParent());
             try (Writer w = Files.newBufferedWriter(FILE, StandardCharsets.UTF_8)) {
                 GSON.toJson(data, w);
             }
         } catch (IOException ignored) {
-            // impossible d'écrire : les réglages restent valables pour cette session
+            // impossible d'écrire : réglages gardés pour la session
         }
     }
 
+    public ModuleSettings settings(HudModule m) {
+        return modules.computeIfAbsent(m, HudConfig::defaults);
+    }
+
     public boolean isEnabled(HudModule m) {
-        return enabled.getOrDefault(m, m.defaultEnabled);
+        return settings(m).enabled;
     }
 
     public void toggle(HudModule m) {
-        enabled.put(m, !isEnabled(m));
+        settings(m).enabled = !settings(m).enabled;
         save();
-    }
-
-    public int[] position(HudModule m) {
-        return positions.computeIfAbsent(m, k -> new int[]{k.defaultX, k.defaultY});
     }
 
     public void setPosition(HudModule m, int x, int y) {
-        positions.put(m, new int[]{x, y});
+        settings(m).x = x;
+        settings(m).y = y;
     }
 
     public void resetPositions() {
-        for (HudModule m : HudModule.values()) positions.put(m, new int[]{m.defaultX, m.defaultY});
+        for (HudModule m : HudModule.values()) {
+            ModuleSettings s = settings(m);
+            s.x = m.defaultX;
+            s.y = m.defaultY;
+        }
         save();
     }
 
-    public int textColor() {
-        return COLORS[Math.floorMod(color, COLORS.length)];
+    public void resetModule(HudModule m) {
+        boolean on = isEnabled(m);
+        ModuleSettings s = defaults(m);
+        s.enabled = on;
+        modules.put(m, s);
+        save();
     }
 }

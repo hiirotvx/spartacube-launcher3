@@ -1,12 +1,15 @@
 package fr.spartacube.client;
 
 import fr.spartacube.client.gui.HudEditorScreen;
-import fr.spartacube.client.gui.SpartaMenuScreen;
+import fr.spartacube.client.gui.SpartaModsScreen;
 import fr.spartacube.client.gui.SpartaTitleScreen;
 import fr.spartacube.client.hud.HudConfig;
 import fr.spartacube.client.hud.HudModule;
 import fr.spartacube.client.hud.HudRenderer;
+import fr.spartacube.client.hud.Mechanics;
+import fr.spartacube.client.hud.Minimap;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
@@ -24,14 +27,14 @@ public class SpartaCubeClient implements ClientModInitializer {
     public void onInitializeClient() {
         HudConfig.get();
 
-        // HUD personnalisé (FPS, ping, CPS, coordonnées…)
+        // HUD (FPS, ping, CPS, minimap…)
         HudElementRegistry.addLast(Identifier.of("spartacube", "hud"), (ctx, tickCounter) -> {
             MinecraftClient mc = MinecraftClient.getInstance();
             if (mc.options.hudHidden || mc.currentScreen instanceof HudEditorScreen) return;
             HudRenderer.renderAll(ctx, mc);
         });
 
-        // Scoreboard affichable / masquable depuis le menu
+        // Scoreboard affichable / masquable
         HudElementRegistry.replaceElement(VanillaHudElements.SCOREBOARD, original -> (ctx, tickCounter) -> {
             if (HudConfig.get().isEnabled(HudModule.SCOREBOARD)) original.render(ctx, tickCounter);
         });
@@ -42,14 +45,20 @@ public class SpartaCubeClient implements ClientModInitializer {
                 client.setScreen(new SpartaTitleScreen());
             }
 
-            // Shift droit : ouvre / ferme le menu SpartaCube en jeu
+            Mechanics.tick(client);
+            HudRenderer.tick(client);
+            if (HudConfig.get().isEnabled(HudModule.MINIMAP)) Minimap.tick(client);
+
+            // Shift droit : ouvre / ferme le menu des modules en jeu
             long window = GLFW.glfwGetCurrentContext();
             boolean down = window != 0L && GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
             if (down && !rightShiftWasDown && client.world != null) {
-                if (client.currentScreen == null) client.setScreen(new SpartaMenuScreen(null));
-                else if (client.currentScreen instanceof SpartaMenuScreen) client.currentScreen.close();
+                if (client.currentScreen == null) client.setScreen(new SpartaModsScreen(null));
+                else if (client.currentScreen instanceof SpartaModsScreen) client.currentScreen.close();
             }
             rightShiftWasDown = down;
         });
+
+        ClientLifecycleEvents.CLIENT_STOPPING.register(Mechanics::restore);
     }
 }

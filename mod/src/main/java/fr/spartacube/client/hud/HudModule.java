@@ -1,33 +1,62 @@
 package fr.spartacube.client.hud;
 
-/** Les modules d'HUD disponibles dans le menu Shift droit. */
+/** Tous les modules du menu SpartaCube (Shift droit). */
 public enum HudModule {
-    FPS("FPS", "Images par seconde", true, 4, 4),
-    PING("Ping", "Latence avec le serveur", true, 4, 18),
-    CPS("CPS", "Clics par seconde (gauche | droit)", false, 4, 32),
-    COORDS("Coordonnées", "Position X / Y / Z", false, 4, 46),
-    DIRECTION("Direction", "Orientation (Nord, Sud…)", false, 4, 60),
-    CLOCK("Horloge", "Heure réelle", false, 4, 74),
-    SERVER("Serveur", "Adresse du serveur", false, 4, 88),
-    KEYSTROKES("Touches", "Affiche Z Q S D, espace et clics", false, 4, 110),
-    SCOREBOARD("Scoreboard", "Affiche le scoreboard du serveur", true, -1, -1);
+    // ---- HUD ----
+    FPS("FPS", "Images par seconde", Category.HUD, "fps", Kind.TEXT, true, 4, 4),
+    CPS("CPS", "Clics par seconde (gauche | droit)", Category.HUD, "cps", Kind.TEXT, false, 4, 18),
+    KEYSTROKES("Touches", "Affiche Z Q S D, espace et clics", Category.HUD, "keystrokes", Kind.SPECIAL, false, 4, 110),
+    CLOCK("Horloge", "Heure réelle", Category.HUD, "clock", Kind.TEXT, false, 4, 32),
+    MEMORY("Mémoire", "RAM utilisée par le jeu", Category.HUD, "memory", Kind.TEXT, false, 4, 46),
+    MINIMAP("Minimap", "Carte vue du dessus autour de toi", Category.HUD, "coords", Kind.SPECIAL, false, -90, 4),
+    // ---- Joueur ----
+    COORDS("Coordonnées", "Position X / Y / Z", Category.PLAYER, "coords", Kind.TEXT, false, 4, 60),
+    DIRECTION("Direction", "Orientation (Nord, Sud…)", Category.PLAYER, "direction", Kind.TEXT, false, 4, 74),
+    SPEED("Vitesse", "Vitesse en blocs par seconde", Category.PLAYER, "speed", Kind.TEXT, false, 4, 88),
+    BIOME("Biome", "Biome actuel", Category.PLAYER, "biome", Kind.TEXT, false, 4, 102),
+    DAY("Jour", "Numéro du jour dans le monde", Category.PLAYER, "day", Kind.TEXT, false, 4, 116),
+    ARMOR("Armure", "Pièces d'armure et objet en main", Category.PLAYER, "armor", Kind.SPECIAL, false, -40, -90),
+    EFFECTS("Effets", "Effets de potion actifs et durée", Category.PLAYER, "fps", Kind.SPECIAL, false, -110, 40),
+    // ---- Mécaniques ----
+    TOGGLE_SPRINT("Toggle Sprint", "Le sprint reste activé sans maintenir la touche", Category.MECHANIC, "speed", Kind.MECHANIC, false, 0, 0),
+    TOGGLE_SNEAK("Toggle Sneak", "S'accroupir reste activé sans maintenir la touche", Category.MECHANIC, "solo", Kind.MECHANIC, false, 0, 0),
+    ZOOM("Zoom", "Maintiens C pour zoomer", Category.MECHANIC, "search", Kind.MECHANIC, true, 0, 0),
+    // ---- Serveur ----
+    PING("Ping", "Latence avec le serveur", Category.SERVER, "ping", Kind.TEXT, true, 4, 130),
+    SERVER("Serveur", "Adresse du serveur", Category.SERVER, "server", Kind.TEXT, false, 4, 144),
+    SCOREBOARD("Scoreboard", "Affiche le scoreboard du serveur", Category.SERVER, "scoreboard", Kind.MECHANIC, true, 0, 0);
+
+    public enum Category {
+        ALL("Tous"), HUD("HUD"), PLAYER("Joueur"), MECHANIC("Mécaniques"), SERVER("Serveur");
+        public final String label;
+        Category(String label) { this.label = label; }
+    }
+
+    /** TEXT/SPECIAL : affichés et déplaçables ; MECHANIC : simple activation. */
+    public enum Kind { TEXT, SPECIAL, MECHANIC }
 
     public final String label;
     public final String description;
+    public final Category category;
+    public final String icon;
+    public final Kind kind;
     public final boolean defaultEnabled;
+    /** Position par défaut ; une valeur négative est mesurée depuis le bord droit / bas. */
     public final int defaultX;
     public final int defaultY;
 
-    HudModule(String label, String description, boolean defaultEnabled, int defaultX, int defaultY) {
+    HudModule(String label, String description, Category category, String icon, Kind kind, boolean defaultEnabled, int defaultX, int defaultY) {
         this.label = label;
         this.description = description;
+        this.category = category;
+        this.icon = icon;
+        this.kind = kind;
         this.defaultEnabled = defaultEnabled;
         this.defaultX = defaultX;
         this.defaultY = defaultY;
     }
 
-    /** Les modules qui s'affichent sous forme de texte déplaçable. */
     public boolean movable() {
-        return this != SCOREBOARD;
+        return kind != Kind.MECHANIC;
     }
 }
