@@ -58,9 +58,13 @@ async function getLaunchAuth() {
   return current.mclc();
 }
 
+async function getAccessToken() {
+  return (await getLaunchAuth()).access_token;
+}
+
 function logout() {
   current = null;
   store.clearRefreshToken();
 }
 
-module.exports = { login, restore, logout, getLaunchAuth, publicProfile };
+module.exports = { login, restore, logout, getLaunchAuth, getAccessToken, publicProfile };

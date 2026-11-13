@@ -3,6 +3,16 @@
 Launcher officiel de **spartacube.fr** : Minecraft Java + Fabric, connexion **Microsoft uniquement** (aucun mode crack).
 Windows, macOS et Linux.
 
+## Onglets
+
+- **Accueil** : actualités à gauche, sélecteur de version, bouton JOUER, statut du serveur.
+- **Actualités** : toutes les news du serveur (texte, image, lien), gérées depuis `launcher.json`.
+- **Mods** : mods installés par version (activer/désactiver, supprimer, ajouter un .jar), recherche et installation depuis Modrinth avec dépendances. Les mods du modpack serveur sont verrouillés 🔒.
+- **Skin** : aperçu 3D, éditeur pixel (pinceau, gomme, remplissage, pipette, annuler), import PNG, copie du skin d'un joueur, bibliothèque locale, application directe sur le compte Minecraft et choix de la cape.
+- **Réglages** : RAM, connexion auto, arguments JVM, compte.
+
+Chaque version a son propre dossier (`instances/<version>`) : mods, options et mondes ne se mélangent pas. Au premier lancement d'une instance, le GUI scale est réglé sur 2.
+
 ## Ce que fait le launcher, tout seul
 
 | Étape | Automatique |
@@ -75,8 +85,12 @@ Compiler à la main : `npm run dist:win`, `dist:mac` ou `dist:linux`. Les fichie
 | Clé | Rôle |
 |---|---|
 | `serverAddress` / `serverPort` | Adresse rejointe automatiquement et pingée |
-| `remoteConfigUrl` | URL du `launcher.json` distant. Peut modifier : `minecraftVersion`, `fabricLoaderVersion`, `modpackManifestUrl`, `managedFolders`, `message`, `news`, `serverPort` |
-| `minecraftVersion` / `fabricLoaderVersion` | Valeurs par défaut si le site est injoignable |
+| `remoteConfigUrl` | URL du `launcher.json` distant. Peut modifier toutes les clés ci-dessous + `message`, `serverPort`, `versions` |
+| `minecraftVersion` / `fabricLoaderVersion` | Version officielle du serveur (1.21.11) et loader Fabric |
+| `allowOtherVersions` | `true` : le sélecteur propose toutes les versions Fabric (sans modpack serveur) |
+| `allowUserMods` | `false` : les joueurs ne peuvent pas ajouter leurs mods sur la version officielle |
+| `defaultMods` | Mods Modrinth installés une fois par instance (Sodium, Lithium, Iris, Sodium Extra par défaut) |
+| `news` | Actualités : `title`, `text`, `date`, `tag`, `image` (HTTPS), `url` (HTTPS) |
 | `managedFolders` | Dossiers dont les fichiers non listés sont supprimés (par défaut `mods`) |
 | `microsoft.clientId` | Ton propre ID d'application Azure (voir ci-dessous) |
 | `defaults` | RAM, connexion auto… par défaut |
@@ -95,6 +109,8 @@ La méthode « propre » pour un launcher distribué au public :
 - [minecraft-launcher-core](https://github.com/Pierce01/MinecraftLauncher-core) (MIT) : téléchargement et lancement du jeu
 - [msmc](https://github.com/Hanro50/MSMC) (MIT) : authentification Microsoft
 - [Fabric](https://fabricmc.net) : mod loader
+- [skinview3d](https://github.com/bs-community/skinview3d) 3.4.2 (MIT), aperçu 3D des skins, copié dans `src/renderer/vendor`
+- [Modrinth](https://modrinth.com) : recherche et téléchargement des mods
 - Electron, electron-builder, electron-updater (MIT)
 
 Minecraft est une marque de Mojang/Microsoft. Ce launcher n'est pas affilié à Mojang.

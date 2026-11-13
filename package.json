@@ -1,7 +1,7 @@
 {
   "name": "spartacube-launcher",
   "productName": "SpartaCube Launcher",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Launcher officiel SpartaCube (spartacube.fr) – Minecraft Java + Fabric, compte Microsoft uniquement",
   "main": "src/main/main.js",
   "author": "SpartaCube",
@@ -18,6 +18,7 @@
     "release": "electron-builder --publish always"
   },
   "dependencies": {
+    "adm-zip": "^0.6.1",
     "electron-log": "^5.4.3",
     "electron-updater": "^6.8.11",
     "minecraft-launcher-core": "^3.18.2",

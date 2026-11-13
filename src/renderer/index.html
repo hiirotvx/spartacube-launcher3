@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; img-src 'self' https://mc-heads.net data:; style-src 'self'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+        content="default-src 'self'; img-src 'self' https: data: blob:; style-src 'self'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>SpartaCube Launcher</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -19,8 +19,8 @@
     </div>
   </header>
 
-  <!-- Écran de connexion -->
-  <main id="loginView" class="view hidden">
+  <!-- ===================== Connexion ===================== -->
+  <main id="loginView" class="login hidden">
     <img class="logo big" src="assets/logo.png" alt="SpartaCube">
     <div class="card login-card">
       <h1>Bienvenue, guerrier</h1>
@@ -33,66 +33,188 @@
     </div>
   </main>
 
-  <!-- Écran principal -->
-  <main id="homeView" class="view hidden">
-    <img class="logo" src="assets/logo.png" alt="SpartaCube">
-
-    <section class="side">
-      <div id="serverMessage" class="card message hidden"></div>
-      <div id="newsList"></div>
-    </section>
-
-    <footer class="bottombar">
-      <div class="account">
+  <!-- ===================== Application ===================== -->
+  <div id="appView" class="shell hidden">
+    <aside class="sidebar">
+      <nav>
+        <button class="nav-btn active" data-page="home" title="Accueil">
+          <svg viewBox="0 0 24 24"><path d="M3 11 12 3l9 8v10h-6v-6H9v6H3z"/></svg><span>Accueil</span>
+        </button>
+        <button class="nav-btn" data-page="news" title="Actualités">
+          <svg viewBox="0 0 24 24"><path d="M4 4h13v16H6a2 2 0 0 1-2-2zm13 4h3v10a2 2 0 0 1-2 2h-1zM7 8h7v2H7zm0 4h7v2H7zm0 4h5v2H7z"/></svg><span>Actualités</span><i class="badge hidden" id="newsBadge"></i>
+        </button>
+        <button class="nav-btn" data-page="mods" title="Mods">
+          <svg viewBox="0 0 24 24"><path d="M10 2h4v3a2 2 0 1 0 4 0V4h4v6h-1a2 2 0 1 0 0 4h1v6h-6v-1a2 2 0 1 0-4 0v1H4v-6h1a2 2 0 1 0 0-4H4V4h6z"/></svg><span>Mods</span>
+        </button>
+        <button class="nav-btn" data-page="skin" title="Skin">
+          <svg viewBox="0 0 24 24"><path d="M8 2h8l5 4-3 4-2-1v13H8V9l-2 1-3-4z"/></svg><span>Skin</span>
+        </button>
+        <button class="nav-btn" data-page="settings" title="Paramètres">
+          <svg viewBox="0 0 24 24"><path d="m19.4 13 .1-1-.1-1 2.1-1.6-2-3.5-2.5 1a7 7 0 0 0-1.7-1L14.9 3h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.5-1-2 3.5L6.5 11l-.1 1 .1 1-2.1 1.6 2 3.5 2.5-1a7 7 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7 7 0 0 0 1.7-1l2.5 1 2-3.5zM12.9 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg><span>Réglages</span>
+        </button>
+      </nav>
+      <div class="sidebar-account" title="Ton compte">
         <img id="avatar" alt="">
-        <div>
-          <strong id="playerName"></strong>
-          <button id="btnLogout" class="link">Se déconnecter</button>
+        <span id="playerName"></span>
+      </div>
+    </aside>
+
+    <section class="content">
+
+      <!-- ---------- Accueil ---------- -->
+      <div class="page active" id="page-home">
+        <img class="logo" src="assets/logo.png" alt="SpartaCube">
+        <section class="home-news">
+          <div class="section-head"><h2>Actualités</h2><button class="link" data-goto="news">Tout voir →</button></div>
+          <div id="serverMessage" class="card message hidden"></div>
+          <div id="homeNews"></div>
+        </section>
+
+        <footer class="bottombar">
+          <div class="version-box">
+            <label for="versionSelect">Version</label>
+            <select id="versionSelect"></select>
+            <small id="versionHint"></small>
+          </div>
+          <div class="center">
+            <div id="progressBox" class="progress hidden">
+              <div class="progress-label" id="progressLabel"></div>
+              <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+            </div>
+            <button id="btnPlay" class="btn-play">JOUER</button>
+            <p id="playError" class="error"></p>
+          </div>
+          <div class="right">
+            <div class="status" id="status"><span class="dot"></span><span id="statusText">Connexion au serveur…</span></div>
+            <button id="btnWebsite" class="btn-secondary">🌐 spartacube.fr</button>
+          </div>
+        </footer>
+      </div>
+
+      <!-- ---------- Actualités ---------- -->
+      <div class="page" id="page-news">
+        <div class="page-head"><h1>Actualités du serveur</h1></div>
+        <div id="newsList" class="news-list"></div>
+      </div>
+
+      <!-- ---------- Mods ---------- -->
+      <div class="page" id="page-mods">
+        <div class="page-head">
+          <h1>Mods <small>Minecraft <span id="modsVersion"></span> · Fabric</small></h1>
+          <div class="head-actions">
+            <button id="btnModAdd" class="btn-secondary">+ Ajouter un .jar</button>
+            <button id="btnModFolder" class="btn-secondary">Ouvrir le dossier</button>
+          </div>
+        </div>
+        <div class="tabs">
+          <button class="tab active" data-tab="installed">Installés <span id="modsCount"></span></button>
+          <button class="tab" data-tab="explore">Explorer (Modrinth)</button>
+        </div>
+        <div class="tab-panel active" id="tab-installed">
+          <p class="hint" id="modsHint"></p>
+          <div id="modsList" class="mod-list"></div>
+        </div>
+        <div class="tab-panel" id="tab-explore">
+          <div class="search-row">
+            <input type="text" id="modSearch" placeholder="Rechercher un mod (Sodium, Iris, minimap…)">
+            <button id="btnModSearch" class="btn-primary">Rechercher</button>
+          </div>
+          <div id="modResults" class="mod-list"></div>
+          <button id="btnModMore" class="btn-secondary more hidden">Voir plus</button>
         </div>
       </div>
 
-      <div class="center">
-        <div id="progressBox" class="progress hidden">
-          <div class="progress-label" id="progressLabel"></div>
-          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <!-- ---------- Skin ---------- -->
+      <div class="page" id="page-skin">
+        <div class="page-head">
+          <h1>Skin &amp; cape</h1>
+          <div class="head-actions">
+            <button id="btnSkinApply" class="btn-primary">✔ Appliquer sur mon compte</button>
+          </div>
         </div>
-        <button id="btnPlay" class="btn-play">JOUER</button>
-        <p id="playError" class="error"></p>
+        <div class="skin-grid">
+          <div class="card viewer-card">
+            <canvas id="skinViewer"></canvas>
+            <div class="seg" id="modelSeg">
+              <button data-model="classic" class="active">Classique</button>
+              <button data-model="slim">Fin (Alex)</button>
+            </div>
+            <div class="seg" id="animSeg">
+              <button data-anim="idle" class="active">Repos</button>
+              <button data-anim="walk">Marche</button>
+              <button data-anim="rotate">Rotation</button>
+            </div>
+            <label class="cape-row">Cape
+              <select id="capeSelect"><option value="">Aucune</option></select>
+            </label>
+          </div>
+
+          <div class="card editor-card">
+            <div class="editor-tools">
+              <div class="seg" id="toolSeg">
+                <button data-tool="pencil" class="active" title="Pinceau (B)">✏️</button>
+                <button data-tool="eraser" title="Gomme (E)">🧽</button>
+                <button data-tool="fill" title="Remplissage (F)">🪣</button>
+                <button data-tool="picker" title="Pipette (I)">💧</button>
+              </div>
+              <input type="color" id="colorPicker" value="#c4122f" title="Couleur">
+              <div class="palette" id="palette"></div>
+              <span class="spacer"></span>
+              <button id="btnUndo" class="icon-btn small" title="Annuler (Ctrl+Z)">↶</button>
+              <button id="btnRedo" class="icon-btn small" title="Rétablir (Ctrl+Y)">↷</button>
+              <label class="check small"><input type="checkbox" id="chkZones" checked> Zones</label>
+              <label class="check small"><input type="checkbox" id="chkGrid"> Grille</label>
+            </div>
+            <canvas id="skinEditor" width="512" height="512"></canvas>
+            <div class="editor-actions">
+              <button id="btnSkinImport" class="btn-secondary">📂 Importer un PNG</button>
+              <input type="file" id="skinFile" accept="image/png" class="hidden">
+              <button id="btnSkinCurrent" class="btn-secondary">⟲ Mon skin actuel</button>
+              <button id="btnSkinNew" class="btn-secondary">✚ Nouveau</button>
+              <div class="from-player">
+                <input type="text" id="skinPlayer" placeholder="Pseudo d'un joueur" maxlength="16">
+                <button id="btnSkinPlayer" class="btn-secondary">Copier</button>
+              </div>
+              <button id="btnSkinDownload" class="btn-secondary">⬇ Télécharger</button>
+              <button id="btnSkinSave" class="btn-secondary">★ Garder dans ma bibliothèque</button>
+            </div>
+          </div>
+        </div>
+        <div class="card library">
+          <div class="section-head"><h2>Ma bibliothèque</h2><button id="btnSkinReset" class="link">Remettre le skin par défaut sur mon compte</button></div>
+          <div id="skinLibrary" class="library-list"></div>
+        </div>
       </div>
 
-      <div class="right">
-        <div class="status" id="status"><span class="dot"></span><span id="statusText">Connexion au serveur…</span></div>
-        <div class="right-btns">
-          <button id="btnWebsite" class="icon-btn" title="Site web">🌐</button>
-          <button id="btnSettings" class="icon-btn" title="Paramètres">⚙</button>
+      <!-- ---------- Paramètres ---------- -->
+      <div class="page" id="page-settings">
+        <div class="page-head"><h1>Réglages</h1></div>
+        <div class="card settings-card">
+          <label>Mémoire maximale : <b id="ramMaxLabel"></b>
+            <input type="range" id="ramMax" min="1024" step="512">
+          </label>
+          <label>Mémoire minimale : <b id="ramMinLabel"></b>
+            <input type="range" id="ramMin" min="512" step="512">
+          </label>
+          <label class="check"><input type="checkbox" id="autoConnect"> Rejoindre SpartaCube automatiquement au lancement (version officielle)</label>
+          <label class="check"><input type="checkbox" id="closeOnStart"> Cacher le launcher pendant que je joue</label>
+          <label>Arguments JVM avancés (optionnel)
+            <input type="text" id="jvmArgs" placeholder="-XX:+UseG1GC">
+          </label>
+          <div class="modal-actions">
+            <button id="btnFolder" class="btn-secondary">Dossier du jeu</button>
+            <button id="btnLogs" class="btn-secondary">Logs</button>
+            <span class="spacer"></span>
+            <button id="btnSaveSettings" class="btn-primary">Enregistrer</button>
+          </div>
+        </div>
+        <div class="card settings-card">
+          <h2>Compte</h2>
+          <p class="hint">Connecté en tant que <b id="settingsName"></b> (compte Microsoft).</p>
+          <div class="modal-actions"><button id="btnLogout" class="btn-danger">Se déconnecter</button></div>
         </div>
       </div>
-    </footer>
-  </main>
-
-  <!-- Paramètres -->
-  <div id="settingsModal" class="modal hidden">
-    <div class="card modal-card">
-      <h2>Paramètres</h2>
-      <label>Mémoire maximale : <b id="ramMaxLabel"></b>
-        <input type="range" id="ramMax" min="1024" step="512">
-      </label>
-      <label>Mémoire minimale : <b id="ramMinLabel"></b>
-        <input type="range" id="ramMin" min="512" step="512">
-      </label>
-      <label class="check"><input type="checkbox" id="autoConnect"> Rejoindre SpartaCube automatiquement au lancement</label>
-      <label class="check"><input type="checkbox" id="closeOnStart"> Cacher le launcher pendant que je joue</label>
-      <label>Arguments JVM avancés (optionnel)
-        <input type="text" id="jvmArgs" placeholder="-XX:+UseG1GC">
-      </label>
-      <div class="modal-actions">
-        <button id="btnFolder" class="btn-secondary">Dossier du jeu</button>
-        <button id="btnLogs" class="btn-secondary">Logs</button>
-        <span class="spacer"></span>
-        <button id="btnCancelSettings" class="btn-secondary">Annuler</button>
-        <button id="btnSaveSettings" class="btn-primary">Enregistrer</button>
-      </div>
-    </div>
+    </section>
   </div>
 
   <!-- Bandeau de mise à jour du launcher -->
@@ -101,8 +223,11 @@
     <button id="btnUpdate" class="btn-primary hidden">Redémarrer et mettre à jour</button>
   </div>
 
+  <div id="toasts" class="toasts"></div>
   <div id="splash" class="splash"><img src="assets/icon.png" alt=""><p>Chargement…</p></div>
 
+  <script src="vendor/skinview3d.bundle.js"></script>
+  <script src="skin-editor.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

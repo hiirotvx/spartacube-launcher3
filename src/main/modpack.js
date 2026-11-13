@@ -10,12 +10,14 @@
 //   ]
 // }
 // - overwrite:true  → le fichier est forcé à l'identique du serveur (mods, configs imposées)
-// - overwrite:false → le fichier n'est posé que s'il n'existe pas (réglages que le joueur peut modifier)
-// - Tout fichier présent dans un dossier "géré" (managedFolders, ex. "mods") mais absent du
-//   manifest est supprimé : les joueurs ne peuvent pas ajouter de mods non autorisés par erreur.
+// - overwrite:false → posé seulement s'il n'existe pas (réglages que le joueur peut modifier)
+// - Les fichiers installés par un ancien manifest puis retirés sont supprimés.
+// - Si allowUserMods = false, TOUT fichier des dossiers gérés absent du manifest est supprimé.
 const fsp = require('fs/promises');
 const path = require('path');
 const { getJson, download, pool, safeJoin, assertHttps } = require('./http');
+
+const STATE = '.spartacube-modpack.json';
 
 async function listFiles(dir) {
   const out = [];
@@ -32,7 +34,16 @@ async function listFiles(dir) {
   return out;
 }
 
-async function syncModpack(gameDir, manifestUrl, managedFolders = ['mods'], onProgress = () => {}) {
+async function readState(gameDir) {
+  try { return JSON.parse(await fsp.readFile(path.join(gameDir, STATE), 'utf8')); } catch { return { files: [] }; }
+}
+
+/** Chemins relatifs (ex. "mods/x.jar") installés par le modpack serveur. */
+async function requiredFiles(gameDir) {
+  return new Set((await readState(gameDir)).files || []);
+}
+
+async function syncModpack(gameDir, manifestUrl, { managedFolders = ['mods'], allowUserMods = true } = {}, onProgress = () => {}) {
   if (!manifestUrl) return { skipped: true };
   onProgress({ step: 'modpack', label: 'Vérification du modpack…', done: 0, total: 1 });
 
@@ -46,7 +57,7 @@ async function syncModpack(gameDir, manifestUrl, managedFolders = ['mods'], onPr
     if (f.overwrite !== false && !/^[a-f0-9]{40}$/i.test(f.sha1 || '')) {
       throw new Error(`SHA-1 manquant pour ${f.path}`);
     }
-    return { ...f, dest };
+    return { ...f, rel: path.relative(gameDir, dest).split(path.sep).join('/'), dest };
   });
 
   let done = 0;
@@ -56,24 +67,35 @@ async function syncModpack(gameDir, manifestUrl, managedFolders = ['mods'], onPr
       if (!exists) await download(f.url, f.dest, { sha1: f.sha1, size: f.size });
     } else {
       await download(f.url, f.dest, { sha1: f.sha1, size: f.size });
+      // Un mod requis désactivé par erreur est retiré (la version active vient d'être posée)
+      await fsp.rm(`${f.dest}.disabled`, { force: true });
     }
     done++;
     onProgress({ step: 'modpack', label: 'Mise à jour du modpack…', done, total: files.length });
   });
 
-  // Nettoyage des dossiers gérés
-  const allowed = new Set(files.map(f => path.resolve(f.dest)));
+  const wanted = new Set(files.map(f => f.rel));
+  const previous = (await readState(gameDir)).files || [];
   let removed = 0;
-  for (const folder of managedFolders) {
-    const dir = safeJoin(gameDir, folder);
-    for (const file of await listFiles(dir)) {
-      if (!allowed.has(path.resolve(file))) {
-        await fsp.rm(file, { force: true });
-        removed++;
+
+  // 1) Fichiers d'un ancien manifest qui ne sont plus demandés
+  for (const rel of previous) {
+    if (wanted.has(rel)) continue;
+    await fsp.rm(safeJoin(gameDir, rel), { force: true });
+    removed++;
+  }
+  // 2) Mode strict : rien d'autre que le modpack dans les dossiers gérés
+  if (!allowUserMods) {
+    for (const folder of managedFolders) {
+      for (const file of await listFiles(safeJoin(gameDir, folder))) {
+        const rel = path.relative(gameDir, file).split(path.sep).join('/');
+        if (!wanted.has(rel)) { await fsp.rm(file, { force: true }); removed++; }
       }
     }
   }
+
+  await fsp.writeFile(path.join(gameDir, STATE), JSON.stringify({ version: manifest.version, files: [...wanted] }, null, 2));
   return { version: manifest.version, files: files.length, removed };
 }
 
-module.exports = { syncModpack };
+module.exports = { syncModpack, requiredFiles };

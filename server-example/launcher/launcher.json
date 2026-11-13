@@ -1,14 +1,43 @@
 {
-  "minecraftVersion": "1.21.1",
+  "minecraftVersion": "1.21.11",
   "fabricLoaderVersion": "latest",
   "modpackManifestUrl": "https://spartacube.fr/launcher/manifest.json",
-  "managedFolders": ["mods"],
+  "managedFolders": [
+    "mods"
+  ],
+  "allowOtherVersions": true,
+  "allowUserMods": true,
+  "defaultMods": [
+    {
+      "name": "Sodium",
+      "project": "AANobbMI",
+      "fabricId": "sodium"
+    },
+    {
+      "name": "Lithium",
+      "project": "gvQqBUqZ",
+      "fabricId": "lithium"
+    },
+    {
+      "name": "Iris",
+      "project": "YL57xq9U",
+      "fabricId": "iris"
+    },
+    {
+      "name": "Sodium Extra",
+      "project": "PtjYWJkn",
+      "fabricId": "sodium-extra"
+    }
+  ],
   "message": "Bienvenue sur SpartaCube ! Rejoins notre Discord pour les annonces.",
   "news": [
     {
       "title": "Ouverture du launcher officiel",
       "text": "Le launcher installe Java, Fabric et les mods tout seul. Clique sur JOUER !",
-      "date": "13/11/2026"
+      "date": "13/11/2026",
+      "tag": "Launcher",
+      "image": "https://spartacube.fr/launcher/news/launcher.jpg",
+      "url": "https://spartacube.fr"
     }
   ]
 }

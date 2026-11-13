@@ -1,15 +1,42 @@
 {
-  "_commentaire": "Config embarquée. Tout ce qui est dans remoteConfigUrl la remplace au démarrage : tu peux changer la version / le modpack sans recompiler le launcher.",
+  "_commentaire": "Config embarquée. Tout ce qui est dans remoteConfigUrl la remplace au démarrage : tu peux changer la version / le modpack / les news sans recompiler le launcher.",
   "serverName": "SpartaCube",
   "serverAddress": "spartacube.fr",
   "serverPort": 25565,
   "website": "https://spartacube.fr",
   "remoteConfigUrl": "https://spartacube.fr/launcher/launcher.json",
-  "minecraftVersion": "1.21.1",
+  "minecraftVersion": "1.21.11",
   "fabricLoaderVersion": "latest",
+  "allowOtherVersions": true,
+  "allowUserMods": true,
+  "defaultMods": [
+    {
+      "name": "Sodium",
+      "project": "AANobbMI",
+      "fabricId": "sodium"
+    },
+    {
+      "name": "Lithium",
+      "project": "gvQqBUqZ",
+      "fabricId": "lithium"
+    },
+    {
+      "name": "Iris",
+      "project": "YL57xq9U",
+      "fabricId": "iris"
+    },
+    {
+      "name": "Sodium Extra",
+      "project": "PtjYWJkn",
+      "fabricId": "sodium-extra"
+    }
+  ],
   "modpackManifestUrl": "",
-  "managedFolders": ["mods"],
+  "managedFolders": [
+    "mods"
+  ],
   "instanceFolder": "spartacube",
+  "news": [],
   "microsoft": {
     "clientId": "",
     "redirect": ""
@@ -19,6 +46,7 @@
     "ramMaxMb": 4096,
     "autoConnect": true,
     "closeLauncherOnStart": false,
-    "jvmArgs": ""
+    "jvmArgs": "",
+    "selectedVersion": ""
   }
 }
