@@ -15,6 +15,6 @@ public abstract class MixinPlayerListHud {
     @Inject(method = "getPlayerName", at = @At("RETURN"), cancellable = true, require = 0)
     private void spartacube$badge(PlayerListEntry entry, CallbackInfoReturnable<Text> cir) {
         if (!LauncherUsers.contains(entry.getProfile().id())) return;
-        cir.setReturnValue(Text.empty().append(cir.getReturnValue()).append(Text.literal(" ")).append(Text.literal("").setStyle(BADGE)));
+        cir.setReturnValue(Text.empty().append(cir.getReturnValue()).append(LauncherUsers.badge()));
     }
 }

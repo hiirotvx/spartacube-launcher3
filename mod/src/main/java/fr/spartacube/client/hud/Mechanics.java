@@ -12,6 +12,9 @@ public final class Mechanics {
     private static boolean zoomTarget;
     private static long lastFrame;
     private static boolean flyBoosted;
+    /** Un autre mod de zoom (Zoomify, Ok Zoomer…) gère déjà la touche C : on s'efface. */
+    private static final boolean OTHER_ZOOM_MOD = net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("zoomify")
+            || net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("ok_zoomer");
 
     private Mechanics() {}
 
@@ -43,7 +46,7 @@ public final class Mechanics {
 
         // Zoom : maintenir C (hors menus). Le champ de vision est modifié par MixinGameRenderer.
         long w = GLFW.glfwGetCurrentContext();
-        zoomTarget = cfg.isEnabled(HudModule.ZOOM) && mc.currentScreen == null && mc.player != null
+        zoomTarget = cfg.isEnabled(HudModule.ZOOM) && !OTHER_ZOOM_MOD && mc.currentScreen == null && mc.player != null
                 && w != 0L && GLFW.glfwGetKey(w, GLFW.GLFW_KEY_C) == GLFW.GLFW_PRESS;
         if (zoomTarget && savedSensitivity == null) {
             savedSensitivity = o.getMouseSensitivity().getValue();
