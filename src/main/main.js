@@ -77,6 +77,10 @@ function cleanNews(list) {
   }));
 }
 
+function liveWin() {
+  return win && !win.isDestroyed() ? win : null;
+}
+
 function send(channel, data) {
   if (win && !win.isDestroyed()) win.webContents.send(channel, data);
 }
@@ -204,8 +208,12 @@ function registerIpc() {
         send(ev, data);
         if (ev === 'game-started') refreshDiscord({ playing: true, startedAt: Date.now() });
         if (ev === 'game-closed') refreshDiscord({ playing: false });
-        if (ev === 'game-started' && settings.closeLauncherOnStart && win) win.hide();
-        if (ev === 'game-closed' && win) win.show();
+        if (ev === 'game-started' && settings.closeLauncherOnStart && liveWin()) liveWin().hide();
+        if (ev === 'game-closed') {
+          // Fenêtre fermée pendant la partie : on quitte proprement au lieu de toucher un objet détruit
+          if (liveWin()) liveWin().show();
+          else if (BrowserWindow.getAllWindows().every(w => w.isDestroyed())) app.quit();
+        }
       });
       return { ok: true };
     } catch (e) {
@@ -295,14 +303,22 @@ function registerIpc() {
   ipcMain.handle('install-update', async () => autoUpdater.quitAndInstall());
 
   ipcMain.on('win', (_e, action) => {
-    if (!win) return;
-    if (action === 'min') win.minimize();
-    if (action === 'close') win.close();
+    const w = liveWin();
+    if (!w) return;
+    if (action === 'min') w.minimize();
+    if (action === 'close') w.close();
   });
 }
 
+// Filet de sécurité : une erreur imprévue est journalisée au lieu d'afficher une boîte d'erreur
+process.on('uncaughtException', err => log.error('Erreur non gérée :', err));
+
 app.on('second-instance', () => {
-  if (win) { if (win.isMinimized()) win.restore(); win.show(); win.focus(); }
+  const w = liveWin();
+  if (!w) { createWindow(); return; }
+  if (w.isMinimized()) w.restore();
+  w.show();
+  w.focus();
 });
 
 app.whenReady().then(() => {
