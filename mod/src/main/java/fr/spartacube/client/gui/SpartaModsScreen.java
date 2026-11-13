@@ -19,9 +19,9 @@ import java.util.Map;
 /** Menu SpartaCube (Shift droit) : modules en cartes, catégories, recherche, options par module. */
 public class SpartaModsScreen extends Screen {
     private static final int COLS = 3;
-    private static final int CARD_H = 82;
+    private static final int CARD_H = 64;
     private static final int GAP = 6;
-    private static final int SIDEBAR = 104;
+    private static final int SIDEBAR = 112;
 
     private final Screen parent;
     private final Ui.Mouse mouse = new Ui.Mouse();
@@ -37,6 +37,7 @@ public class SpartaModsScreen extends Screen {
     private float scroll, scrollTarget;
     private int px1, py1, px2, py2;
     private String dragging;
+    private HudModule hoveredModule;
 
     public SpartaModsScreen(Screen parent) {
         super(Text.literal("Modules SpartaCube"));
@@ -116,7 +117,7 @@ public class SpartaModsScreen extends Screen {
         ctx.getMatrices().translate(-this.width / 2f, -this.height / 2f);
 
         Ui.round(ctx, this.px1, this.py1, this.px2, this.py2, 10, Ui.alpha(0xE6140B12, open));
-        Ui.outline(ctx, this.px1, this.py1, this.px2, this.py2, 10, Ui.alpha(0x40FF8C2E, open));
+        Ui.outline(ctx, this.px1, this.py1, this.px2, this.py2, 10, Ui.alpha(0x22FFFFFF, open));
 
         // En-tête
         SpartaDraw.logo(ctx, this.px1 + 52, this.py1 + 6, 70);
@@ -158,8 +159,8 @@ public class SpartaModsScreen extends Screen {
         boolean overTitle = Ui.inside(mouseX, mouseY, bx1, by, bx2, by + 22);
         float ht = hover("title", overTitle, dt);
         Ui.round(ctx, bx1, by, bx2, by + 22, 6, Ui.mix(0x30FFFFFF, 0x50FFFFFF, ht));
-        Ui.text(ctx, Ui.t("Menu principal"), bx1 + 6, by + 7, Ui.TEXT);
-        toggle(ctx, bx2 - 26, by + 6, cfg.customTitleScreen, hover("titleSw", cfg.customTitleScreen, dt));
+        Ui.text(ctx, Ui.t("Écran titre"), bx1 + 8, by + 7, Ui.TEXT);
+        toggle(ctx, bx2 - 27, by + 6, cfg.customTitleScreen, hover("titleSw", cfg.customTitleScreen, dt));
         if (click && overTitle) { Ui.click(); cfg.customTitleScreen = !cfg.customTitleScreen; cfg.save(); }
 
         // Recherche
@@ -177,12 +178,15 @@ public class SpartaModsScreen extends Screen {
         ctx.disableScissor();
 
         ctx.getMatrices().popMatrix();
-        Ui.centered(ctx, Ui.t("Shift droit : ouvrir / fermer · Molette : défiler"), this.width / 2, this.py2 + 4, Ui.alpha(0xFF9A8578, open));
+        String foot = this.hoveredModule != null && this.optionsFor == null
+                ? this.hoveredModule.description + "  ·  clic : activer  ·  ⚙ : options"
+                : "Shift droit : ouvrir / fermer  ·  Molette : défiler";
+        Ui.centered(ctx, Ui.t(foot), this.width / 2, this.py2 + 5, Ui.alpha(this.hoveredModule != null ? 0xFFE8DED8 : 0xFF9A8578, open));
         super.render(ctx, mouseX, mouseY, delta);
     }
 
     private void toggle(DrawContext ctx, int x, int y, boolean on, float anim) {
-        Ui.round(ctx, x, y, x + 20, y + 10, 5, Ui.mix(0x50FFFFFF, Ui.GREEN, anim));
+        Ui.round(ctx, x, y, x + 20, y + 10, 5, Ui.mix(0x40FFFFFF, Ui.GREEN, anim));
         int kx = x + 1 + Math.round(anim * 10);
         Ui.round(ctx, kx, y + 1, kx + 8, y + 9, 4, 0xFFFFFFFF);
     }
@@ -190,6 +194,7 @@ public class SpartaModsScreen extends Screen {
     private void drawGrid(DrawContext ctx, int mouseX, int mouseY, int gx1, int gy1, int gx2, int gy2, float dt, boolean click) {
         HudConfig cfg = HudConfig.get();
         List<HudModule> list = visibleModules();
+        this.hoveredModule = null;
         int cardW = (gx2 - gx1 - (COLS - 1) * GAP) / COLS;
         int rows = (list.size() + COLS - 1) / COLS;
         int contentH = rows * (CARD_H + GAP);
@@ -212,29 +217,22 @@ public class SpartaModsScreen extends Screen {
             float hv = Ui.approach(this.hoverCard.getOrDefault(m, 0f), overCard ? 1f : 0f, 14f, dt);
             this.hoverCard.put(m, hv);
 
-            Ui.round(ctx, x1, y1, x2, y2, 7, Ui.alpha(Ui.mix(0x30FFFFFF, 0x48FFFFFF, hv), fade));
-            Ui.outline(ctx, x1, y1, x2, y2, 7, Ui.alpha(on ? 0x6022A55B : 0x30FFFFFF, fade));
-            int iy = y1 + 8 - Math.round(hv * 2);
-            Ui.icon(ctx, m.icon, (x1 + x2) / 2 - 9, iy, 18);
-            Ui.centered(ctx, Ui.t(m.label), (x1 + x2) / 2, y1 + 31, Ui.alpha(on ? 0xFFFFFFFF : 0xFFC9B9AF, fade));
+            Ui.round(ctx, x1, y1, x2, y2, 7, Ui.alpha(Ui.mix(0x22FFFFFF, 0x36FFFFFF, hv), fade));
+            if (overCard) this.hoveredModule = m;
+            int iy = y1 + 9 - Math.round(hv * 1.5f);
+            Ui.icon(ctx, m.icon, (x1 + x2) / 2 - 9, iy, 18, Ui.alpha(on ? Ui.ACCENT : 0xFF8F8079, fade));
+            Ui.centered(ctx, Ui.t(m.label), (x1 + x2) / 2, y1 + 32, Ui.alpha(on ? 0xFFFFFFFF : 0xFFB3A39A, fade));
 
-            // Ligne OPTIONS
-            int oy1 = y2 - 36, oy2 = y2 - 20;
-            boolean overOpt = overCard && Ui.inside(mouseX, mouseY, x1, oy1, x2, oy2);
-            ctx.fill(x1 + 1, oy1, x2 - 1, oy2, Ui.alpha(overOpt ? 0x40FFFFFF : 0x22000000, fade));
-            Ui.centered(ctx, Ui.b("OPTIONS"), (x1 + x2) / 2 - 6, oy1 + 4, Ui.alpha(0xFFE8DED8, fade));
-            Ui.icon(ctx, "gear", x2 - 16, oy1 + 3, 10);
+            // Bas de carte : engrenage (options) à gauche, interrupteur à droite
+            int by = y2 - 17;
+            boolean overGear = overCard && Ui.inside(mouseX, mouseY, x1 + 4, by - 2, x1 + 20, by + 12);
+            Ui.icon(ctx, "gear", x1 + 7, by + 1, 9, Ui.alpha(overGear ? 0xFFFFFFFF : 0x90FFFFFF, fade));
+            float sw = Ui.approach(this.hoverMisc.getOrDefault("sw" + m.name(), on ? 1f : 0f), on ? 1f : 0f, 16f, dt);
+            this.hoverMisc.put("sw" + m.name(), sw);
+            toggle(ctx, x2 - 27, by + 1, on, sw);
 
-            // Ligne ACTIVÉ / DÉSACTIVÉ
-            int ty1 = y2 - 19;
-            boolean overTog = overCard && Ui.inside(mouseX, mouseY, x1, ty1, x2, y2);
-            int base = on ? Ui.GREEN : Ui.RED;
-            Ui.round(ctx, x1 + 1, ty1, x2 - 1, y2 - 1, 6, Ui.alpha(Ui.mix(base, 0xFFFFFFFF, overTog ? 0.15f : 0f), fade));
-            ctx.fill(x1 + 1, ty1, x2 - 1, ty1 + 4, Ui.alpha(Ui.mix(base, 0xFFFFFFFF, overTog ? 0.15f : 0f), fade));
-            Ui.centered(ctx, Ui.b(on ? "ACTIVÉ" : "DÉSACTIVÉ"), (x1 + x2) / 2, ty1 + 6, Ui.alpha(0xFFFFFFFF, fade));
-
-            if (click && overTog) { Ui.click(); cfg.toggle(m); }
-            else if (click && (overOpt || overCard)) { Ui.click(); this.optionsFor = m; }
+            if (click && overGear) { Ui.click(); this.optionsFor = m; }
+            else if (click && overCard) { Ui.click(); cfg.toggle(m); }
         }
         // Barre de défilement
         if (maxScroll > 0) {

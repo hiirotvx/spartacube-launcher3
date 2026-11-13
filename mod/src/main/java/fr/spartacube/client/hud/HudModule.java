@@ -16,6 +16,7 @@ public enum HudModule {
     BIOME("Biome", "Biome actuel", Category.PLAYER, "biome", Kind.TEXT, false, 4, 102),
     DAY("Jour", "Numéro du jour dans le monde", Category.PLAYER, "day", Kind.TEXT, false, 4, 116),
     ARMOR("Armure", "Pièces d'armure et objet en main", Category.PLAYER, "armor", Kind.SPECIAL, false, -40, -90),
+    NAMETAG("Pseudo en F5", "Affiche ton pseudo au-dessus de ta tête en vue F5", Category.PLAYER, "solo", Kind.MECHANIC, true, 0, 0),
     EFFECTS("Effets", "Effets de potion actifs et durée", Category.PLAYER, "fps", Kind.SPECIAL, false, -110, 40),
     // ---- Mécaniques ----
     TOGGLE_SPRINT("Toggle Sprint", "Le sprint reste activé sans maintenir la touche", Category.MECHANIC, "speed", Kind.MECHANIC, false, 0, 0),

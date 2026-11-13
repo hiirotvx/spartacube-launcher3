@@ -78,41 +78,59 @@ public final class Ui {
 
     /* ---------- Formes ---------- */
 
-    /** Rectangle aux coins arrondis (rayon en pixels d'interface). */
+    private static final Identifier CIRCLE = Identifier.of("spartacube", "textures/gui/shape/circle.png");
+    private static final int[] RING_SIZES = {3, 4, 5, 6, 7, 8, 10};
+
+    /** Quart de disque/anneau lissé (texture filtrée), teinté. q : 0=haut-gauche 1=haut-droit 2=bas-gauche 3=bas-droit. */
+    private static void corner(DrawContext ctx, Identifier tex, int texSize, int x, int y, int r, int q, int color) {
+        int half = texSize / 2;
+        int u = (q == 1 || q == 3) ? half : 0;
+        int v = (q == 2 || q == 3) ? half : 0;
+        ctx.drawTexture(RenderPipelines.GUI_TEXTURED, tex, x, y, u, v, r, r, half, half, texSize, texSize, color);
+    }
+
+    /** Rectangle aux coins arrondis et lissés. */
     public static void round(DrawContext ctx, int x1, int y1, int x2, int y2, int r, int color) {
         if (x2 <= x1 || y2 <= y1 || (color >>> 24) == 0) return;
         r = Math.max(0, Math.min(r, Math.min((x2 - x1) / 2, (y2 - y1) / 2)));
         if (r == 0) { ctx.fill(x1, y1, x2, y2, color); return; }
-        ctx.fill(x1, y1 + r, x2, y2 - r, color);
-        for (int i = 0; i < r; i++) {
-            double dy = r - i - 0.5;
-            int inset = (int) Math.round(r - Math.sqrt(r * r - dy * dy));
-            ctx.fill(x1 + inset, y1 + i, x2 - inset, y1 + i + 1, color);
-            ctx.fill(x1 + inset, y2 - i - 1, x2 - inset, y2 - i, color);
-        }
+        ctx.fill(x1 + r, y1, x2 - r, y2, color);
+        ctx.fill(x1, y1 + r, x1 + r, y2 - r, color);
+        ctx.fill(x2 - r, y1 + r, x2, y2 - r, color);
+        corner(ctx, CIRCLE, 64, x1, y1, r, 0, color);
+        corner(ctx, CIRCLE, 64, x2 - r, y1, r, 1, color);
+        corner(ctx, CIRCLE, 64, x1, y2 - r, r, 2, color);
+        corner(ctx, CIRCLE, 64, x2 - r, y2 - r, r, 3, color);
     }
 
-    /** Contour arrondi d'1 px. */
+    /** Contour arrondi et lissé (1 unité d'interface). */
     public static void outline(DrawContext ctx, int x1, int y1, int x2, int y2, int r, int color) {
         r = Math.max(0, Math.min(r, Math.min((x2 - x1) / 2, (y2 - y1) / 2)));
+        int rr = RING_SIZES[0];
+        for (int s : RING_SIZES) if (s <= r) rr = s;
+        if (r < 3) rr = 0;
+        r = rr;
         ctx.fill(x1 + r, y1, x2 - r, y1 + 1, color);
         ctx.fill(x1 + r, y2 - 1, x2 - r, y2, color);
         ctx.fill(x1, y1 + r, x1 + 1, y2 - r, color);
         ctx.fill(x2 - 1, y1 + r, x2, y2 - r, color);
-        for (int i = 0; i < r; i++) {
-            double dy = r - i - 0.5;
-            int inset = (int) Math.round(r - Math.sqrt(r * r - dy * dy));
-            ctx.fill(x1 + inset, y1 + i, x1 + inset + 1, y1 + i + 1, color);
-            ctx.fill(x2 - inset - 1, y1 + i, x2 - inset, y1 + i + 1, color);
-            ctx.fill(x1 + inset, y2 - i - 1, x1 + inset + 1, y2 - i, color);
-            ctx.fill(x2 - inset - 1, y2 - i - 1, x2 - inset, y2 - i, color);
-        }
+        if (r == 0) return;
+        Identifier ring = Identifier.of("spartacube", "textures/gui/shape/ring" + r + ".png");
+        int ts = 2 * r * 8;
+        corner(ctx, ring, ts, x1, y1, r, 0, color);
+        corner(ctx, ring, ts, x2 - r, y1, r, 1, color);
+        corner(ctx, ring, ts, x1, y2 - r, r, 2, color);
+        corner(ctx, ring, ts, x2 - r, y2 - r, r, 3, color);
     }
 
-    /** Icône blanche 64×64 dessinée à la taille voulue. */
+    /** Icône blanche (48 px, lissée) dessinée à la taille voulue. */
     public static void icon(DrawContext ctx, String name, int x, int y, int size) {
+        icon(ctx, name, x, y, size, 0xFFFFFFFF);
+    }
+
+    public static void icon(DrawContext ctx, String name, int x, int y, int size, int color) {
         Identifier id = Identifier.of("spartacube", "textures/gui/icons/" + name + ".png");
-        ctx.drawTexture(RenderPipelines.GUI_TEXTURED, id, x, y, 0, 0, size, size, 64, 64, 64, 64);
+        ctx.drawTexture(RenderPipelines.GUI_TEXTURED, id, x, y, 0, 0, size, size, 48, 48, 48, 48, color);
     }
 
     public static boolean inside(double mx, double my, int x1, int y1, int x2, int y2) {

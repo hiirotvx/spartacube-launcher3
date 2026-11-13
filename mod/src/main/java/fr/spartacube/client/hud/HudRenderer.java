@@ -1,5 +1,6 @@
 package fr.spartacube.client.hud;
 
+import fr.spartacube.client.gui.Ui;
 import fr.spartacube.client.hud.HudConfig.ModuleSettings;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -198,7 +199,7 @@ public final class HudRenderer {
                 String t = text(m, mc);
                 if (t != null) {
                     int[] s = baseSize(m, mc);
-                    if (st.background) ctx.fill(0, 0, s[0], s[1], 0x80000000);
+                    if (st.background) Ui.round(ctx, 0, 0, s[0], s[1], 3, 0x80000000);
                     ctx.drawText(mc.textRenderer, t, PAD, PAD, st.textColor(), st.shadow);
                 }
             }
@@ -210,7 +211,7 @@ public final class HudRenderer {
         List<String> lines = effectLines(mc);
         if (lines.isEmpty()) return;
         int[] s = baseSize(HudModule.EFFECTS, mc);
-        if (st.background) ctx.fill(0, 0, s[0], s[1], 0x80000000);
+        if (st.background) Ui.round(ctx, 0, 0, s[0], s[1], 3, 0x80000000);
         int y = PAD;
         for (String l : lines) {
             ctx.drawText(mc.textRenderer, l, PAD, y, st.textColor(), st.shadow);
@@ -220,7 +221,7 @@ public final class HudRenderer {
 
     private static void renderArmor(DrawContext ctx, MinecraftClient mc, ModuleSettings st) {
         int[] s = baseSize(HudModule.ARMOR, mc);
-        if (st.background) ctx.fill(0, 0, s[0], s[1], 0x60000000);
+        if (st.background) Ui.round(ctx, 0, 0, s[0], s[1], 3, 0x60000000);
         ClientPlayerEntity p = mc.player;
         int y = 2;
         if (p != null) {
@@ -261,7 +262,7 @@ public final class HudRenderer {
     }
 
     private static void box(DrawContext ctx, MinecraftClient mc, ModuleSettings st, int x, int y, int w, int h, boolean pressed, String label) {
-        ctx.fill(x, y, x + w, y + h, pressed ? 0xD0FFFFFF : (st.background ? 0x80000000 : 0x30000000));
+        Ui.round(ctx, x, y, x + w, y + h, 3, pressed ? 0xD0FFFFFF : (st.background ? 0x80000000 : 0x30000000));
         TextRenderer tr = mc.textRenderer;
         int tw = tr.getWidth(label);
         int color = pressed ? 0xFF140B12 : st.textColor();

@@ -3,6 +3,12 @@
   "minVersion": "0.8",
   "package": "fr.spartacube.client.mixin",
   "compatibilityLevel": "JAVA_21",
-  "client": ["MixinGameRenderer"],
-  "injectors": { "defaultRequire": 0 }
+  "client": [
+    "MixinGameRenderer",
+    "MixinLivingEntityRenderer",
+    "MixinPlayerListHud"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
 }

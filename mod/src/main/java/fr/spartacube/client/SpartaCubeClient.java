@@ -8,6 +8,7 @@ import fr.spartacube.client.hud.HudModule;
 import fr.spartacube.client.hud.HudRenderer;
 import fr.spartacube.client.hud.Mechanics;
 import fr.spartacube.client.hud.Minimap;
+import fr.spartacube.client.net.LauncherUsers;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -26,6 +27,7 @@ public class SpartaCubeClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         HudConfig.get();
+        LauncherUsers.init();
 
         // HUD (FPS, ping, CPS, minimap…)
         HudElementRegistry.addLast(Identifier.of("spartacube", "hud"), (ctx, tickCounter) -> {

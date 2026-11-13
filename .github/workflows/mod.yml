@@ -5,7 +5,7 @@ name: Mod SpartaCube Client
 on:
   push:
     branches: [main]
-    paths: ['mod/**', '.github/workflows/mod.yml', '.github/scripts/gradle-annotate.sh']
+    paths: ['mod/**', 'plugin/**', '.github/workflows/mod.yml', '.github/scripts/gradle-annotate.sh']
   workflow_dispatch:
   workflow_call:
 
@@ -26,6 +26,12 @@ jobs:
           gradle-version: '9.2.0'
       - name: Compiler le mod
         run: bash .github/scripts/gradle-annotate.sh
+      - name: Compiler le plugin serveur
+        run: bash .github/scripts/gradle-annotate.sh plugin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: server-plugin
+          path: plugin/build/libs/SpartaCubeBadge.jar
       - name: Préparer mod-dist
         run: |
           mkdir -p mod-dist

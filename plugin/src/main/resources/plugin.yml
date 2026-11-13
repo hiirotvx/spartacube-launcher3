@@ -1,0 +1,13 @@
+name: SpartaCubeBadge
+version: '${version}'
+main: fr.spartacube.badge.SpartaCubeBadge
+api-version: '1.21'
+description: Affiche qui utilise le launcher SpartaCube (pastille dans la tab).
+author: SpartaCube
+commands:
+  launcherusers:
+    description: Liste les joueurs connectés qui utilisent le launcher SpartaCube
+    permission: spartacube.badge.list
+permissions:
+  spartacube.badge.list:
+    default: op

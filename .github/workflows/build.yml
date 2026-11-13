@@ -75,3 +75,16 @@ jobs:
           # CSC_LINK / CSC_KEY_PASSWORD (Windows ou macOS)
           # APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID (notarisation macOS)
           CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.CSC_LINK != '' }}
+
+  plugin-asset:
+    needs: [check, build]
+    if: needs.check.outputs.build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: server-plugin
+      - name: Joindre le plugin serveur à la Release
+        run: gh release upload "v${{ needs.check.outputs.version }}" SpartaCubeBadge.jar --clobber --repo "$GITHUB_REPOSITORY"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
