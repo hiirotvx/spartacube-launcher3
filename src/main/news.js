@@ -4,13 +4,38 @@
 // serverId = sha1(nonce + ':' + sha256(contenu)). Le plugin vérifie auprès de Mojang que
 // c'est bien ce compte, puis qu'il est admin. Le jeton Microsoft n'est jamais envoyé au serveur.
 const crypto = require('crypto');
+const dns = require('dns').promises;
 
 const sha = (alg, s) => crypto.createHash(alg).update(s, 'utf8').digest('hex');
 
-function baseUrl(apiUrl) {
+const resolved = new Map();
+
+/** Adresse de l'API. Si le domaine est un enregistrement SRV Minecraft, on vise la vraie machine. */
+async function baseUrl(apiUrl) {
   const u = new URL(apiUrl);
   if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error('URL d\'API invalide');
-  return u.origin;
+  if (resolved.has(u.origin)) return resolved.get(u.origin);
+  let origin = u.origin;
+  try {
+    const srv = await dns.resolveSrv(`_minecraft._tcp.${u.hostname}`);
+    if (srv && srv[0] && srv[0].name) {
+      const v = new URL(u.origin);
+      v.hostname = srv[0].name.replace(/\.$/, '');
+      origin = v.origin;
+    }
+  } catch { /* pas de SRV : adresse telle quelle */ }
+  resolved.set(u.origin, origin);
+  return origin;
+}
+
+function friendly(e) {
+  if (e && (e.name === 'AbortError' || /abort/i.test(e.message || ''))) {
+    return new Error('Le serveur des actualités ne répond pas. Vérifie que le plugin SpartaCubeBadge 1.3.0 tourne et que le port 8765 (TCP) est ouvert chez ton hébergeur.');
+  }
+  if (e && /fetch failed|ECONNREFUSED|ENOTFOUND|EHOSTUNREACH/i.test(`${e.message} ${e.cause && e.cause.code}`)) {
+    return new Error('Connexion au serveur des actualités impossible (port 8765 fermé ou plugin pas démarré).');
+  }
+  return e;
 }
 
 async function request(url, opts = {}, timeoutMs = 8000) {
@@ -27,7 +52,7 @@ async function request(url, opts = {}, timeoutMs = 8000) {
 async function fetchNews(apiUrl) {
   if (!apiUrl) return null;
   try {
-    const r = await request(`${baseUrl(apiUrl)}/news`, {}, 5000);
+    const r = await request(`${await baseUrl(apiUrl)}/news`, {}, 5000);
     if (!r.ok) return null;
     const list = await r.json();
     return Array.isArray(list) ? list : null;
@@ -36,8 +61,16 @@ async function fetchNews(apiUrl) {
   }
 }
 
-async function publish(apiUrl, list, { accessToken, uuid, name }) {
-  const base = baseUrl(apiUrl);
+async function publish(apiUrl, list, auth) {
+  try {
+    return await doPublish(apiUrl, list, auth);
+  } catch (e) {
+    throw friendly(e);
+  }
+}
+
+async function doPublish(apiUrl, list, { accessToken, uuid, name }) {
+  const base = await baseUrl(apiUrl);
   const ch = await request(`${base}/news/challenge`);
   if (!ch.ok) throw new Error((await ch.json().catch(() => ({}))).error || `Serveur injoignable (${ch.status})`);
   const { nonce } = await ch.json();
