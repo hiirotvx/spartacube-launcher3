@@ -7,7 +7,6 @@ import fr.spartacube.client.hud.HudConfig;
 import fr.spartacube.client.hud.HudModule;
 import fr.spartacube.client.hud.HudRenderer;
 import fr.spartacube.client.hud.Mechanics;
-import fr.spartacube.client.hud.PlayerCard;
 import fr.spartacube.client.hud.Toasts;
 import fr.spartacube.client.cosmetics.Cosmetics;
 import fr.spartacube.client.hud.Freelook;
@@ -63,7 +62,6 @@ public class SpartaCubeClient implements ClientModInitializer {
         HudElementRegistry.addLast(Identifier.of("spartacube", "player_card"), (ctx, tickCounter) -> {
             MinecraftClient mc = MinecraftClient.getInstance();
             if (mc.options.hudHidden || mc.currentScreen != null) return;
-            PlayerCard.render(ctx, mc);
         });
 
         // Notifications animées
@@ -122,7 +120,6 @@ public class SpartaCubeClient implements ClientModInitializer {
 
             Mechanics.tick(client);
             HudRenderer.tick(client);
-            PlayerCard.tick(client);
             Freelook.tick(client);
             Cosmetics.tick(client);
 
@@ -144,10 +141,10 @@ public class SpartaCubeClient implements ClientModInitializer {
 
             // Shift droit : ouvre / ferme le menu des modules en jeu
             long window = GLFW.glfwGetCurrentContext();
-            boolean down = window != 0L && GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
+            boolean down = fr.spartacube.client.hud.Keys.isDown(HudConfig.get().menuKey);
             if (down && !rightShiftWasDown && client.world != null) {
                 if (client.currentScreen == null) client.setScreen(new SpartaModsScreen(null));
-                else if (client.currentScreen instanceof SpartaModsScreen) client.currentScreen.close();
+                else if (client.currentScreen instanceof SpartaModsScreen sms && !sms.isCapturing()) sms.close();
             }
             rightShiftWasDown = down;
         });

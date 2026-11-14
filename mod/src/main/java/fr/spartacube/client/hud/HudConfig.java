@@ -41,6 +41,9 @@ public final class HudConfig {
         /** Mode arc-en-ciel. */
         public boolean chroma = false;
         public float chromaSpeed = 1.0f;
+        /** Mode d'affichage propre au module (ex. armure : 0 icônes, 1 %, 2 barre, 3 restant). */
+        public int mode = 0;
+        public boolean horizontal = false;
 
         public int textColor() {
             return textColor(0);
@@ -70,6 +73,12 @@ public final class HudConfig {
         boolean toastSound = true;
         float toastVolume = 0.6f;
         boolean freelookHold = true;
+        int zoomKey = 67;       // C
+        int freelookKey = 342;  // Alt gauche
+        int menuKey = 344;      // Shift droit
+        int fullbrightKey = 0;  // aucune
+        int healthMode = 0;
+        boolean healthTargetOnly = true;
     }
 
     private final Map<HudModule, ModuleSettings> modules = new EnumMap<>(HudModule.class);
@@ -80,6 +89,13 @@ public final class HudConfig {
     public boolean toastSound = true;
     public float toastVolume = 0.6f;
     public boolean freelookHold = true;
+    public int zoomKey = 67;
+    public int freelookKey = 342;
+    public int menuKey = 344;
+    public int fullbrightKey = 0;
+    /** 0 : « ❤ 9.5 », 1 : « 19 / 20 PV », 2 : barre de cœurs. */
+    public int healthMode = 0;
+    public boolean healthTargetOnly = true;
 
     public static HudConfig get() {
         if (instance == null) instance = load();
@@ -117,6 +133,12 @@ public final class HudConfig {
             cfg.toastSound = data.toastSound;
             cfg.toastVolume = Math.max(0f, Math.min(1f, data.toastVolume));
             cfg.freelookHold = data.freelookHold;
+            cfg.zoomKey = data.zoomKey > 0 ? data.zoomKey : 67;
+            cfg.freelookKey = data.freelookKey > 0 ? data.freelookKey : 342;
+            cfg.menuKey = data.menuKey > 0 ? data.menuKey : 344;
+            cfg.fullbrightKey = Math.max(0, data.fullbrightKey);
+            cfg.healthMode = Math.floorMod(data.healthMode, 3);
+            cfg.healthTargetOnly = data.healthTargetOnly;
             cfg.flyBoostMult = Math.max(1f, Math.min(5f, data.flyBoostMult == 0 ? 2.5f : data.flyBoostMult));
         }
         return cfg;
@@ -131,6 +153,12 @@ public final class HudConfig {
         data.toastSound = toastSound;
         data.toastVolume = toastVolume;
         data.freelookHold = freelookHold;
+        data.zoomKey = zoomKey;
+        data.freelookKey = freelookKey;
+        data.menuKey = menuKey;
+        data.fullbrightKey = fullbrightKey;
+        data.healthMode = healthMode;
+        data.healthTargetOnly = healthTargetOnly;
         data.flyBoostMult = flyBoostMult;
         try {
             Files.createDirectories(FILE.getParent());

@@ -11,7 +11,7 @@ public final class Mechanics {
     private static float zoomProgress;
     private static boolean zoomTarget;
     private static long lastFrame;
-    private static boolean flyBoosted;
+    private static boolean flyBoosted, fullbrightKeyWasDown;
     /** Un autre mod de zoom (Zoomify, Ok Zoomer…) gère déjà la touche C : on s'efface. */
     private static final boolean OTHER_ZOOM_MOD = net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("zoomify")
             || net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("ok_zoomer");
@@ -45,10 +45,18 @@ public final class Mechanics {
             }
         }
 
+        // Fullbright : touche optionnelle pour basculer
+        boolean fb = cfg.fullbrightKey > 0 && mc.currentScreen == null && Keys.isDown(cfg.fullbrightKey);
+        if (fb && !fullbrightKeyWasDown) {
+            cfg.toggle(HudModule.FULLBRIGHT);
+            Toasts.show("info", "Fullbright " + (cfg.isEnabled(HudModule.FULLBRIGHT) ? "activé" : "désactivé"), "");
+        }
+        fullbrightKeyWasDown = fb;
+
         // Zoom : maintenir C (hors menus). Le champ de vision est modifié par MixinGameRenderer.
         long w = GLFW.glfwGetCurrentContext();
         zoomTarget = cfg.isEnabled(HudModule.ZOOM) && !OTHER_ZOOM_MOD && mc.currentScreen == null && mc.player != null
-                && w != 0L && GLFW.glfwGetKey(w, GLFW.GLFW_KEY_C) == GLFW.GLFW_PRESS;
+                && Keys.isDown(cfg.zoomKey);
         if (zoomTarget && savedSensitivity == null) {
             savedSensitivity = o.getMouseSensitivity().getValue();
             o.getMouseSensitivity().setValue(savedSensitivity * 0.45);

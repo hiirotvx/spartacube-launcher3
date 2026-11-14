@@ -147,7 +147,7 @@ public final class HudRenderer {
         TextRenderer tr = mc.textRenderer;
         switch (m) {
             case KEYSTROKES: return new int[]{KEY * 3 + GAP * 2, KEY * 2 + GAP * 3 + 10 + 14};
-            case ARMOR: return new int[]{20, 5 * 17 + 2};
+            case ARMOR: return armorSize(mc, HudConfig.get().settings(HudModule.ARMOR));
             case EFFECTS: {
                 List<String> lines = effectLines(mc);
                 int w = 0;
@@ -236,24 +236,86 @@ public final class HudRenderer {
         }
     }
 
-    private static void renderArmor(DrawContext ctx, MinecraftClient mc, ModuleSettings st) {
-        int[] s = baseSize(HudModule.ARMOR, mc);
-        if (st.background) Ui.round(ctx, 0, 0, s[0], s[1], 3, st.bgColor());
+    /* ---------- Armure : 0 icônes, 1 pourcentage, 2 barre, 3 durabilité restante ---------- */
+
+    private static List<ItemStack> armorItems(MinecraftClient mc) {
+        List<ItemStack> out = new ArrayList<>();
         ClientPlayerEntity p = mc.player;
-        int y = 2;
-        if (p != null) {
-            ItemStack hand = p.getMainHandStack();
-            for (EquipmentSlot slot : ARMOR_SLOTS) {
-                ItemStack it = p.getEquippedStack(slot);
-                if (!it.isEmpty()) {
-                    ctx.drawItem(it, 2, y);
-                    ctx.drawStackOverlay(mc.textRenderer, it, 2, y);
-                }
-                y += 17;
-            }
-            if (!hand.isEmpty()) {
-                ctx.drawItem(hand, 2, y);
-                ctx.drawStackOverlay(mc.textRenderer, hand, 2, y);
+        if (p == null) {
+            // Aperçu dans l'éditeur hors partie
+            out.add(new ItemStack(net.minecraft.item.Items.DIAMOND_HELMET));
+            out.add(new ItemStack(net.minecraft.item.Items.DIAMOND_CHESTPLATE));
+            out.add(new ItemStack(net.minecraft.item.Items.DIAMOND_LEGGINGS));
+            out.add(new ItemStack(net.minecraft.item.Items.DIAMOND_BOOTS));
+            out.add(new ItemStack(net.minecraft.item.Items.DIAMOND_SWORD));
+            return out;
+        }
+        for (EquipmentSlot slot : ARMOR_SLOTS) out.add(p.getEquippedStack(slot));
+        out.add(p.getMainHandStack());
+        return out;
+    }
+
+    private static String armorLabel(ItemStack it, int mode) {
+        if (it.isEmpty()) return "";
+        if (!it.isDamageable()) return it.getCount() > 1 ? String.valueOf(it.getCount()) : "";
+        int max = it.getMaxDamage(), left = max - it.getDamage();
+        if (mode == 1) return Math.round(left * 100f / max) + "%";
+        if (mode == 3) return String.valueOf(left);
+        return "";
+    }
+
+    private static int durabilityColor(ItemStack it) {
+        if (!it.isDamageable()) return 0xFFFFFFFF;
+        float f = (it.getMaxDamage() - it.getDamage()) / (float) it.getMaxDamage();
+        return 0xFF000000 | (java.awt.Color.HSBtoRGB(f / 3f, 0.85f, 1f) & 0xFFFFFF);
+    }
+
+    private static int armorTextW(MinecraftClient mc, ModuleSettings st) {
+        int w = 0;
+        for (ItemStack it : armorItems(mc)) w = Math.max(w, mc.textRenderer.getWidth(armorLabel(it, st.mode)));
+        return w;
+    }
+
+    private static int[] armorSize(MinecraftClient mc, ModuleSettings st) {
+        int n = 5;
+        int tw = (st.mode == 1 || st.mode == 3) ? armorTextW(mc, st) : 0;
+        if (st.horizontal) {
+            int cell = Math.max(18, tw + 4);
+            int h = 18 + (st.mode == 2 ? 4 : tw > 0 ? 10 : 0);
+            return new int[]{cell * n + 2, h + 2};
+        }
+        int w = 20 + (st.mode == 2 ? 28 : tw > 0 ? tw + 4 : 0);
+        return new int[]{w, n * 17 + 2};
+    }
+
+    private static void renderArmor(DrawContext ctx, MinecraftClient mc, ModuleSettings st) {
+        int[] s = armorSize(mc, st);
+        if (st.background) Ui.round(ctx, 0, 0, s[0], s[1], 3, st.bgColor());
+        List<ItemStack> items = armorItems(mc);
+        int tw = (st.mode == 1 || st.mode == 3) ? armorTextW(mc, st) : 0;
+        int cell = Math.max(18, tw + 4);
+        for (int i = 0; i < items.size(); i++) {
+            ItemStack it = items.get(i);
+            int x = st.horizontal ? 1 + i * cell + (cell - 16) / 2 : 2;
+            int y = st.horizontal ? 2 : 2 + i * 17;
+            if (it.isEmpty()) continue;
+            ctx.drawItem(it, x, y);
+            // Icônes seules : barre vanilla ; sinon on n'affiche que le nombre d'objets
+            if (st.mode == 0 || !it.isDamageable()) ctx.drawStackOverlay(mc.textRenderer, it, x, y);
+            if (!it.isDamageable()) continue;
+            int col = st.chroma || st.customColor ? st.textColor(x) : durabilityColor(it);
+            float f = (it.getMaxDamage() - it.getDamage()) / (float) it.getMaxDamage();
+            if (st.mode == 2) {
+                int bx = st.horizontal ? x : 20, by = st.horizontal ? 19 : y + 6;
+                int bw = st.horizontal ? 16 : 26;
+                Ui.round(ctx, bx, by, bx + bw, by + 3, 1, 0x60000000);
+                Ui.round(ctx, bx, by, bx + Math.max(1, Math.round(bw * f)), by + 3, 1, col);
+            } else if (st.mode == 1 || st.mode == 3) {
+                String label = armorLabel(it, st.mode);
+                int lw = mc.textRenderer.getWidth(label);
+                int tx = st.horizontal ? 1 + i * cell + (cell - lw) / 2 : 20;
+                int ty = st.horizontal ? 19 : y + 4;
+                ctx.drawText(mc.textRenderer, label, tx, ty, col, st.shadow);
             }
         }
     }

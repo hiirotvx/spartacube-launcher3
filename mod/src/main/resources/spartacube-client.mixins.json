@@ -10,7 +10,8 @@
     "MixinEntityRenderer",
     "MixinGameOptions",
     "MixinEntity",
-    "MixinCamera"
+    "MixinCamera",
+    "MixinLightmap"
   ],
   "injectors": {
     "defaultRequire": 0

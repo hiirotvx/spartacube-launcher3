@@ -24,7 +24,7 @@ public final class Freelook {
 
     public static void tick(MinecraftClient mc) {
         long w = GLFW.glfwGetCurrentContext();
-        boolean key = w != 0L && GLFW.glfwGetKey(w, GLFW.GLFW_KEY_LEFT_ALT) == GLFW.GLFW_PRESS;
+        boolean key = Keys.isDown(HudConfig.get().freelookKey);
         boolean allowed = HudConfig.get().isEnabled(HudModule.FREELOOK) && mc.player != null;
         boolean want;
         if (HudConfig.get().freelookHold) {

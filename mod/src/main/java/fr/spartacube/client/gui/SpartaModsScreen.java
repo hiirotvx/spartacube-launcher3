@@ -105,6 +105,7 @@ public class SpartaModsScreen extends Screen {
         this.lastFrame = now;
         float open = Ui.easeOut((now - this.openedAt) / 260f);
         this.mouse.update();
+        pollCapture();
         HudConfig cfg = HudConfig.get();
         boolean click = this.mouse.released && open > 0.9f;
 
@@ -279,7 +280,7 @@ public class SpartaModsScreen extends Screen {
         boolean overBack = inArea && Ui.inside(mouseX, mouseY, x, y, x + 60, y + 16);
         Ui.round(ctx, x, y, x + 60, y + 16, 4, Ui.alpha(overBack ? 0x50FFFFFF : 0x30FFFFFF, a));
         Ui.text(ctx, Ui.t("‹ Retour"), x + 9, y + 4, Ui.alpha(Ui.TEXT, a));
-        if (click && overBack) { Ui.click(); this.optionsFor = null; this.optScrollTarget = 0; this.optScroll = 0; return; }
+        if (click && overBack) { Ui.click(); this.capturing = null; this.optionsFor = null; this.optScrollTarget = 0; this.optScroll = 0; return; }
 
         y += 24;
         Ui.icon(ctx, m.icon, x, y, 20, Ui.alpha(Ui.ACCENT, a));
@@ -296,9 +297,10 @@ public class SpartaModsScreen extends Screen {
         switch (m) {
             case ZOOM -> {
                 y = section(ctx, x, y, "Zoom", a);
+                y = keyRow(ctx, mouseX, mouseY, x, x2, y, "Touche du zoom (maintenir)", "zoom", cfg.zoomKey, k -> cfg.zoomKey = k, click, a);
                 y = slider(ctx, mouseX, mouseY, x, x2, y, "Puissance", (60 - cfg.zoomFov) / 55f,
                         v -> cfg.zoomFov = Math.round(60 - v * 55), "x" + String.format(Locale.ROOT, "%.1f", 70f / cfg.zoomFov), a);
-                y = note(ctx, x, y, "Maintiens C pour zoomer.", a);
+                y = note(ctx, x, y, "Maintiens la touche pour zoomer.", a);
             }
             case FLY_BOOST -> {
                 y = section(ctx, x, y, "Vol", a);
@@ -310,8 +312,29 @@ public class SpartaModsScreen extends Screen {
             }
             case FREELOOK -> {
                 y = section(ctx, x, y, "Touche", a);
+                y = keyRow(ctx, mouseX, mouseY, x, x2, y, "Touche du freelook", "freelook", cfg.freelookKey, k -> cfg.freelookKey = k, click, a);
                 y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Maintenir Alt (sinon : appuyer pour basculer)", cfg.freelookHold, click,
                         () -> { cfg.freelookHold = !cfg.freelookHold; cfg.save(); }, dt, a);
+            }
+            case FULLBRIGHT -> {
+                y = section(ctx, x, y, "Touche", a);
+                y = keyRow(ctx, mouseX, mouseY, x, x2, y, "Touche pour activer / désactiver", "fullbright", cfg.fullbrightKey, k -> cfg.fullbrightKey = k, click, a);
+                y = note(ctx, x, y, "Clic droit sur la touche pour l'enlever.", a);
+            }
+            case HEALTH -> {
+                y = section(ctx, x, y, "Affichage", a);
+                y = choiceRow(ctx, mouseX, mouseY, x, x2, y, "Format", new String[]{"❤ 9.5", "19 / 20 PV", "❤❤❤❤❤"}, cfg.healthMode,
+                        i -> { cfg.healthMode = i; cfg.save(); }, click, a);
+                y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Seulement le joueur visé", cfg.healthTargetOnly, click,
+                        () -> { cfg.healthTargetOnly = !cfg.healthTargetOnly; cfg.save(); }, dt, a);
+                y = note(ctx, x, y, "Les cœurs s'affichent à côté du pseudo, au-dessus de la tête.", a);
+            }
+            case ARMOR -> {
+                y = section(ctx, x, y, "Armure", a);
+                y = choiceRow(ctx, mouseX, mouseY, x, x2, y, "État", new String[]{"Icônes", "Pourcentage", "Barre d'usure", "Durabilité restante"}, st.mode,
+                        i -> { st.mode = i; cfg.save(); }, click, a);
+                y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Horizontal", st.horizontal, click, () -> { st.horizontal = !st.horizontal; cfg.save(); }, dt, a);
+                y = note(ctx, x, y, "Position : bouton « Éditer l'HUD » puis glisse le module.", a);
             }
             case NOTIFICATIONS -> {
                 y = section(ctx, x, y, "Son", a);
@@ -385,7 +408,8 @@ public class SpartaModsScreen extends Screen {
             Ui.text(ctx, Ui.t("Réinitialiser le module"), x + 7, y + 4, Ui.alpha(Ui.TEXT, a));
             if (click && overReset) { Ui.click(); cfg.resetModule(m); }
             y += 22;
-        } else if (m != HudModule.ZOOM && m != HudModule.FLY_BOOST && m != HudModule.FREELOOK && m != HudModule.NOTIFICATIONS) {
+        } else if (m != HudModule.ZOOM && m != HudModule.FLY_BOOST && m != HudModule.FREELOOK && m != HudModule.NOTIFICATIONS
+                && m != HudModule.FULLBRIGHT && m != HudModule.HEALTH) {
             y = note(ctx, x, y, "Ce module n'a pas d'autre option.", a);
         }
 
@@ -400,6 +424,85 @@ public class SpartaModsScreen extends Screen {
             Ui.round(ctx, gx2 - 3, barY, gx2, barY + barH, 1, 0x80FF8C2E);
         }
         if (this.mouse.released && this.dragging != null) { this.dragging = null; cfg.save(); }
+    }
+
+    /** Touche en cours de capture (null : aucune). */
+    private String capturing;
+    private java.util.function.IntConsumer captureSet;
+
+    private int keyRow(DrawContext ctx, int mx, int my, int x1, int x2, int y, String label, String id, int key,
+                       java.util.function.IntConsumer set, boolean click, float a) {
+        Ui.round(ctx, x1, y, x2, y + 18, 5, Ui.alpha(0x18FFFFFF, a));
+        Ui.text(ctx, Ui.t(label), x1 + 8, y + 5, Ui.alpha(Ui.TEXT, a));
+        boolean cap = id.equals(this.capturing);
+        String shown = cap ? "Appuie sur une touche…" : key > 0 ? fr.spartacube.client.hud.Keys.name(key) : "Aucune";
+        Text t = Ui.t(shown);
+        int bw = Math.max(54, Ui.width(t) + 14);
+        int bx = x2 - bw - 4;
+        boolean over = Ui.inside(mx, my, bx, y + 2, x2 - 4, y + 16);
+        Ui.round(ctx, bx, y + 2, x2 - 4, y + 16, 4, Ui.alpha(cap ? 0xFFE8731C : over ? 0x50FFFFFF : 0x30FFFFFF, a));
+        Ui.text(ctx, t, bx + (bw - Ui.width(t)) / 2, y + 5, Ui.alpha(0xFFFFFFFF, a));
+        if (click && over) {
+            Ui.click();
+            this.capturing = id;
+            this.captureSet = set;
+            this.captureArmed = false;
+            if (this.search != null) this.search.setFocused(false);
+        }
+        long w = org.lwjgl.glfw.GLFW.glfwGetCurrentContext();
+        if (over && w != 0L && org.lwjgl.glfw.GLFW.glfwGetMouseButton(w, org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT) == org.lwjgl.glfw.GLFW.GLFW_PRESS && !cap) {
+            set.accept(0);
+            HudConfig.get().save();
+        }
+        return y + 22;
+    }
+
+    private boolean captureArmed;
+
+    public boolean isCapturing() {
+        return this.capturing != null;
+    }
+
+    /** À chaque image : enregistre la première touche pressée pendant une capture. */
+    private void pollCapture() {
+        if (this.capturing == null) return;
+        int k = fr.spartacube.client.hud.Keys.firstPressed();
+        if (!this.captureArmed) { if (k < 0) this.captureArmed = true; return; } // attendre que tout soit relâché
+        long w = org.lwjgl.glfw.GLFW.glfwGetCurrentContext();
+        if (w != 0L && org.lwjgl.glfw.GLFW.glfwGetKey(w, org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) == org.lwjgl.glfw.GLFW.GLFW_PRESS) {
+            this.capturing = null;
+            return;
+        }
+        if (k > 0) {
+            this.captureSet.accept(k);
+            this.capturing = null;
+            HudConfig.get().save();
+            Ui.click();
+        }
+    }
+
+    @Override
+    public boolean shouldCloseOnEsc() {
+        return this.capturing == null;
+    }
+
+    private int choiceRow(DrawContext ctx, int mx, int my, int x1, int x2, int y, String label, String[] choices, int index,
+                          java.util.function.IntConsumer set, boolean click, float a) {
+        Ui.round(ctx, x1, y, x2, y + 18, 5, Ui.alpha(0x18FFFFFF, a));
+        Ui.text(ctx, Ui.t(label), x1 + 8, y + 5, Ui.alpha(Ui.TEXT, a));
+        int i = Math.floorMod(index, choices.length);
+        Text t = Ui.t("‹  " + choices[i] + "  ›");
+        int bw = Ui.width(t) + 14;
+        int bx = x2 - bw - 4;
+        boolean over = Ui.inside(mx, my, bx, y + 2, x2 - 4, y + 16);
+        Ui.round(ctx, bx, y + 2, x2 - 4, y + 16, 4, Ui.alpha(over ? 0x50FFFFFF : 0x30FFFFFF, a));
+        Ui.text(ctx, t, bx + 7, y + 5, Ui.alpha(Ui.ACCENT, a));
+        if (click && over) {
+            Ui.click();
+            // clic sur la moitié gauche : précédent, sinon suivant
+            set.accept(Math.floorMod(i + (mx < bx + bw / 2 ? -1 : 1), choices.length));
+        }
+        return y + 22;
     }
 
     private int section(DrawContext ctx, int x, int y, String title, float a) {
