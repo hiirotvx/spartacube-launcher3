@@ -1,8 +1,0 @@
-plugins { id 'application' }
-repositories { mavenCentral() }
-dependencies {
-  implementation 'com.google.code.gson:gson:2.11.0'
-  implementation 'io.netty:netty-transport:4.1.115.Final'
-  implementation 'io.netty:netty-buffer:4.1.115.Final'
-}
-application { mainClass = 't.T' }
