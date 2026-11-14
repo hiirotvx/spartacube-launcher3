@@ -27,6 +27,8 @@ public final class SpartaCubeBadge extends JavaPlugin implements PluginMessageLi
     static final String HELLO = "spartacube:hello";
     static final String USERS = "spartacube:users";
     static final String TOAST = "spartacube:toast";
+    /** Serveur → client : 1 octet, 1 si le joueur a la permission spartacube.staff (affiche le panel staff). */
+    static final String STAFF = "spartacube:staff";
     static final String COS_SELECT = "spartacube:cosmetic_select";
     static final String COS_ALLOWED = "spartacube:cosmetic_allowed";
     static final String COS_ACTIVE = "spartacube:cosmetics";
@@ -40,6 +42,7 @@ public final class SpartaCubeBadge extends JavaPlugin implements PluginMessageLi
         getServer().getMessenger().registerIncomingPluginChannel(this, HELLO, this);
         getServer().getMessenger().registerOutgoingPluginChannel(this, USERS);
         getServer().getMessenger().registerOutgoingPluginChannel(this, TOAST);
+        getServer().getMessenger().registerOutgoingPluginChannel(this, STAFF);
         getServer().getMessenger().registerIncomingPluginChannel(this, COS_SELECT, this);
         getServer().getMessenger().registerOutgoingPluginChannel(this, COS_ALLOWED);
         getServer().getMessenger().registerOutgoingPluginChannel(this, COS_ACTIVE);
@@ -65,6 +68,8 @@ public final class SpartaCubeBadge extends JavaPlugin implements PluginMessageLi
                 Bukkit.getScheduler().runTaskLater(this, () -> {
                     broadcast();
                     player.sendPluginMessage(this, COS_ALLOWED, varInt(allowedFlags(player)));
+                    // Panel staff : simple indication d'affichage. Chaque action reste une commande soumise aux permissions du serveur.
+                    player.sendPluginMessage(this, STAFF, new byte[]{(byte) (player.hasPermission("spartacube.staff") ? 1 : 0)});
                     broadcastCosmetics();
                 }, 10L);
             }

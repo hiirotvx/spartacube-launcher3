@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.3.31",
+    "date": "14/11/2026",
+    "title": "Menu Échap, macros et panel staff",
+    "items": [
+      "Nouveau menu Échap aux couleurs de SpartaCube, avec les raccourcis Modules, Macros et Voter",
+      "Macros : associe une touche à une commande ou à un message (menu Échap ou menu Shift droit)",
+      "Panel staff pour l'équipe : joueurs en ligne, téléportation, sanctions, historique (touche F8)"
+    ]
+  },
+  {
     "version": "1.3.30",
     "date": "14/11/2026",
     "title": "Pack de ressources sans question",

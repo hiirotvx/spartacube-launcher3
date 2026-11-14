@@ -89,6 +89,7 @@ public final class HudConfig {
         boolean themeChroma = false;
         boolean themeNeutral = false;
         boolean themeHolo = true;
+        java.util.List<Macro> macros = new java.util.ArrayList<>();
     }
 
     private final Map<HudModule, ModuleSettings> modules = new EnumMap<>(HudModule.class);
@@ -117,6 +118,13 @@ public final class HudConfig {
     public boolean themeNeutral = false;
     /** Reflets holographiques dans le menu. */
     public boolean themeHolo = true;
+    /** Macros : touche → commande ou message. */
+    public java.util.List<Macro> macros = new java.util.ArrayList<>();
+
+    public static final class Macro {
+        public int key;
+        public String command = "";
+    }
 
     public static HudConfig get() {
         if (instance == null) instance = load();
@@ -168,6 +176,14 @@ public final class HudConfig {
             cfg.themeChroma = data.themeChroma;
             cfg.themeNeutral = data.themeNeutral;
             cfg.themeHolo = data.themeHolo;
+            if (data.macros != null) {
+                for (Macro m : data.macros) {
+                    if (m == null || cfg.macros.size() >= 16) continue;
+                    if (m.command == null) m.command = "";
+                    if (m.command.length() > 200) m.command = m.command.substring(0, 200);
+                    cfg.macros.add(m);
+                }
+            }
             cfg.flyBoostMult = Math.max(1f, Math.min(5f, data.flyBoostMult == 0 ? 2.5f : data.flyBoostMult));
         }
         return cfg;
@@ -196,6 +212,7 @@ public final class HudConfig {
         data.themeChroma = themeChroma;
         data.themeNeutral = themeNeutral;
         data.themeHolo = themeHolo;
+        data.macros = new java.util.ArrayList<>(macros);
         data.flyBoostMult = flyBoostMult;
         try {
             Files.createDirectories(FILE.getParent());

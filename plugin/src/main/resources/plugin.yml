@@ -17,6 +17,9 @@ permissions:
     default: false
   spartacube.cosmetic.aura:
     default: false
+  spartacube.staff:
+    description: Affiche le panel staff dans le launcher (les actions restent soumises aux permissions de chaque commande)
+    default: op
   spartacube.badge.toast:
     default: op
   spartacube.badge.list:

@@ -40,6 +40,7 @@ import org.lwjgl.glfw.GLFW;
 public class SpartaCubeClient implements ClientModInitializer {
     public static final String SERVER_ADDRESS = "play.spartacube.fr";
     private static boolean rightShiftWasDown;
+    private static boolean staffKeyWasDown;
     private static int joinTicks = -1;
     private static String pendingCommand = "";
     private static int voteCheckTicks = 0;
@@ -52,6 +53,7 @@ public class SpartaCubeClient implements ClientModInitializer {
         Cosmetics.init();
         fr.spartacube.client.hud.Combat.init();
         fr.spartacube.client.gui.ChatEmotes.register();
+        fr.spartacube.client.net.Staff.init();
 
         // HUD (FPS, ping, CPS, minimap…)
         HudElementRegistry.addLast(Identifier.of("spartacube", "hud"), (ctx, tickCounter) -> {
@@ -149,6 +151,20 @@ public class SpartaCubeClient implements ClientModInitializer {
             }
 
             Mechanics.tick(client);
+            fr.spartacube.client.hud.Macros.tick(client);
+            // Panel staff : touche configurable (F8 par défaut), seulement si le serveur a confirmé la permission
+            int staffKey = HudConfig.get().settings(HudModule.STAFF_PANEL).mode;
+            boolean staffDown = fr.spartacube.client.hud.Keys.isDown(staffKey > 0 ? staffKey : GLFW.GLFW_KEY_F8);
+            if (staffDown && !staffKeyWasDown && client.currentScreen == null && client.player != null
+                    && fr.spartacube.client.net.Staff.allowed && HudConfig.get().isEnabled(HudModule.STAFF_PANEL)) {
+                client.setScreen(new fr.spartacube.client.gui.StaffScreen(null));
+            }
+            staffKeyWasDown = staffDown;
+            // Menu Échap SpartaCube : remplace l'affichage du menu du jeu (ses boutons restent ceux du jeu)
+            if (client.currentScreen instanceof GameMenuScreen gm && HudConfig.get().isEnabled(HudModule.PAUSE_MENU)
+                    && gm != fr.spartacube.client.gui.SpartaPauseScreen.keepVanilla) {
+                fr.spartacube.client.gui.SpartaPauseScreen.tryOpen(client, gm);
+            }
             // Pack de ressources de SpartaCube : accepté d'office (uniquement pour ce serveur)
             net.minecraft.client.network.ServerInfo srv = client.getCurrentServerEntry();
             if (srv != null && srv.address != null && srv.address.toLowerCase(java.util.Locale.ROOT).contains("spartacube.fr")

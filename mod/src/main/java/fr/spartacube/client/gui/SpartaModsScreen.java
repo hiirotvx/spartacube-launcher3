@@ -79,6 +79,7 @@ public class SpartaModsScreen extends Screen {
         String q = this.search == null ? "" : this.search.getText().trim().toLowerCase(Locale.ROOT);
         List<HudModule> out = new ArrayList<>();
         for (HudModule m : HudModule.values()) {
+            if (m == HudModule.STAFF_PANEL && !fr.spartacube.client.net.Staff.allowed) continue; // réservé au staff
             if (this.category != Category.ALL && m.category != this.category) continue;
             if (!q.isEmpty() && !m.label.toLowerCase(Locale.ROOT).contains(q) && !m.description.toLowerCase(Locale.ROOT).contains(q)) continue;
             out.add(m);
@@ -221,6 +222,13 @@ public class SpartaModsScreen extends Screen {
         Ui.round(ctx, bx1 + 7, by + 6, bx1 + 17, by + 16, 5, Ui.ACCENT);
         Ui.text(ctx, Ui.t("Couleurs du menu"), bx1 + 22, by + 7, Ui.TEXT);
         if (click && overTheme) { Ui.click(); this.optionsFor = null; this.capturing = null; this.themeOpen = true; this.optScroll = 0; this.optScrollTarget = 0; }
+
+        by -= 26;
+        boolean overMacros = Ui.inside(mouseX, mouseY, bx1, by, bx2, by + 22);
+        float hmc = hover("macros", overMacros, dt);
+        Ui.round(ctx, bx1, by, bx2, by + 22, 6, Ui.mix(0x30FFFFFF, 0x50FFFFFF, hmc));
+        Ui.text(ctx, Ui.t("Macros (touches → commandes)"), bx1 + 8, by + 7, Ui.TEXT);
+        if (click && overMacros) { Ui.click(); this.client.setScreen(new MacrosScreen(this)); return; }
 
         // Recherche
         int sx1 = this.px1 + SIDEBAR + 14, sx2 = this.px2 - 14;
@@ -546,6 +554,11 @@ public class SpartaModsScreen extends Screen {
                 y = note(ctx, x, y, "S'applique aux nouveaux messages. L'historique passe à 2 000 messages.", a);
                 y = note(ctx, x, y, "Fond et taille du chat : Options de Minecraft → Chat.", a);
             }
+            case STAFF_PANEL -> {
+                y = section(ctx, x, y, "Touche", a);
+                y = keyRow(ctx, mouseX, mouseY, x, x2, y, "Ouvrir le panel staff", "staff", st.mode > 0 ? st.mode : org.lwjgl.glfw.GLFW.GLFW_KEY_F8, k -> st.mode = k, click, a);
+                y = note(ctx, x, y, "F8 par défaut. Le panel est aussi dans le menu Échap.", a);
+            }
             case ARMOR -> {
                 y = section(ctx, x, y, "Armure", a);
                 y = choiceRow(ctx, mouseX, mouseY, x, x2, y, "État", new String[]{"Icônes", "Pourcentage", "Barre d'usure", "Durabilité restante"}, st.mode,
@@ -627,7 +640,7 @@ public class SpartaModsScreen extends Screen {
             y += 22;
         } else if (m != HudModule.ZOOM && m != HudModule.FLY_BOOST && m != HudModule.FREELOOK && m != HudModule.NOTIFICATIONS
                 && m != HudModule.FULLBRIGHT && m != HudModule.HEALTH && m != HudModule.SCREENSHOTS
-                && m != HudModule.CHAT && m != HudModule.SNAPLOOK && m != HudModule.CROSSHAIR && m != HudModule.BOSS_BAR && m != HudModule.TITLES) {
+                && m != HudModule.STAFF_PANEL && m != HudModule.CHAT && m != HudModule.SNAPLOOK && m != HudModule.CROSSHAIR && m != HudModule.BOSS_BAR && m != HudModule.TITLES) {
             y = note(ctx, x, y, "Ce module n'a pas d'autre option.", a);
         }
 

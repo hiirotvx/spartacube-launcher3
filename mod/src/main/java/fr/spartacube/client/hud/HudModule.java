@@ -38,6 +38,8 @@ public enum HudModule {
     CHAT("Chat SpartaCube", "Chat modernisé : police, heure des messages, barre de couleur, 2 000 messages gardés", Category.SERVER, "server", Kind.MECHANIC, true, 0, 0),
     EMOTES("Émojis", "Écris :eyes: dans le chat pour 👀, avec suggestions et grille d'émojis", Category.SERVER, "server", Kind.MECHANIC, true, 0, 0),
     AUTO_PACK("Pack du serveur", "Accepte automatiquement le pack de ressources de SpartaCube, sans redemander à chaque connexion", Category.SERVER, "server", Kind.MECHANIC, true, 0, 0),
+    PAUSE_MENU("Menu Échap SpartaCube", "Menu Échap aux couleurs de SpartaCube, avec les raccourcis Modules, Macros et Voter", Category.SERVER, "hud", Kind.MECHANIC, true, 0, 0),
+    STAFF_PANEL("Panel staff", "Joueurs en ligne, téléportation, sanctions et historique (réservé au staff)", Category.SERVER, "solo", Kind.MECHANIC, true, 0, 0),
     TAB_PING("Ping en chiffres", "Liste des joueurs (Tab) : ping en millisecondes à la place des barres", Category.SERVER, "ping", Kind.MECHANIC, true, 0, 0),
     BOSS_BAR("Barre de boss", "Redimensionne ou masque la barre de vie des boss", Category.SERVER, "scoreboard", Kind.MECHANIC, false, 0, 0),
     TITLES("Titres", "Réduit ou agrandit les grands textes au centre de l'écran", Category.SERVER, "scoreboard", Kind.MECHANIC, false, 0, 0),
