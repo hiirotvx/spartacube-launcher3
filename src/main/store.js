@@ -42,4 +42,27 @@ function clearRefreshToken() {
   try { fs.rmSync(accountFile(), { force: true }); } catch { /* rien */ }
 }
 
-module.exports = { readSettings, writeSettings, saveRefreshToken, loadRefreshToken, clearRefreshToken };
+/* ---------- Plusieurs comptes : { active, accounts: [{ uuid, name, token }] }, chiffré par le système ---------- */
+const accountsFile = () => path.join(dir(), 'accounts.bin');
+
+function loadAccounts() {
+  try {
+    if (!safeStorage.isEncryptionAvailable()) return { active: null, accounts: [] };
+    const d = JSON.parse(safeStorage.decryptString(fs.readFileSync(accountsFile())));
+    const accounts = (Array.isArray(d.accounts) ? d.accounts : [])
+      .filter(a => a && typeof a.uuid === 'string' && typeof a.token === 'string')
+      .map(a => ({ uuid: a.uuid, name: String(a.name || '').slice(0, 32), token: a.token }));
+    return { active: typeof d.active === 'string' ? d.active : null, accounts };
+  } catch {
+    return { active: null, accounts: [] };
+  }
+}
+
+function saveAccounts(data) {
+  if (!safeStorage.isEncryptionAvailable()) return false;
+  fs.mkdirSync(dir(), { recursive: true });
+  fs.writeFileSync(accountsFile(), safeStorage.encryptString(JSON.stringify(data)), { mode: 0o600 });
+  return true;
+}
+
+module.exports = { readSettings, writeSettings, saveRefreshToken, loadRefreshToken, clearRefreshToken, loadAccounts, saveAccounts };

@@ -217,6 +217,15 @@ function createWindow() {
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
 }
 
+let pendingUpdate = null;
+
+/** Installe la mise à jour téléchargée puis relance le launcher (jamais pendant une partie). */
+function installPendingUpdate() {
+  if (!pendingUpdate || game.isRunning()) return;
+  allowClose = true;
+  try { autoUpdater.quitAndInstall(true, true); } catch (e) { log.warn(`Installation de la mise à jour : ${e.message}`); allowClose = false; }
+}
+
 function setupUpdater() {
   if (!app.isPackaged) return;
   autoUpdater.logger = log;
@@ -224,7 +233,13 @@ function setupUpdater() {
   autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.on('update-available', i => send('update', { state: 'downloading', version: i.version }));
   autoUpdater.on('download-progress', p => send('update', { state: 'downloading', percent: Math.round(p.percent) }));
-  autoUpdater.on('update-downloaded', i => send('update', { state: 'ready', version: i.version }));
+  autoUpdater.on('update-downloaded', i => {
+    pendingUpdate = i.version;
+    if (game.isRunning()) { send('update', { state: 'ready', version: i.version }); return; }
+    // Pas de partie en cours : installation et redémarrage automatiques
+    send('update', { state: 'installing', version: i.version });
+    setTimeout(installPendingUpdate, 4000);
+  });
   autoUpdater.on('error', e => log.warn(`Mise à jour : ${e.message}`));
   autoUpdater.checkForUpdates().catch(() => {});
   setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 60 * 60 * 1000);
@@ -259,6 +274,7 @@ function registerIpc() {
     if (liveNews) cfg.news = liveNews;
     return {
       appVersion: app.getVersion(),
+      changelog: require('../changelog.json'),
       serverName: cfg.serverName,
       serverAddress: cfg.serverAddress,
       officialVersion: cfg.minecraftVersion,
@@ -291,7 +307,17 @@ function registerIpc() {
     }
   });
 
-  ipcMain.handle('logout', async () => { auth.logout(); return true; });
+  ipcMain.handle('logout', async () => ({ profile: await auth.logout(cfg) }));
+
+  // Plusieurs comptes Microsoft
+  handle('accounts:list', () => auth.list());
+  handle('accounts:switch', async uuid => {
+    if (game.isRunning()) throw new Error('Ferme le jeu avant de changer de compte.');
+    const profile = await auth.switchTo(cfg, String(uuid));
+    refreshDiscord();
+    return profile;
+  });
+  handle('accounts:remove', async uuid => ({ profile: await auth.remove(cfg, String(uuid)) }));
 
   ipcMain.handle('save-settings', async (_e, s) => {
     const clean = {
@@ -322,6 +348,7 @@ function registerIpc() {
         send(ev, data);
         if (ev === 'game-started') refreshDiscord({ playing: true, startedAt: Date.now() });
         if (ev === 'game-closed') refreshDiscord({ playing: false });
+        if (ev === 'game-closed' && pendingUpdate) setTimeout(installPendingUpdate, 2000);
         if (ev === 'game-started' && settings.closeLauncherOnStart && liveWin()) liveWin().hide();
         if (ev === 'game-closed') {
           // Fenêtre fermée pendant la partie : on quitte proprement au lieu de toucher un objet détruit
@@ -417,7 +444,7 @@ function registerIpc() {
   ipcMain.handle('open-game-folder', async () => shell.openPath(game.gameDirFor(cfg, game.selectedVersion(cfg, settings))));
   ipcMain.handle('open-logs', async () => shell.showItemInFolder(log.transports.file.getFile().path));
 
-  ipcMain.handle('install-update', async () => { allowClose = true; autoUpdater.quitAndInstall(); });
+  ipcMain.handle('install-update', async () => { allowClose = true; autoUpdater.quitAndInstall(true, true); });
   ipcMain.handle('logs:get', async () => gameLog.slice());
   ipcMain.handle('logs:running', async () => game.isRunning());
   ipcMain.handle('console:open', async () => { openConsoleWindow(); return true; });

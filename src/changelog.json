@@ -1,0 +1,115 @@
+[
+  {
+    "version": "1.3.26",
+    "date": "14/11/2026",
+    "title": "Plusieurs comptes, mises à jour automatiques et notes de version",
+    "items": [
+      "Plusieurs comptes Microsoft : clique sur ton pseudo en bas à gauche pour en ajouter un ou passer de l'un à l'autre",
+      "Le launcher s'installe et redémarre tout seul quand une mise à jour est prête",
+      "Une fenêtre « Nouveautés » s'affiche après chaque mise à jour",
+      "Nouvel onglet Nouveautés avec l'historique des versions"
+    ]
+  },
+  {
+    "version": "1.3.25",
+    "date": "14/11/2026",
+    "title": "Console dans sa propre fenêtre",
+    "items": [
+      "La console du jeu s'ouvre dans une fenêtre séparée",
+      "Champ « Filtrer » pour retrouver une ligne"
+    ]
+  },
+  {
+    "version": "1.3.24",
+    "date": "14/11/2026",
+    "title": "Chat SpartaCube",
+    "items": [
+      "Chat modernisé : nouvelle police, heure des messages, barre de couleur",
+      "Chaque option se coupe dans le menu Shift droit"
+    ]
+  },
+  {
+    "version": "1.3.23",
+    "date": "14/11/2026",
+    "title": "Bouton d'avis",
+    "items": [
+      "Lien « Un avis ? » en bas à gauche pour envoyer une idée ou signaler un bug à l'équipe"
+    ]
+  },
+  {
+    "version": "1.3.22",
+    "date": "14/11/2026",
+    "title": "Console et fermeture",
+    "items": [
+      "Console du jeu en direct",
+      "À la fermeture : réduire le launcher près de l'horloge ou le fermer complètement"
+    ]
+  },
+  {
+    "version": "1.3.21",
+    "date": "14/11/2026",
+    "title": "Menu des modules retravaillé",
+    "items": [
+      "Effet verre : flou, transparence, ombres",
+      "Cartes animées, liseré lumineux, survol et activation en fondu"
+    ]
+  },
+  {
+    "version": "1.3.20",
+    "date": "14/11/2026",
+    "title": "13 nouveaux modules",
+    "items": [
+      "HUD : temps de jeu, chronomètre, compteur d'objets, combo, portée, temps de recharge",
+      "Mécaniques : snaplook, sans secousse, viseur personnalisé",
+      "Serveur : ping en chiffres dans Tab, barre de boss, titres, chat étendu"
+    ]
+  },
+  {
+    "version": "1.3.19",
+    "date": "14/11/2026",
+    "title": "Cœurs et votes",
+    "items": [
+      "Vrais cœurs au-dessus du pseudo des joueurs",
+      "Page Voter : les cinq sites de vote du serveur, avec minuteurs"
+    ]
+  },
+  {
+    "version": "1.3.17",
+    "date": "14/11/2026",
+    "title": "Thèmes, captures et nouveaux mods",
+    "items": [
+      "Couleurs du menu : 7 thèmes, couleur personnalisée, arc-en-ciel",
+      "Capture d'écran (F2) copiée automatiquement, avec notification",
+      "Modules Saturation et Effets de potion (icônes, couleurs)",
+      "Skins 3D (activable dans le menu) et aperçu des shulkers installés par défaut"
+    ]
+  },
+  {
+    "version": "1.3.16",
+    "date": "14/11/2026",
+    "title": "Actualités du site",
+    "items": [
+      "L'onglet Actualités affiche directement les actualités de spartacube.fr"
+    ]
+  },
+  {
+    "version": "1.3.12",
+    "date": "14/11/2026",
+    "title": "Touches, Fullbright et armure",
+    "items": [
+      "Touches configurables pour le zoom, le freelook et le Fullbright",
+      "Fullbright, vie des joueurs",
+      "HUD d'armure : pourcentage, barre d'usure, durabilité, horizontal"
+    ]
+  },
+  {
+    "version": "1.3.10",
+    "date": "14/11/2026",
+    "title": "Modules personnalisables",
+    "items": [
+      "Couleur personnalisée et arc-en-ciel pour chaque module HUD",
+      "Fly Boost indépendant, freelook en bascule",
+      "Son et nouveau style des notifications"
+    ]
+  }
+]

@@ -356,3 +356,30 @@ body.theme-halloween .bg { filter: hue-rotate(-25deg) saturate(1.2) brightness(.
 .feedback-link.hidden { display: none; }
 .feedback-text { min-height: 120px; resize: vertical; padding: 8px 11px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,.4); color: var(--text); font: inherit; outline: none; }
 .feedback-text:focus { border-color: var(--fire-1); }
+
+/* ---------- Nouveautés (notes de version) ---------- */
+.notes-list { display: flex; flex-direction: column; gap: 12px; max-width: 760px; }
+.note { border: 1px solid var(--border); border-radius: 10px; padding: 13px 16px; background: rgba(0,0,0,.25); }
+.note-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+.note-head .ver { font-weight: 800; color: var(--fire-1); }
+.note-head .date { color: var(--muted); font-size: 12px; margin-left: auto; }
+.note ul { margin: 0; padding-left: 18px; color: var(--text); font-size: 13px; line-height: 1.6; }
+.note.current { border-color: var(--fire-1); }
+.whatsnew-card { width: min(560px, 92vw); max-height: 84vh; }
+.notes-list.compact { overflow-y: auto; }
+
+/* ---------- Plusieurs comptes ---------- */
+.sidebar-account { cursor: pointer; position: relative; }
+.sidebar-account .caret { display: none; }
+.account-menu { position: fixed; left: 100px; bottom: 14px; width: 230px; z-index: 60; background: #1b1016; border: 1px solid var(--border); border-radius: 12px; padding: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.55); display: flex; flex-direction: column; gap: 6px; }
+.account-menu.hidden { display: none; }
+.account-title { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); padding: 0 4px; }
+.account-row { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 8px; cursor: pointer; }
+.account-row:hover { background: rgba(255,255,255,.07); }
+.account-row.active { background: rgba(255,140,46,.14); }
+.account-row img { width: 26px; height: 26px; border-radius: 5px; image-rendering: pixelated; }
+.account-row .name { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-row .tick { color: var(--fire-1); font-size: 12px; }
+.account-row .rm { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 12px; padding: 2px 5px; border-radius: 5px; }
+.account-row .rm:hover { color: #ff7b7b; background: rgba(255,255,255,.08); }
+.account-add { width: 100%; margin-top: 2px; }

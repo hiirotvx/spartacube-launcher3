@@ -109,7 +109,62 @@ $('btnLogin').onclick = async () => {
   if (r.ok) { setProfile(r.profile); if (!state.settings.onboarded) startOnboarding(); }
   else $('loginError').textContent = r.error;
 };
-$('btnLogout').onclick = async () => { await L.logout(); state.skinLoaded = false; showView('login'); };
+function afterAccountChange(profile) {
+  state.skinLoaded = false;
+  if (profile) { setProfile(profile); if (document.querySelector('#page-skin.active')) initSkinPage(); }
+  else showView('login');
+}
+
+$('btnLogout').onclick = async () => {
+  const r = await L.logout();
+  afterAccountChange(r && r.profile);
+  if (r && r.profile) toast(`Déconnecté. Tu es maintenant sur ${r.profile.name}.`, 'ok');
+};
+
+/* ---------- Plusieurs comptes ---------- */
+
+async function renderAccounts() {
+  const list = await api(L.accounts.list());
+  if (!list) return;
+  $('accountList').replaceChildren(...list.map(a => {
+    const row = el('div', { class: `account-row${a.active ? ' active' : ''}`, title: a.active ? 'Compte actif' : `Passer sur ${a.name}` },
+      el('img', { src: `https://mc-heads.net/avatar/${encodeURIComponent(a.uuid)}/52`, alt: '' }),
+      el('span', { class: 'name', text: a.name }),
+      a.active ? el('span', { class: 'tick', text: '✔' }) : null,
+      el('button', { class: 'rm', title: 'Retirer ce compte du launcher', text: '✕', onclick: async e => {
+        e.stopPropagation();
+        const r = await api(L.accounts.remove(a.uuid));
+        if (!r) return;
+        if (a.active) { $('accountMenu').classList.add('hidden'); afterAccountChange(r.profile); }
+        else renderAccounts();
+      } }));
+    if (!a.active) row.onclick = async () => {
+      row.style.opacity = '.5';
+      const p = await api(L.accounts.switchTo(a.uuid));
+      row.style.opacity = '';
+      if (!p) return;
+      $('accountMenu').classList.add('hidden');
+      afterAccountChange(p);
+      toast(`Compte actif : ${p.name}`, 'ok');
+    };
+    return row;
+  }));
+}
+
+$('accountBtn').onclick = e => {
+  e.stopPropagation();
+  const menu = $('accountMenu');
+  menu.classList.toggle('hidden');
+  if (!menu.classList.contains('hidden')) renderAccounts();
+};
+$('accountMenu').onclick = e => e.stopPropagation();
+document.addEventListener('click', () => $('accountMenu').classList.add('hidden'));
+$('accountAdd').onclick = async () => {
+  $('accountMenu').classList.add('hidden');
+  const r = await L.login();
+  if (r.ok) { afterAccountChange(r.profile); toast(`Compte ajouté : ${r.profile.name}`, 'ok'); }
+  else if (r.error && r.error !== 'Connexion annulée') toast(r.error, 'err');
+};
 
 /* ===================== Actualités ===================== */
 
@@ -163,6 +218,39 @@ $('btnNewsSite').onclick = () => L.openUrl(state.website || 'https://spartacube.
 $('btnConsole').onclick = () => L.openConsole();
 L.onGameStarted(() => $('consoleDot').classList.remove('hidden'));
 L.onGameClosed(() => $('consoleDot').classList.add('hidden'));
+
+/* ===================== Nouveautés (notes de version) ===================== */
+
+function cmpVersion(a, b) {
+  const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
+  for (let i = 0; i < 3; i++) { const d = (pa[i] || 0) - (pb[i] || 0); if (d) return d; }
+  return 0;
+}
+
+function noteCard(n, current) {
+  return el('div', { class: `note${current ? ' current' : ''}` },
+    el('div', { class: 'note-head' },
+      el('span', { class: 'ver', text: `v${n.version}` }),
+      el('strong', { text: n.title || '' }),
+      el('span', { class: 'date', text: n.date || '' })),
+    el('ul', {}, ...(n.items || []).map(t => el('li', { text: t }))));
+}
+
+function initNotes(info) {
+  const log = Array.isArray(info.changelog) ? info.changelog : [];
+  $('notesList').replaceChildren(...log.map(n => noteCard(n, n.version === info.appVersion)));
+  let seen = null;
+  try { seen = localStorage.getItem('seenVersion'); } catch { /* stockage indisponible */ }
+  try { localStorage.setItem('seenVersion', info.appVersion); } catch { /* */ }
+  // Première installation : pas de fenêtre (l'accueil s'en charge). Après une mise à jour : oui.
+  if (seen === info.appVersion || (!seen && !info.settings.onboarded)) return;
+  const fresh = log.filter(n => cmpVersion(n.version, info.appVersion) <= 0 && (!seen || cmpVersion(n.version, seen) > 0)).slice(0, seen ? 4 : 1);
+  if (!fresh.length) return;
+  $('whatsNewBody').replaceChildren(...fresh.map(n => noteCard(n, n.version === info.appVersion)));
+  $('whatsNew').classList.remove('hidden');
+}
+$('whatsNewOk').onclick = () => $('whatsNew').classList.add('hidden');
+$('whatsNewAll').onclick = () => { $('whatsNew').classList.add('hidden'); goto('notes'); };
 
 /* ===================== Avis ===================== */
 
@@ -744,8 +832,11 @@ $('btnOnboarding').onclick = () => startOnboarding();
 
 L.onUpdate(u => {
   $('updateBar').classList.remove('hidden');
-  if (u.state === 'ready') {
-    $('updateText').textContent = `Version ${u.version} prête.`;
+  if (u.state === 'installing') {
+    $('updateText').textContent = `Version ${u.version} prête : installation et redémarrage automatiques…`;
+    $('btnUpdate').classList.add('hidden');
+  } else if (u.state === 'ready') {
+    $('updateText').textContent = `Version ${u.version} prête : elle s'installera à la fermeture du jeu.`;
     $('btnUpdate').classList.remove('hidden');
   } else {
     $('updateText').textContent = `Mise à jour du launcher en cours…${u.percent != null ? ` ${u.percent}%` : ''}`;
@@ -763,6 +854,7 @@ $('btnUpdate').onclick = () => L.installUpdate();
   state.version = info.selectedVersion;
   state.allowUserMods = info.allowUserMods;
   $('appVersion').textContent = `v${info.appVersion}`;
+  initNotes(info);
   state.serverTheme = info.theme;
   applyTheme(info.theme);
   state.website = info.website;
