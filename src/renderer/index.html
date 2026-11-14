@@ -104,7 +104,10 @@
 
       <!-- ---------- Actualités ---------- -->
       <div class="page" id="page-news">
-        <div class="page-head"><h1>Actualités du serveur</h1></div>
+        <div class="page-head">
+          <h1>Actualités du serveur</h1>
+          <div class="head-actions"><button id="btnNewsEdit" class="btn-primary hidden">✎ Gérer les actualités</button></div>
+        </div>
         <div id="newsList" class="news-list"></div>
       </div>
 
@@ -287,6 +290,24 @@
       <button id="lbReveal" class="btn-secondary">Afficher dans le dossier</button>
       <button id="lbDelete" class="btn-danger">Mettre à la corbeille</button>
       <button id="lbClose" class="btn-primary">Fermer</button>
+    </div>
+  </div>
+
+  <!-- Éditeur des actualités (admins) -->
+  <div id="newsEditor" class="onboarding hidden">
+    <div class="card ne-card">
+      <div class="ne-head">
+        <h2>Gérer les actualités</h2>
+        <button id="neClose" class="icon-btn small" title="Fermer">✕</button>
+      </div>
+      <p class="ne-hint">La première actualité s'affiche en haut. Les liens et images doivent commencer par https://.</p>
+      <div id="neList" class="ne-list"></div>
+      <div class="modal-actions">
+        <button id="neAdd" class="btn-secondary">+ Nouvelle actualité</button>
+        <span class="spacer"></span>
+        <button id="neCancel" class="btn-secondary">Annuler</button>
+        <button id="nePublish" class="btn-primary">Publier pour tous les joueurs</button>
+      </div>
     </div>
   </div>
 

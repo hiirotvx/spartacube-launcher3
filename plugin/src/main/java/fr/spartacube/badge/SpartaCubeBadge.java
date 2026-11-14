@@ -44,8 +44,28 @@ public final class SpartaCubeBadge extends JavaPlugin implements PluginMessageLi
         getServer().getMessenger().registerOutgoingPluginChannel(this, COS_ALLOWED);
         getServer().getMessenger().registerOutgoingPluginChannel(this, COS_ACTIVE);
         saveDefaultConfig();
+        // Ajoute les nouvelles options (admins, news-api) à un config.yml existant
+        getConfig().options().copyDefaults(true);
+        saveConfig();
         getServer().getPluginManager().registerEvents(this, this);
         getLogger().info("Pastilles du launcher SpartaCube actives.");
+        startNewsApi();
+    }
+
+    private NewsApi newsApi;
+
+    private void startNewsApi() {
+        if (!getConfig().getBoolean("news-api.enabled", true)) return;
+        java.util.Set<String> admins = new java.util.HashSet<>();
+        for (String a : getConfig().getStringList("admins")) admins.add(a.trim().toLowerCase(java.util.Locale.ROOT));
+        newsApi = new NewsApi(getLogger(), getDataFolder().toPath(), admins);
+        int port = getConfig().getInt("news-api.port", 8765);
+        try {
+            newsApi.start(getConfig().getString("news-api.bind", "0.0.0.0"), port);
+        } catch (Exception e) {
+            getLogger().warning("Impossible de démarrer l'API des actualités sur le port " + port + " : " + e.getMessage());
+            newsApi = null;
+        }
     }
 
     @Override
@@ -53,6 +73,7 @@ public final class SpartaCubeBadge extends JavaPlugin implements PluginMessageLi
         getServer().getMessenger().unregisterIncomingPluginChannel(this);
         getServer().getMessenger().unregisterOutgoingPluginChannel(this);
         users.clear();
+        if (newsApi != null) newsApi.stop();
     }
 
     @Override

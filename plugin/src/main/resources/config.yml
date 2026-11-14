@@ -10,3 +10,14 @@ cosmetics:
   aura:
     - 6eb277d7-48c3-41c8-a3ba-bf5339f59cd4   # Hiirowh
     - Hiirowh
+
+# Admins du launcher : peuvent publier les actualités depuis le launcher (UUID avec tirets).
+# La vérification passe par la connexion Microsoft/Mojang : impossible d'usurper un UUID.
+admins:
+  - 6eb277d7-48c3-41c8-a3ba-bf5339f59cd4   # Hiirowh
+
+# API HTTP des actualités lue par le launcher (port à ouvrir chez ton hébergeur, en TCP).
+news-api:
+  enabled: true
+  bind: 0.0.0.0
+  port: 8765

@@ -340,3 +340,17 @@ body.theme-halloween .bg { filter: hue-rotate(-25deg) saturate(1.2) brightness(.
   10% { opacity: 1; }
   100% { transform: translate(var(--dx, 30px), 110vh); opacity: 0; }
 }
+
+/* ---------- Éditeur des actualités (admins) ---------- */
+.ne-card { width: min(760px, 92vw); max-height: 88vh; display: flex; flex-direction: column; gap: 12px; padding: 20px; }
+.ne-head { display: flex; align-items: center; justify-content: space-between; }
+.ne-hint { color: var(--muted); font-size: 13px; }
+.ne-list { overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px; min-height: 120px; }
+.ne-item { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: rgba(0,0,0,.25); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ne-item .full { grid-column: 1 / -1; }
+.ne-item input[type=text], .ne-item textarea { width: 100%; }
+.ne-item textarea { min-height: 70px; resize: vertical; padding: 8px 11px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,.4); color: var(--text); font: inherit; outline: none; }
+.ne-item textarea:focus { border-color: var(--fire-1); }
+.ne-item label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+.ne-tools { grid-column: 1 / -1; display: flex; gap: 6px; justify-content: flex-end; align-items: center; }
+.ne-tools .num { margin-right: auto; color: var(--muted); font-size: 12px; font-weight: 700; }

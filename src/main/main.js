@@ -2,6 +2,7 @@
 const path = require('path');
 const os = require('os');
 const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
+const newsApi = require('./news');
 const log = require('electron-log/main');
 const { autoUpdater } = require('electron-updater');
 
@@ -36,7 +37,7 @@ let settings = null;
 // Clés que la config distante (spartacube.fr/launcher/launcher.json) a le droit de modifier.
 const REMOTE_KEYS = [
   'minecraftVersion', 'fabricLoaderVersion', 'modpackManifestUrl', 'managedFolders',
-  'news', 'message', 'serverAddress', 'serverPort', 'versions', 'allowOtherVersions', 'allowUserMods', 'defaultMods', 'voteUrl', 'voteSites', 'destinations', 'theme', 'discordClientId'
+  'news', 'message', 'serverAddress', 'serverPort', 'versions', 'allowOtherVersions', 'allowUserMods', 'defaultMods', 'voteUrl', 'voteSites', 'destinations', 'theme', 'discordClientId', 'newsApiUrl', 'admins'
 ];
 
 async function loadRemoteConfig() {
@@ -148,7 +149,8 @@ function ensureNotRunning() {
 function registerIpc() {
   ipcMain.handle('init', async () => {
     await loadRemoteConfig();
-    const profile = await auth.restore(cfg);
+    const [profile, liveNews] = await Promise.all([auth.restore(cfg), newsApi.fetchNews(cfg.newsApiUrl)]);
+    if (liveNews) cfg.news = liveNews;
     return {
       appVersion: app.getVersion(),
       serverName: cfg.serverName,
@@ -159,6 +161,8 @@ function registerIpc() {
       website: cfg.website,
       message: typeof cfg.message === 'string' ? cfg.message.slice(0, 500) : '',
       news: cleanNews(cfg.news),
+      canEditNews: !!cfg.newsApiUrl,
+      admins: (Array.isArray(cfg.admins) ? cfg.admins : []).map(a => String(a).toLowerCase().replace(/-/g, '')),
       totalRamMb: Math.floor(os.totalmem() / 1024 / 1024),
       destinations: cleanDestinations(cfg.destinations),
       hasVoteSites: votes.cleanSites(cfg.voteSites).length > 0,
@@ -169,6 +173,26 @@ function registerIpc() {
   });
 
   handle('versions', () => listVersions(cfg));
+
+  // Actualités : édition réservée aux admins (vérifiée côté serveur via la session Mojang)
+  handle('news:get', async () => {
+    const live = await newsApi.fetchNews(cfg.newsApiUrl);
+    if (live) cfg.news = live;
+    return cleanNews(cfg.news);
+  });
+  handle('news:publish', async list => {
+    if (!cfg.newsApiUrl) throw new Error('API des actualités non configurée');
+    if (!Array.isArray(list) || list.length > 30) throw new Error('Liste invalide');
+    const clean = cleanNews(list).filter(n => n.title.trim()).map(({ id, ...n }) => {
+      for (const k of Object.keys(n)) if (n[k] === null || n[k] === '') delete n[k];
+      return n;
+    });
+    const a = await auth.getLaunchAuth();
+    const p = auth.publicProfile();
+    const count = await newsApi.publish(cfg.newsApiUrl, clean, { accessToken: a.access_token, uuid: p.uuid, name: p.name });
+    cfg.news = clean;
+    return { count, news: cleanNews(cfg.news) };
+  });
 
   ipcMain.handle('login', async () => {
     try {

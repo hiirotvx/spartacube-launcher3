@@ -18,6 +18,11 @@ contextBridge.exposeInMainWorld('launcher', {
   status: () => call('status'),
   saveSettings: s => call('save-settings', s),
 
+  news: {
+    get: () => call('news:get'),
+    publish: list => call('news:publish', list)
+  },
+
   mods: {
     list: v => call('mods:list', v),
     toggle: (v, file, enabled) => call('mods:toggle', v, file, enabled),
