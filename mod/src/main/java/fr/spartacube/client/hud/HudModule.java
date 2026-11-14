@@ -20,7 +20,8 @@ public enum HudModule {
     NAMETAG("Pseudo en F5", "Affiche ton pseudo au-dessus de ta tête en vue F5", Category.PLAYER, "solo", Kind.MECHANIC, true, 0, 0),
     EFFECTS("Effets", "Effets de potion actifs et durée", Category.PLAYER, "fps", Kind.SPECIAL, false, -110, 40),
     // ---- Mécaniques ----
-    TOGGLE_SPRINT("Toggle Sprint", "Sprint sans maintenir la touche + fly boost (options)", Category.MECHANIC, "speed", Kind.MECHANIC, false, 0, 0),
+    TOGGLE_SPRINT("Toggle Sprint", "Sprint sans maintenir la touche", Category.MECHANIC, "speed", Kind.MECHANIC, false, 0, 0),
+    FLY_BOOST("Fly Boost", "Vole plus vite (créatif ou /fly)", Category.MECHANIC, "join", Kind.MECHANIC, true, 0, 0),
     TOGGLE_SNEAK("Toggle Sneak", "S'accroupir reste activé sans maintenir la touche", Category.MECHANIC, "solo", Kind.MECHANIC, false, 0, 0),
     ZOOM("Zoom", "Maintiens C pour zoomer", Category.MECHANIC, "search", Kind.MECHANIC, true, 0, 0),
     FREELOOK("Freelook", "Maintiens Alt gauche pour regarder autour de toi", Category.MECHANIC, "direction", Kind.MECHANIC, true, 0, 0),

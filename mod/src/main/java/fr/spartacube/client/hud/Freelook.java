@@ -10,6 +10,8 @@ public final class Freelook {
     private static float yaw, pitch;
     private static Perspective previous;
 
+    private static boolean keyWasDown, toggled;
+
     private Freelook() {}
 
     public static boolean isActive() {
@@ -22,8 +24,18 @@ public final class Freelook {
 
     public static void tick(MinecraftClient mc) {
         long w = GLFW.glfwGetCurrentContext();
-        boolean want = HudConfig.get().isEnabled(HudModule.FREELOOK) && mc.player != null && mc.currentScreen == null
-                && w != 0L && GLFW.glfwGetKey(w, GLFW.GLFW_KEY_LEFT_ALT) == GLFW.GLFW_PRESS;
+        boolean key = w != 0L && GLFW.glfwGetKey(w, GLFW.GLFW_KEY_LEFT_ALT) == GLFW.GLFW_PRESS;
+        boolean allowed = HudConfig.get().isEnabled(HudModule.FREELOOK) && mc.player != null;
+        boolean want;
+        if (HudConfig.get().freelookHold) {
+            want = allowed && mc.currentScreen == null && key;
+        } else {
+            // Mode bascule : un appui active, un autre désactive
+            if (key && !keyWasDown && mc.currentScreen == null) toggled = !toggled;
+            want = allowed && toggled;
+            if (!allowed) toggled = false;
+        }
+        keyWasDown = key;
         if (want && !active) {
             active = true;
             yaw = mc.player.getYaw();

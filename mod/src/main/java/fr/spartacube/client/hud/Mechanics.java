@@ -33,10 +33,11 @@ public final class Mechanics {
             appliedSneak = sneak;
         }
 
-        // Fly boost (option du Toggle Sprint) : vitesse de vol augmentée
+        // Fly Boost (module indépendant) : vitesse de vol augmentée
         if (mc.player != null) {
             var ab = mc.player.getAbilities();
-            boolean boost = ab.flying && sprint && cfg.flyBoost;
+            boolean sprinting = o.sprintKey.isPressed() || mc.player.isSprinting();
+            boolean boost = ab.flying && cfg.isEnabled(HudModule.FLY_BOOST) && (!cfg.flyBoostSprintOnly || sprinting);
             float wanted = boost ? 0.05f * cfg.flyBoostMult : 0.05f;
             if (boost || flyBoosted) {
                 if (Math.abs(ab.getFlySpeed() - wanted) > 1e-4f) ab.setFlySpeed(wanted);

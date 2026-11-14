@@ -82,7 +82,8 @@ public class SpartaModsScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        this.scrollTarget -= (float) verticalAmount * 30f;
+        if (this.optionsFor != null) this.optScrollTarget -= (float) verticalAmount * 30f;
+        else this.scrollTarget -= (float) verticalAmount * 30f;
         return true;
     }
 
@@ -241,7 +242,7 @@ public class SpartaModsScreen extends Screen {
             if (click && overCard && locked) {
                 Ui.click();
                 Toasts.show("info", "Cosmétique verrouillé", "Ce cosmétique n'est pas encore disponible pour ton compte.");
-            } else if (click && overGear) { Ui.click(); this.optionsFor = m; }
+            } else if (click && overGear) { Ui.click(); this.optionsFor = m; this.optScroll = 0; this.optScrollTarget = 0; }
             else if (click && overCard) {
                 Ui.click();
                 cfg.toggle(m);
@@ -257,64 +258,189 @@ public class SpartaModsScreen extends Screen {
         }
     }
 
+    private float optScroll, optScrollTarget;
+
     private void drawOptions(DrawContext ctx, int mouseX, int mouseY, int gx1, int gy1, int gx2, int gy2, float dt, boolean click) {
         HudConfig cfg = HudConfig.get();
         HudModule m = this.optionsFor;
         ModuleSettings st = cfg.settings(m);
         int off = Math.round((1 - this.optionsAnim) * 40);
         int x = gx1 + off;
+        int x2 = gx2 - 6;
         float a = this.optionsAnim;
+        // Les clics hors de la zone visible sont ignorés
+        boolean inArea = Ui.inside(mouseX, mouseY, gx1, gy1, gx2, gy2);
+        click = click && inArea;
+        this.optScroll = Ui.approach(this.optScroll, this.optScrollTarget, 16f, dt);
+        int top = gy1 - Math.round(this.optScroll);
 
         // Retour
-        boolean overBack = Ui.inside(mouseX, mouseY, x, gy1, x + 60, gy1 + 16);
-        Ui.round(ctx, x, gy1, x + 60, gy1 + 16, 4, Ui.alpha(overBack ? 0x50FFFFFF : 0x30FFFFFF, a));
-        Ui.text(ctx, Ui.t("‹ Retour"), x + 9, gy1 + 4, Ui.alpha(Ui.TEXT, a));
-        if (click && overBack) { Ui.click(); this.optionsFor = null; return; }
+        int y = top;
+        boolean overBack = inArea && Ui.inside(mouseX, mouseY, x, y, x + 60, y + 16);
+        Ui.round(ctx, x, y, x + 60, y + 16, 4, Ui.alpha(overBack ? 0x50FFFFFF : 0x30FFFFFF, a));
+        Ui.text(ctx, Ui.t("‹ Retour"), x + 9, y + 4, Ui.alpha(Ui.TEXT, a));
+        if (click && overBack) { Ui.click(); this.optionsFor = null; this.optScrollTarget = 0; this.optScroll = 0; return; }
 
-        int y = gy1 + 24;
-        Ui.icon(ctx, m.icon, x, y, 20);
+        y += 24;
+        Ui.icon(ctx, m.icon, x, y, 20, Ui.alpha(Ui.ACCENT, a));
         Ui.text(ctx, Ui.b(m.label), x + 28, y + 1, Ui.alpha(0xFFFFFFFF, a));
         Ui.text(ctx, Ui.t(m.description), x + 28, y + 12, Ui.alpha(Ui.MUTED, a));
         y += 32;
 
-        // Activé
-        y = optionRow(ctx, mouseX, mouseY, x, gx2, y, "Activé", st.enabled, click, () -> {
+        y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Activé", st.enabled, click, () -> {
             if (!Cosmetics.isAllowed(m)) { Toasts.show("info", "Cosmétique verrouillé", "Ce cosmétique n'est pas encore disponible pour ton compte."); return; }
             cfg.toggle(m);
             if (Cosmetics.flagOf(m) != 0) Cosmetics.sync();
         }, dt, a);
 
-        if (m == HudModule.ZOOM) {
-            y = slider(ctx, mouseX, mouseY, x, gx2, y, "Puissance du zoom", (60 - cfg.zoomFov) / 55f,
-                    v -> cfg.zoomFov = Math.round(60 - v * 55), "x" + String.format(Locale.ROOT, "%.1f", 70f / cfg.zoomFov), a);
-        } else if (m == HudModule.TOGGLE_SPRINT) {
-            y = optionRow(ctx, mouseX, mouseY, x, gx2, y, "Fly boost", cfg.flyBoost, click, () -> { cfg.flyBoost = !cfg.flyBoost; cfg.save(); }, dt, a);
-            y = slider(ctx, mouseX, mouseY, x, gx2, y, "Vitesse de vol", (cfg.flyBoostMult - 1f) / 4f,
-                    v -> cfg.flyBoostMult = Math.round((1f + v * 4f) * 10f) / 10f, "x" + String.format(Locale.ROOT, "%.1f", cfg.flyBoostMult), a);
-            Ui.text(ctx, Ui.t("Le fly boost s'applique quand tu voles (créatif ou /fly)."), x, y + 4, Ui.alpha(Ui.MUTED, a));
-        } else if (m.movable()) {
-            y = slider(ctx, mouseX, mouseY, x, gx2, y, "Taille", (st.scale - 0.5f) / 1.5f,
+        switch (m) {
+            case ZOOM -> {
+                y = section(ctx, x, y, "Zoom", a);
+                y = slider(ctx, mouseX, mouseY, x, x2, y, "Puissance", (60 - cfg.zoomFov) / 55f,
+                        v -> cfg.zoomFov = Math.round(60 - v * 55), "x" + String.format(Locale.ROOT, "%.1f", 70f / cfg.zoomFov), a);
+                y = note(ctx, x, y, "Maintiens C pour zoomer.", a);
+            }
+            case FLY_BOOST -> {
+                y = section(ctx, x, y, "Vol", a);
+                y = slider(ctx, mouseX, mouseY, x, x2, y, "Vitesse de vol", (cfg.flyBoostMult - 1f) / 4f,
+                        v -> cfg.flyBoostMult = Math.round((1f + v * 4f) * 10f) / 10f, "x" + String.format(Locale.ROOT, "%.1f", cfg.flyBoostMult), a);
+                y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Seulement en sprintant", cfg.flyBoostSprintOnly, click,
+                        () -> { cfg.flyBoostSprintOnly = !cfg.flyBoostSprintOnly; cfg.save(); }, dt, a);
+                y = note(ctx, x, y, "Fonctionne sans le Toggle Sprint, dès que tu voles (créatif ou /fly).", a);
+            }
+            case FREELOOK -> {
+                y = section(ctx, x, y, "Touche", a);
+                y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Maintenir Alt (sinon : appuyer pour basculer)", cfg.freelookHold, click,
+                        () -> { cfg.freelookHold = !cfg.freelookHold; cfg.save(); }, dt, a);
+            }
+            case NOTIFICATIONS -> {
+                y = section(ctx, x, y, "Son", a);
+                y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Son de notification", cfg.toastSound, click,
+                        () -> { cfg.toastSound = !cfg.toastSound; cfg.save(); }, dt, a);
+                y = slider(ctx, mouseX, mouseY, x, x2, y, "Volume", cfg.toastVolume,
+                        v -> cfg.toastVolume = Math.round(v * 20f) / 20f, Math.round(cfg.toastVolume * 100) + " %", a);
+                boolean overTest = inArea && Ui.inside(mouseX, mouseY, x, y, x + 120, y + 16);
+                Ui.round(ctx, x, y, x + 120, y + 16, 4, Ui.alpha(overTest ? 0x50FFFFFF : 0x30FFFFFF, a));
+                Ui.text(ctx, Ui.t("Tester une notification"), x + 7, y + 4, Ui.alpha(Ui.TEXT, a));
+                if (click && overTest) { Ui.click(); cfg.save(); Toasts.show("event", "Test", "Voici à quoi ressemble une notification SpartaCube."); }
+                y += 22;
+            }
+            default -> { }
+        }
+
+        if (m.movable()) {
+            y = section(ctx, x, y, "Apparence", a);
+            y = slider(ctx, mouseX, mouseY, x, x2, y, "Taille", (st.scale - 0.5f) / 1.5f,
                     v -> st.scale = Math.round((0.5f + v * 1.5f) * 20f) / 20f, Math.round(st.scale * 100) + " %", a);
-            y = optionRow(ctx, mouseX, mouseY, x, gx2, y, "Fond", st.background, click, () -> { st.background = !st.background; cfg.save(); }, dt, a);
-            y = optionRow(ctx, mouseX, mouseY, x, gx2, y, "Ombre du texte", st.shadow, click, () -> { st.shadow = !st.shadow; cfg.save(); }, dt, a);
-            Ui.text(ctx, Ui.t("Couleur"), x, y + 4, Ui.alpha(Ui.TEXT, a));
-            int cx = gx2 - HudConfig.COLORS.length * 16;
-            for (int i = 0; i < HudConfig.COLORS.length; i++) {
-                int sx = cx + i * 16;
-                boolean over = Ui.inside(mouseX, mouseY, sx, y + 1, sx + 12, y + 13);
-                if (st.color == i) Ui.round(ctx, sx - 2, y - 1, sx + 14, y + 15, 4, Ui.alpha(0xFFFFFFFF, a));
-                Ui.round(ctx, sx, y + 1, sx + 12, y + 13, 3, Ui.alpha(HudConfig.COLORS[i], a));
-                if (click && over) { Ui.click(); st.color = i; cfg.save(); }
+            y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Fond", st.background, click, () -> { st.background = !st.background; cfg.save(); }, dt, a);
+            if (st.background) {
+                y = slider(ctx, mouseX, mouseY, x, x2, y, "Opacité du fond", st.bgOpacity / 100f,
+                        v -> st.bgOpacity = Math.round(v * 100f), st.bgOpacity + " %", a);
+            }
+            y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Ombre du texte", st.shadow, click, () -> { st.shadow = !st.shadow; cfg.save(); }, dt, a);
+            if (m.kind == HudModule.Kind.TEXT) {
+                y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Crochets  [ ]", st.brackets, click, () -> { st.brackets = !st.brackets; cfg.save(); }, dt, a);
+            }
+
+            y = section(ctx, x, y, "Couleur", a);
+            y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Arc-en-ciel", st.chroma, click, () -> { st.chroma = !st.chroma; cfg.save(); }, dt, a);
+            if (st.chroma) {
+                y = slider(ctx, mouseX, mouseY, x, x2, y, "Vitesse", (st.chromaSpeed - 0.2f) / 2.8f,
+                        v -> st.chromaSpeed = Math.round((0.2f + v * 2.8f) * 10f) / 10f, "x" + String.format(Locale.ROOT, "%.1f", st.chromaSpeed), a);
+            } else {
+                // Palette rapide
+                Ui.text(ctx, Ui.t("Palette"), x + 8, y + 4, Ui.alpha(Ui.TEXT, a));
+                int cx = x2 - HudConfig.COLORS.length * 16 - 4;
+                for (int i = 0; i < HudConfig.COLORS.length; i++) {
+                    int sx = cx + i * 16;
+                    boolean over = inArea && Ui.inside(mouseX, mouseY, sx, y + 1, sx + 12, y + 13);
+                    if (!st.customColor && st.color == i) Ui.round(ctx, sx - 2, y - 1, sx + 14, y + 15, 4, Ui.alpha(0xFFFFFFFF, a));
+                    Ui.round(ctx, sx, y + 1, sx + 12, y + 13, 3, Ui.alpha(HudConfig.COLORS[i], a));
+                    if (click && over) { Ui.click(); st.color = i; st.customColor = false; cfg.save(); }
+                }
+                y += 20;
+                y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Couleur personnalisée", st.customColor, click, () -> { st.customColor = !st.customColor; cfg.save(); }, dt, a);
+                if (st.customColor) {
+                    y = colorSlider(ctx, mouseX, mouseY, x, x2, y, "Teinte", st.hue, v -> st.hue = v, 0, st, a);
+                    y = colorSlider(ctx, mouseX, mouseY, x, x2, y, "Saturation", st.sat, v -> st.sat = v, 1, st, a);
+                    y = colorSlider(ctx, mouseX, mouseY, x, x2, y, "Luminosité", st.bri, v -> st.bri = Math.max(0.15f, v), 2, st, a);
+                }
+            }
+            // Aperçu
+            Ui.text(ctx, Ui.t("Aperçu"), x + 8, y + 5, Ui.alpha(Ui.TEXT, a));
+            String sample = m.label;
+            int pw = this.textRenderer.getWidth(sample) + 8;
+            int pxs = x2 - pw - 4;
+            if (st.background) Ui.round(ctx, pxs, y + 1, pxs + pw, y + 16, 3, st.bgColor());
+            int ccx = pxs + 4;
+            for (int i = 0; i < sample.length(); i++) {
+                String ch = String.valueOf(sample.charAt(i));
+                ctx.drawText(this.textRenderer, ch, ccx, y + 5, Ui.alpha(st.textColor(ccx), a), st.shadow);
+                ccx += this.textRenderer.getWidth(ch);
             }
             y += 22;
-            boolean overReset = Ui.inside(mouseX, mouseY, x, y, x + 110, y + 16);
+
+            boolean overReset = inArea && Ui.inside(mouseX, mouseY, x, y, x + 110, y + 16);
             Ui.round(ctx, x, y, x + 110, y + 16, 4, Ui.alpha(overReset ? 0x50FFFFFF : 0x30FFFFFF, a));
             Ui.text(ctx, Ui.t("Réinitialiser le module"), x + 7, y + 4, Ui.alpha(Ui.TEXT, a));
             if (click && overReset) { Ui.click(); cfg.resetModule(m); }
-        } else {
-            Ui.text(ctx, Ui.t("Ce module n'a pas d'autre option."), x, y + 4, Ui.alpha(Ui.MUTED, a));
+            y += 22;
+        } else if (m != HudModule.ZOOM && m != HudModule.FLY_BOOST && m != HudModule.FREELOOK && m != HudModule.NOTIFICATIONS) {
+            y = note(ctx, x, y, "Ce module n'a pas d'autre option.", a);
+        }
+
+        // Défilement des options
+        int contentH = y - top;
+        float max = Math.max(0, contentH - (gy2 - gy1) + 6);
+        this.optScrollTarget = Math.max(0, Math.min(max, this.optScrollTarget));
+        if (max > 0) {
+            int trackH = gy2 - gy1;
+            int barH = Math.max(20, trackH * trackH / Math.max(1, contentH));
+            int barY = gy1 + Math.round((trackH - barH) * (this.optScroll / max));
+            Ui.round(ctx, gx2 - 3, barY, gx2, barY + barH, 1, 0x80FF8C2E);
         }
         if (this.mouse.released && this.dragging != null) { this.dragging = null; cfg.save(); }
+    }
+
+    private int section(DrawContext ctx, int x, int y, String title, float a) {
+        y += 4;
+        Ui.text(ctx, Ui.b(title.toUpperCase(Locale.ROOT)), x + 2, y, Ui.alpha(Ui.ACCENT, a));
+        return y + 13;
+    }
+
+    private int note(DrawContext ctx, int x, int y, String text, float a) {
+        Ui.text(ctx, Ui.t(text), x + 2, y + 2, Ui.alpha(Ui.MUTED, a));
+        return y + 16;
+    }
+
+    /** Curseur de couleur avec piste en dégradé (0 : teinte, 1 : saturation, 2 : luminosité). */
+    private int colorSlider(DrawContext ctx, int mx, int my, int x1, int x2, int y, String label, float value,
+                            java.util.function.Consumer<Float> set, int kind, ModuleSettings st, float a) {
+        Ui.text(ctx, Ui.t(label), x1 + 8, y + 5, Ui.alpha(Ui.TEXT, a));
+        int tx1 = x1 + 110, tx2 = x2 - 50;
+        int ty = y + 6;
+        String key = "color" + label;
+        if (this.mouse.pressed && Ui.inside(mx, my, tx1 - 4, y, tx2 + 4, y + 18)) this.dragging = key;
+        if (this.mouse.down && key.equals(this.dragging)) {
+            value = Math.max(0f, Math.min(1f, (mx - tx1) / (float) (tx2 - tx1)));
+            set.accept(value);
+        }
+        int w = tx2 - tx1;
+        for (int i = 0; i < w; i++) {
+            float t = i / (float) Math.max(1, w - 1);
+            int rgb = switch (kind) {
+                case 0 -> java.awt.Color.HSBtoRGB(t, 0.9f, 1f);
+                case 1 -> java.awt.Color.HSBtoRGB(st.hue, t, st.bri);
+                default -> java.awt.Color.HSBtoRGB(st.hue, st.sat, t);
+            };
+            ctx.fill(tx1 + i, ty, tx1 + i + 1, ty + 6, Ui.alpha(0xFF000000 | (rgb & 0xFFFFFF), a));
+        }
+        Ui.outline(ctx, tx1 - 1, ty - 1, tx2 + 1, ty + 7, 3, Ui.alpha(0x40FFFFFF, a));
+        int kx = tx1 + Math.round(value * w);
+        Ui.round(ctx, kx - 3, ty - 3, kx + 4, ty + 9, 3, Ui.alpha(0xFFFFFFFF, a));
+        int sw = Ui.alpha(st.textColor(), a);
+        Ui.round(ctx, x2 - 22, y + 3, x2 - 8, y + 15, 3, sw);
+        return y + 22;
     }
 
     private int optionRow(DrawContext ctx, int mx, int my, int x1, int x2, int y, String label, boolean on, boolean click, Runnable action, float dt, float a) {

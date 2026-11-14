@@ -64,7 +64,17 @@ public final class Toasts {
         if (t.length() > 60) t = t.substring(0, 60);
         if (b.length() > 200) b = b.substring(0, 200);
         TOASTS.add(new Toast(Type.of(type), t, b, 6000));
+        playSound();
         while (TOASTS.size() > 4) TOASTS.remove(0);
+    }
+
+    /** Petit « whoosh » discret, réglable dans les options du module Notifications. */
+    private static void playSound() {
+        HudConfig cfg = HudConfig.get();
+        if (!cfg.toastSound || cfg.toastVolume <= 0.01f) return;
+        MinecraftClient mc = MinecraftClient.getInstance();
+        mc.execute(() -> mc.getSoundManager().play(net.minecraft.client.sound.PositionedSoundInstance.master(
+                net.minecraft.sound.SoundEvents.UI_TOAST_IN, 1.15f, cfg.toastVolume)));
     }
 
     public static synchronized void render(DrawContext ctx, MinecraftClient mc) {

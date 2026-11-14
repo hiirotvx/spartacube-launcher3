@@ -135,6 +135,13 @@ public final class HudRenderer {
         return out;
     }
 
+    /** Texte affiché (avec crochets si l'option est activée). */
+    private static String display(HudModule m, MinecraftClient mc) {
+        String t = text(m, mc);
+        if (t == null) return null;
+        return HudConfig.get().settings(m).brackets ? "[" + t + "]" : t;
+    }
+
     /** Taille non mise à l'échelle. */
     private static int[] baseSize(HudModule m, MinecraftClient mc) {
         TextRenderer tr = mc.textRenderer;
@@ -148,7 +155,7 @@ public final class HudRenderer {
                 return new int[]{lines.isEmpty() ? 0 : w + PAD * 2, lines.isEmpty() ? 0 : lines.size() * 11 + PAD * 2 - 2};
             }
             default: {
-                String t = text(m, mc);
+                String t = display(m, mc);
                 if (t == null) return new int[]{0, 0};
                 return new int[]{tr.getWidth(t) + PAD * 2, tr.fontHeight + PAD * 2 - 1};
             }
@@ -194,11 +201,23 @@ public final class HudRenderer {
             case ARMOR -> renderArmor(ctx, mc, st);
             case EFFECTS -> renderEffects(ctx, mc, st);
             default -> {
-                String t = text(m, mc);
+                String t = display(m, mc);
                 if (t != null) {
                     int[] s = baseSize(m, mc);
-                    if (st.background) Ui.round(ctx, 0, 0, s[0], s[1], 3, 0x80000000);
-                    ctx.drawText(mc.textRenderer, t, PAD, PAD, st.textColor(), st.shadow);
+                    if (st.background) Ui.round(ctx, 0, 0, s[0], s[1], 3, st.bgColor());
+                    if (st.chroma) {
+                        // Arc-en-ciel qui ondule lettre par lettre
+                        int cx = PAD;
+                        for (int i = 0; i < t.length(); ) {
+                            int cp = t.codePointAt(i);
+                            String ch = new String(Character.toChars(cp));
+                            ctx.drawText(mc.textRenderer, ch, cx, PAD, st.textColor(x + cx), st.shadow);
+                            cx += mc.textRenderer.getWidth(ch);
+                            i += Character.charCount(cp);
+                        }
+                    } else {
+                        ctx.drawText(mc.textRenderer, t, PAD, PAD, st.textColor(), st.shadow);
+                    }
                 }
             }
         }
@@ -209,7 +228,7 @@ public final class HudRenderer {
         List<String> lines = effectLines(mc);
         if (lines.isEmpty()) return;
         int[] s = baseSize(HudModule.EFFECTS, mc);
-        if (st.background) Ui.round(ctx, 0, 0, s[0], s[1], 3, 0x80000000);
+        if (st.background) Ui.round(ctx, 0, 0, s[0], s[1], 3, st.bgColor());
         int y = PAD;
         for (String l : lines) {
             ctx.drawText(mc.textRenderer, l, PAD, y, st.textColor(), st.shadow);
@@ -219,7 +238,7 @@ public final class HudRenderer {
 
     private static void renderArmor(DrawContext ctx, MinecraftClient mc, ModuleSettings st) {
         int[] s = baseSize(HudModule.ARMOR, mc);
-        if (st.background) Ui.round(ctx, 0, 0, s[0], s[1], 3, 0x60000000);
+        if (st.background) Ui.round(ctx, 0, 0, s[0], s[1], 3, st.bgColor());
         ClientPlayerEntity p = mc.player;
         int y = 2;
         if (p != null) {
@@ -260,7 +279,7 @@ public final class HudRenderer {
     }
 
     private static void box(DrawContext ctx, MinecraftClient mc, ModuleSettings st, int x, int y, int w, int h, boolean pressed, String label) {
-        Ui.round(ctx, x, y, x + w, y + h, 3, pressed ? 0xD0FFFFFF : (st.background ? 0x80000000 : 0x30000000));
+        Ui.round(ctx, x, y, x + w, y + h, 3, pressed ? 0xD0FFFFFF : (st.background ? st.bgColor() : 0x30000000));
         TextRenderer tr = mc.textRenderer;
         int tw = tr.getWidth(label);
         int color = pressed ? 0xFF140B12 : st.textColor();

@@ -31,9 +31,33 @@ public final class HudConfig {
         public int color = 0;
         public boolean background = true;
         public boolean shadow = true;
+        /** Opacité du fond (0 à 100 %). */
+        public int bgOpacity = 50;
+        /** Texte entre crochets : [60 FPS]. */
+        public boolean brackets = false;
+        /** Couleur personnalisée (teinte / saturation / luminosité). */
+        public boolean customColor = false;
+        public float hue = 0.07f, sat = 0.85f, bri = 1.0f;
+        /** Mode arc-en-ciel. */
+        public boolean chroma = false;
+        public float chromaSpeed = 1.0f;
 
         public int textColor() {
+            return textColor(0);
+        }
+
+        /** offset : décalage (en pixels) pour que l'arc-en-ciel « ondule » d'un élément à l'autre. */
+        public int textColor(int offset) {
+            if (chroma) {
+                float h = (System.currentTimeMillis() % 100000L) / 1000f * 0.25f * chromaSpeed - offset / 300f;
+                return 0xFF000000 | (java.awt.Color.HSBtoRGB(h - (float) Math.floor(h), 0.75f, 1f) & 0xFFFFFF);
+            }
+            if (customColor) return 0xFF000000 | (java.awt.Color.HSBtoRGB(hue, sat, bri) & 0xFFFFFF);
             return COLORS[Math.floorMod(color, COLORS.length)];
+        }
+
+        public int bgColor() {
+            return (Math.round(Math.max(0, Math.min(100, bgOpacity)) * 2.55f) << 24);
         }
     }
 
@@ -41,15 +65,21 @@ public final class HudConfig {
         Map<String, ModuleSettings> modules = new HashMap<>();
         boolean customTitleScreen = true;
         int zoomFov = 15;
-        boolean flyBoost = true;
         float flyBoostMult = 2.5f;
+        boolean flyBoostSprintOnly = false;
+        boolean toastSound = true;
+        float toastVolume = 0.6f;
+        boolean freelookHold = true;
     }
 
     private final Map<HudModule, ModuleSettings> modules = new EnumMap<>(HudModule.class);
     public boolean customTitleScreen = true;
     public int zoomFov = 15;
-    public boolean flyBoost = true;
     public float flyBoostMult = 2.5f;
+    public boolean flyBoostSprintOnly = false;
+    public boolean toastSound = true;
+    public float toastVolume = 0.6f;
+    public boolean freelookHold = true;
 
     public static HudConfig get() {
         if (instance == null) instance = load();
@@ -83,7 +113,10 @@ public final class HudConfig {
         if (data != null) {
             cfg.customTitleScreen = data.customTitleScreen;
             cfg.zoomFov = Math.max(5, Math.min(60, data.zoomFov == 0 ? 15 : data.zoomFov));
-            cfg.flyBoost = data.flyBoost;
+            cfg.flyBoostSprintOnly = data.flyBoostSprintOnly;
+            cfg.toastSound = data.toastSound;
+            cfg.toastVolume = Math.max(0f, Math.min(1f, data.toastVolume));
+            cfg.freelookHold = data.freelookHold;
             cfg.flyBoostMult = Math.max(1f, Math.min(5f, data.flyBoostMult == 0 ? 2.5f : data.flyBoostMult));
         }
         return cfg;
@@ -94,7 +127,10 @@ public final class HudConfig {
         for (HudModule m : HudModule.values()) data.modules.put(m.name(), settings(m));
         data.customTitleScreen = customTitleScreen;
         data.zoomFov = zoomFov;
-        data.flyBoost = flyBoost;
+        data.flyBoostSprintOnly = flyBoostSprintOnly;
+        data.toastSound = toastSound;
+        data.toastVolume = toastVolume;
+        data.freelookHold = freelookHold;
         data.flyBoostMult = flyBoostMult;
         try {
             Files.createDirectories(FILE.getParent());
