@@ -8,7 +8,10 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.MutableText;
+import net.minecraft.text.Style;
+import net.minecraft.text.StyleSpriteSource;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.Formatting;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -28,11 +31,47 @@ public abstract class MixinEntityRenderer {
             out = Text.empty().append(name).append(Text.literal(" ")).append(LauncherUsers.badge());
         }
         if (cfg.isEnabled(HudModule.HEALTH) && entity != MinecraftClient.getInstance().player
-                && (!cfg.healthTargetOnly || MinecraftClient.getInstance().targetedEntity == entity)) {
-            if (out == null) out = Text.empty().append(name);
-            out.append(Text.literal("  ")).append(health(player, cfg.healthMode));
+                && (!cfg.healthAimOnly || MinecraftClient.getInstance().targetedEntity == entity)) {
+            Text base = out == null ? name : out;
+            if (cfg.healthStyle == 0) out = withHearts(base, player);
+            else out = Text.empty().append(base).append(Text.literal("  ")).append(health(player, cfg.healthStyle - 1));
         }
         if (out != null) cir.setReturnValue(out);
+    }
+
+    private static final Style HEARTS = Style.EMPTY.withFont(new StyleSpriteSource.Font(Identifier.of("spartacube", "hearts"))).withColor(0xFFFFFF);
+
+    /** Décalage horizontal (positif ou négatif) fait de caractères d'espacement de la police « hearts ». */
+    private static String shift(int px) {
+        StringBuilder sb = new StringBuilder();
+        int n = Math.min(511, Math.abs(px));
+        char first = px < 0 ? '\uF800' : '\uF820';
+        for (int i = 0; i < 9; i++) if ((n & (1 << i)) != 0) sb.append((char) (first + i));
+        return sb.toString();
+    }
+
+    /** Rangée de vrais cœurs centrée au-dessus du pseudo (la police dessine les cœurs une ligne plus haut). */
+    private static MutableText withHearts(Text base, PlayerEntity p) {
+        float hp = p.getHealth(), max = Math.max(1f, p.getMaxHealth()), abs = p.getAbsorptionAmount();
+        int hearts = Math.max(1, Math.min(10, (int) Math.ceil(max / 2f)));
+        int units = Math.max(hp > 0 ? 1 : 0, Math.round(hp / max * hearts * 2f));
+        StringBuilder row = new StringBuilder();
+        for (int i = 0; i < hearts; i++) row.append(units >= (i + 1) * 2 ? '\uE000' : units == i * 2 + 1 ? '\uE001' : '\uE002');
+        for (int i = 0; i < Math.min(5, (int) Math.ceil(abs / 2f)); i++) row.append('\uE003');
+        Text heartsText = Text.literal(row.toString()).setStyle(HEARTS);
+        var tr = MinecraftClient.getInstance().textRenderer;
+        int w = tr.getWidth(base), h = tr.getWidth(heartsText);
+        MutableText out = Text.empty();
+        if (h <= w) {
+            int pad = (w - h) / 2;
+            out.append(base).append(Text.literal(shift(-(w - pad))).setStyle(HEARTS)).append(heartsText)
+                    .append(Text.literal(shift(w - pad - h)).setStyle(HEARTS));
+        } else {
+            int pad = (h - w) / 2;
+            out.append(heartsText).append(Text.literal(shift(-(h - pad))).setStyle(HEARTS)).append(base)
+                    .append(Text.literal(shift(h - pad - w)).setStyle(HEARTS));
+        }
+        return out;
     }
 
     private static Text health(PlayerEntity p, int mode) {

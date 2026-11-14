@@ -79,8 +79,8 @@ public final class HudConfig {
         int freelookKey = 342;  // Alt gauche
         int menuKey = 344;      // Shift droit
         int fullbrightKey = 0;  // aucune
-        int healthMode = 0;
-        boolean healthTargetOnly = true;
+        int healthStyle = 0;
+        boolean healthAimOnly = false;
         boolean shotCopy = true;
         boolean shotToast = true;
         int themePreset = 0;
@@ -102,9 +102,9 @@ public final class HudConfig {
     public int freelookKey = 342;
     public int menuKey = 344;
     public int fullbrightKey = 0;
-    /** 0 : « ❤ 9.5 », 1 : « 19 / 20 PV », 2 : barre de cœurs. */
-    public int healthMode = 0;
-    public boolean healthTargetOnly = true;
+    /** 0 : vrais cœurs au-dessus du pseudo, 1 : « ❤ 9.5 », 2 : « 19 / 20 PV », 3 : cœurs en texte. */
+    public int healthStyle = 0;
+    public boolean healthAimOnly = false;
     /** Captures d'écran : copie automatique et notification. */
     public boolean shotCopy = true;
     public boolean shotToast = true;
@@ -155,8 +155,8 @@ public final class HudConfig {
             cfg.freelookKey = data.freelookKey > 0 ? data.freelookKey : 342;
             cfg.menuKey = data.menuKey > 0 ? data.menuKey : 344;
             cfg.fullbrightKey = Math.max(0, data.fullbrightKey);
-            cfg.healthMode = Math.floorMod(data.healthMode, 3);
-            cfg.healthTargetOnly = data.healthTargetOnly;
+            cfg.healthStyle = Math.floorMod(data.healthStyle, 4);
+            cfg.healthAimOnly = data.healthAimOnly;
             cfg.shotCopy = data.shotCopy;
             cfg.shotToast = data.shotToast;
             cfg.themePreset = Math.max(0, data.themePreset);
@@ -182,8 +182,8 @@ public final class HudConfig {
         data.freelookKey = freelookKey;
         data.menuKey = menuKey;
         data.fullbrightKey = fullbrightKey;
-        data.healthMode = healthMode;
-        data.healthTargetOnly = healthTargetOnly;
+        data.healthStyle = healthStyle;
+        data.healthAimOnly = healthAimOnly;
         data.shotCopy = shotCopy;
         data.shotToast = shotToast;
         data.themePreset = themePreset;

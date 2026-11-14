@@ -405,11 +405,11 @@ public class SpartaModsScreen extends Screen {
             }
             case HEALTH -> {
                 y = section(ctx, x, y, "Affichage", a);
-                y = choiceRow(ctx, mouseX, mouseY, x, x2, y, "Format", new String[]{"❤ 9.5", "19 / 20 PV", "❤❤❤❤❤"}, cfg.healthMode,
-                        i -> { cfg.healthMode = i; cfg.save(); }, click, a);
-                y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Seulement le joueur visé", cfg.healthTargetOnly, click,
-                        () -> { cfg.healthTargetOnly = !cfg.healthTargetOnly; cfg.save(); }, dt, a);
-                y = note(ctx, x, y, "Les cœurs s'affichent à côté du pseudo, au-dessus de la tête.", a);
+                y = choiceRow(ctx, mouseX, mouseY, x, x2, y, "Format", new String[]{"Vrais cœurs (au-dessus)", "❤ 9.5", "19 / 20 PV", "Cœurs en texte"}, cfg.healthStyle,
+                        i -> { cfg.healthStyle = i; cfg.save(); }, click, a);
+                y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Seulement le joueur visé", cfg.healthAimOnly, click,
+                        () -> { cfg.healthAimOnly = !cfg.healthAimOnly; cfg.save(); }, dt, a);
+                y = note(ctx, x, y, "Vrais cœurs : une rangée de cœurs au-dessus du pseudo. Les autres formats s'affichent à côté du pseudo.", a);
             }
             case EFFECTS -> {
                 y = section(ctx, x, y, "Effets", a);

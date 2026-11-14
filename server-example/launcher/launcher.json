@@ -62,5 +62,33 @@
     }
   ],
   "voteUrl": "https://spartacube.fr/vote",
-  "newsFeedUrl": "https://spartacube.fr/api/rss"
+  "newsFeedUrl": "https://spartacube.fr/api/rss",
+  "voteSites": [
+    {
+      "name": "serveur-prive.net",
+      "url": "https://serveur-prive.net/minecraft/spartacube-6590/vote/{player}",
+      "cooldownMin": 90
+    },
+    {
+      "name": "top-serveurs.net",
+      "url": "https://top-serveurs.net/minecraft/vote/spartacube?pseudo={player}",
+      "cooldownMin": 120
+    },
+    {
+      "name": "serveur-minecraft.com",
+      "url": "https://serveur-minecraft.com/2170",
+      "cooldownMin": 180
+    },
+    {
+      "name": "liste-serveurs-minecraft.org",
+      "url": "https://www.liste-serveurs-minecraft.org/serveur-minecraft/spartacube-survie-1-19/",
+      "cooldownMin": 180
+    },
+    {
+      "name": "serveursminecraft.org",
+      "url": "https://www.serveursminecraft.org/serveur/4799/",
+      "cooldownMin": 1440
+    }
+  ],
+  "destinations": []
 }

@@ -241,7 +241,10 @@ function registerIpc() {
     const site = votes.cleanSites(cfg.voteSites).find(x => x.url === url);
     if (!site) throw new Error('Site de vote inconnu');
     votes.markVoted(site.url);
-    bridge.openVoteWindow(path.join(__dirname, '../renderer/assets/icon.png'), site.url);
+    // {player} dans le lien : remplacé par le pseudo du compte connecté
+    const prof = auth.publicProfile();
+    const target = site.url.replace(/\{player\}|%7Bplayer%7D/gi, encodeURIComponent(prof && prof.name ? prof.name : ''));
+    bridge.openVoteWindow(path.join(__dirname, '../renderer/assets/icon.png'), target);
     return votes.status(cfg.voteSites);
   });
 

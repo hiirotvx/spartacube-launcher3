@@ -78,17 +78,32 @@
   "voteUrl": "https://spartacube.fr/vote",
   "voteSites": [
     {
-      "name": "Page de vote SpartaCube",
-      "url": "https://spartacube.fr/vote",
+      "name": "serveur-prive.net",
+      "url": "https://serveur-prive.net/minecraft/spartacube-6590/vote/{player}",
       "cooldownMin": 90
-    }
-  ],
-  "destinations": [
+    },
     {
-      "name": "Spawn",
-      "command": "/spawn"
+      "name": "top-serveurs.net",
+      "url": "https://top-serveurs.net/minecraft/vote/spartacube?pseudo={player}",
+      "cooldownMin": 120
+    },
+    {
+      "name": "serveur-minecraft.com",
+      "url": "https://serveur-minecraft.com/2170",
+      "cooldownMin": 180
+    },
+    {
+      "name": "liste-serveurs-minecraft.org",
+      "url": "https://www.liste-serveurs-minecraft.org/serveur-minecraft/spartacube-survie-1-19/",
+      "cooldownMin": 180
+    },
+    {
+      "name": "serveursminecraft.org",
+      "url": "https://www.serveursminecraft.org/serveur/4799/",
+      "cooldownMin": 1440
     }
   ],
+  "destinations": [],
   "theme": "auto",
   "discordClientId": "1570893669568090252",
   "newsFeedUrl": "https://spartacube.fr/api/rss"
