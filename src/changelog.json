@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.3.32",
+    "date": "14/11/2026",
+    "title": "Panel staff redessiné",
+    "items": [
+      "Nouveau style : têtes des joueurs, carte du joueur choisi, effet verre",
+      "Boutons adaptés à la longueur de leur texte, champs de saisie arrondis",
+      "Durées rapides en un clic : 30m, 2h, 1d, 7d, 30d, définitif"
+    ]
+  },
+  {
     "version": "1.3.31",
     "date": "14/11/2026",
     "title": "Menu Échap, macros et panel staff",

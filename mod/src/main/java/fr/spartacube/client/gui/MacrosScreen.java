@@ -39,7 +39,9 @@ public class MacrosScreen extends Screen {
         int x = px1() + 98, w = panelW() - 98 - 34;
         for (int i = 0; i < cfg.macros.size(); i++) {
             HudConfig.Macro m = cfg.macros.get(i);
-            TextFieldWidget f = new TextFieldWidget(this.textRenderer, x, rowY(i) + 2, w, 16, Text.literal("Commande"));
+            TextFieldWidget f = new TextFieldWidget(this.textRenderer, x + 7, rowY(i) + 6, w - 14, 12, Text.literal("Commande"));
+            f.setDrawsBackground(false);
+            f.setPlaceholder(Ui.t("/spawn, /home, un message…").styled(st -> st.withColor(0x80808A)));
             f.setMaxLength(200);
             f.setText(m.command == null ? "" : m.command);
             f.setChangedListener(s -> m.command = s);
@@ -69,6 +71,14 @@ public class MacrosScreen extends Screen {
         Ui.text(ctx, Ui.b("Macros"), x1 + 14, y1 + 12, 0xFFFFFFFF);
         Ui.text(ctx, Ui.t("Une touche envoie une commande (/spawn) ou un message."), x1 + 14, y1 + 25, Ui.MUTED);
 
+        // Fond des champs de texte (arrondi, contour à la couleur du thème quand le champ est actif)
+        int fx = x1 + 98, fw = panelW() - 98 - 34, fi = 0;
+        for (var child : this.children()) {
+            if (!(child instanceof TextFieldWidget tf)) continue;
+            int fy = rowY(fi++);
+            Ui.round(ctx, fx, fy, fx + fw, fy + 20, 6, 0x66000000);
+            Ui.outline(ctx, fx, fy, fx + fw, fy + 20, 6, tf.isFocused() ? Ui.accent(0xD0) : 0x26FFFFFF);
+        }
         super.render(ctx, mouseX, mouseY, delta); // champs de texte
 
         for (int i = 0; i < n; i++) {
