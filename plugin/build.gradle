@@ -1,7 +1,7 @@
 plugins { id 'java' }
 
 group = 'fr.spartacube'
-version = '1.3.1'
+version = '1.2.1'
 
 repositories {
     mavenCentral()
@@ -10,8 +10,6 @@ repositories {
 
 dependencies {
     compileOnly 'io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT'
-    compileOnly 'io.netty:netty-transport:4.1.115.Final'
-    compileOnly 'io.netty:netty-buffer:4.1.115.Final'
 }
 
 java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }

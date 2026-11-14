@@ -10,8 +10,6 @@ const state = {
   version: '',
   allowUserMods: true,
   news: [],
-  admins: [],
-  canEditNews: false,
   profile: null,
   modsLoadedFor: null,
   modrinthOffset: 0,
@@ -95,13 +93,8 @@ $('btnWebsite').onclick = () => L.openWebsite();
 
 /* ===================== Compte ===================== */
 
-function isAdmin() {
-  return !!(state.profile && state.canEditNews && state.admins.includes(String(state.profile.uuid).toLowerCase().replace(/-/g, '')));
-}
-
 function setProfile(p) {
   state.profile = p;
-  $('btnNewsEdit').classList.toggle('hidden', !isAdmin());
   $('playerName').textContent = p.name;
   $('settingsName').textContent = p.name;
   $('avatar').src = `https://mc-heads.net/avatar/${encodeURIComponent(p.uuid)}/96`;
@@ -163,78 +156,7 @@ function focusNews(id) {
   card.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-/* ===================== Édition des actualités (admins) ===================== */
-
-let neDraft = [];
-
-function today() {
-  const d = new Date();
-  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-}
-
-function neField(n, key, label, opts = {}) {
-  const input = opts.area
-    ? el('textarea', { maxlength: opts.max || 4000, placeholder: opts.ph || '' })
-    : el('input', { type: 'text', maxlength: opts.max || 120, placeholder: opts.ph || '' });
-  input.value = n[key] || '';
-  input.oninput = () => { n[key] = input.value; };
-  return el('label', { class: opts.full ? 'full' : '' }, label, input);
-}
-
-function renderNewsEditor() {
-  const list = $('neList');
-  list.replaceChildren();
-  if (!neDraft.length) list.append(el('div', { class: 'empty', text: 'Aucune actualité. Clique sur « + Nouvelle actualité ».' }));
-  neDraft.forEach((n, i) => {
-    const move = d => { const j = i + d; if (j < 0 || j >= neDraft.length) return; [neDraft[i], neDraft[j]] = [neDraft[j], neDraft[i]]; renderNewsEditor(); };
-    list.append(el('div', { class: 'ne-item' },
-      el('div', { class: 'ne-tools' },
-        el('span', { class: 'num', text: `#${i + 1}` }),
-        el('button', { class: 'icon-btn small', title: 'Monter', text: '↑', onclick: () => move(-1) }),
-        el('button', { class: 'icon-btn small', title: 'Descendre', text: '↓', onclick: () => move(1) }),
-        el('button', { class: 'icon-btn small', title: 'Supprimer', text: '🗑', onclick: () => { neDraft.splice(i, 1); renderNewsEditor(); } })),
-      neField(n, 'title', 'Titre *', { full: true, max: 120, ph: 'Event Halloween ce week-end !' }),
-      neField(n, 'text', 'Texte', { full: true, area: true, ph: 'Détails de l\'actualité…' }),
-      neField(n, 'tag', 'Étiquette', { max: 24, ph: 'Event, Mise à jour…' }),
-      neField(n, 'date', 'Date', { max: 40 }),
-      neField(n, 'image', 'Image (https://…)', { max: 500 }),
-      neField(n, 'url', 'Lien « En savoir plus » (https://…)', { max: 500 })));
-  });
-}
-
-async function openNewsEditor() {
-  const fresh = await api(L.news.get());
-  neDraft = (fresh || state.news).map(({ id, ...n }) => ({ ...n }));
-  renderNewsEditor();
-  $('newsEditor').classList.remove('hidden');
-}
-
-function closeNewsEditor() { $('newsEditor').classList.add('hidden'); }
-
-$('btnNewsEdit').onclick = openNewsEditor;
-$('neClose').onclick = closeNewsEditor;
-$('neCancel').onclick = closeNewsEditor;
-$('neAdd').onclick = () => {
-  neDraft.unshift({ title: '', text: '', tag: '', date: today(), image: '', url: '' });
-  renderNewsEditor();
-  $('neList').scrollTop = 0;
-};
-$('nePublish').onclick = async () => {
-  const bad = neDraft.find(n => !String(n.title || '').trim());
-  if (bad) { toast('Chaque actualité doit avoir un titre.', 'err'); return; }
-  const badLink = neDraft.find(n => (n.image && !n.image.startsWith('https://')) || (n.url && !n.url.startsWith('https://')));
-  if (badLink) { toast('Les liens et images doivent commencer par https://', 'err'); return; }
-  const btn = $('nePublish');
-  btn.disabled = true;
-  btn.textContent = 'Publication…';
-  const r = await api(L.news.publish(neDraft));
-  btn.disabled = false;
-  btn.textContent = 'Publier pour tous les joueurs';
-  if (!r) return;
-  toast(`${r.count} actualité(s) publiée(s) ✔`, 'ok');
-  renderNews({ news: r.news, message: '' });
-  closeNewsEditor();
-};
+$('btnNewsSite').onclick = () => L.openUrl(state.website || 'https://spartacube.fr');
 
 /* ===================== Versions ===================== */
 
@@ -806,8 +728,7 @@ $('btnUpdate').onclick = () => L.installUpdate();
   $('appVersion').textContent = `v${info.appVersion}`;
   state.serverTheme = info.theme;
   applyTheme(info.theme);
-  state.admins = info.admins || [];
-  state.canEditNews = info.canEditNews;
+  state.website = info.website;
   renderNews(info);
   if (info.destinations.length) {
     const sel = $('destSelect');

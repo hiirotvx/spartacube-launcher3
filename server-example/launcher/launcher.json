@@ -52,8 +52,5 @@
     }
   ],
   "voteUrl": "https://spartacube.fr/vote",
-  "newsApiUrl": "",
-  "admins": [
-    "6eb277d7-48c3-41c8-a3ba-bf5339f59cd4"
-  ]
+  "newsFeedUrl": "https://spartacube.fr/api/rss"
 }

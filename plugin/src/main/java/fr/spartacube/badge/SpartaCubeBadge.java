@@ -44,46 +44,15 @@ public final class SpartaCubeBadge extends JavaPlugin implements PluginMessageLi
         getServer().getMessenger().registerOutgoingPluginChannel(this, COS_ALLOWED);
         getServer().getMessenger().registerOutgoingPluginChannel(this, COS_ACTIVE);
         saveDefaultConfig();
-        // Ajoute les nouvelles options (admins, news-api) à un config.yml existant
-        getConfig().options().copyDefaults(true);
-        saveConfig();
         getServer().getPluginManager().registerEvents(this, this);
         getLogger().info("Pastilles du launcher SpartaCube actives.");
-        startNewsApi();
     }
-
-    private NewsApi newsApi;
-
-    private void startNewsApi() {
-        if (!getConfig().getBoolean("news-api.enabled", true)) return;
-        java.util.Set<String> admins = new java.util.HashSet<>();
-        for (String a : getConfig().getStringList("admins")) admins.add(a.trim().toLowerCase(java.util.Locale.ROOT));
-        newsApi = new NewsApi(getLogger(), getDataFolder().toPath(), admins);
-        newsApi.init();
-        String mode = getConfig().getString("news-api.mode", "minecraft");
-        if ("port".equalsIgnoreCase(mode)) {
-            int port = getConfig().getInt("news-api.port", 8765);
-            try {
-                newsApi.start(getConfig().getString("news-api.bind", "0.0.0.0"), port);
-            } catch (Exception e) {
-                getLogger().warning("Impossible de démarrer l'API des actualités sur le port " + port + " : " + e.getMessage());
-            }
-        } else {
-            sharedHttp = new SharedPortHttp(newsApi, getLogger());
-            if (sharedHttp.register()) getLogger().info("API des actualités du launcher active sur le port du serveur Minecraft.");
-            else sharedHttp = null;
-        }
-    }
-
-    private SharedPortHttp sharedHttp;
 
     @Override
     public void onDisable() {
         getServer().getMessenger().unregisterIncomingPluginChannel(this);
         getServer().getMessenger().unregisterOutgoingPluginChannel(this);
         users.clear();
-        if (newsApi != null) newsApi.stop();
-        if (sharedHttp != null) sharedHttp.unregister();
     }
 
     @Override
