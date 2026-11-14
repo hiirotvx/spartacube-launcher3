@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.3.29",
+    "date": "14/11/2026",
+    "title": "Émojis dans le chat",
+    "items": [
+      "Écris :eyes: dans le chat pour afficher 👀 (75 émojis en couleur)",
+      "Suggestions pendant la frappe dès que tu tapes « : »",
+      "Bouton à droite de la barre de chat pour choisir un émoji dans une grille"
+    ]
+  },
+  {
     "version": "1.3.28",
     "date": "14/11/2026",
     "title": "Changer de compte depuis le jeu",

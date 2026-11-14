@@ -51,6 +51,7 @@ public class SpartaCubeClient implements ClientModInitializer {
         LauncherUsers.init();
         Cosmetics.init();
         fr.spartacube.client.hud.Combat.init();
+        fr.spartacube.client.gui.ChatEmotes.register();
 
         // HUD (FPS, ping, CPS, minimap…)
         HudElementRegistry.addLast(Identifier.of("spartacube", "hud"), (ctx, tickCounter) -> {
