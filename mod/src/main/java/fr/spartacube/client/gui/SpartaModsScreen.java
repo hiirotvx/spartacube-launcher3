@@ -458,7 +458,7 @@ public class SpartaModsScreen extends Screen {
                         i -> { st.mode = i; cfg.save(); }, click, a);
                 y = slider(ctx, mouseX, mouseY, x, x2, y, "Taille", (st.scale - 0.5f) / 1.5f,
                         v -> st.scale = Math.round((0.5f + v * 1.5f) * 20f) / 20f, Math.round(st.scale * 100) + " %", a);
-                y = choiceRow(ctx, mouseX, mouseY, x, x2, y, "Couleur", new String[]{"Blanc", "Couleur 2", "Couleur 3", "Couleur 4", "Couleur 5", "Couleur 6"}, Math.floorMod(st.color, Math.min(6, HudConfig.COLORS.length)),
+                y = choiceRow(ctx, mouseX, mouseY, x, x2, y, "Couleur", new String[]{"Blanc", "Jaune", "Orange", "Rose", "Vert", "Bleu"}, Math.floorMod(st.color, Math.min(6, HudConfig.COLORS.length)),
                         i -> { st.color = i; st.customColor = false; cfg.save(); }, click, a);
                 y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Arc-en-ciel", st.chroma, click, () -> { st.chroma = !st.chroma; cfg.save(); }, dt, a);
                 y = note(ctx, x, y, "Le viseur personnalisé remplace celui du jeu (sans l'indicateur de recharge d'attaque).", a);
