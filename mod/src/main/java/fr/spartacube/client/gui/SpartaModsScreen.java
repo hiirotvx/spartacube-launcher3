@@ -522,6 +522,14 @@ public class SpartaModsScreen extends Screen {
                 y = slider(ctx, mouseX, mouseY, x, x2, y, "Taille", (st.scale - 0.5f) / 1.5f,
                         v -> st.scale = Math.round((0.5f + v * 1.5f) * 20f) / 20f, Math.round(st.scale * 100) + " %", a);
             }
+            case CHAT -> {
+                y = section(ctx, x, y, "Chat", a);
+                y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Police moderne", (st.mode & 1) == 0, click, () -> { st.mode ^= 1; cfg.save(); }, dt, a);
+                y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Heure devant chaque message", (st.mode & 2) == 0, click, () -> { st.mode ^= 2; cfg.save(); }, dt, a);
+                y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Barre de couleur (couleur du thème)", (st.mode & 4) == 0, click, () -> { st.mode ^= 4; cfg.save(); }, dt, a);
+                y = note(ctx, x, y, "S'applique aux nouveaux messages. L'historique passe à 2 000 messages.", a);
+                y = note(ctx, x, y, "Fond et taille du chat : Options de Minecraft → Chat.", a);
+            }
             case ARMOR -> {
                 y = section(ctx, x, y, "Armure", a);
                 y = choiceRow(ctx, mouseX, mouseY, x, x2, y, "État", new String[]{"Icônes", "Pourcentage", "Barre d'usure", "Durabilité restante"}, st.mode,
@@ -603,7 +611,7 @@ public class SpartaModsScreen extends Screen {
             y += 22;
         } else if (m != HudModule.ZOOM && m != HudModule.FLY_BOOST && m != HudModule.FREELOOK && m != HudModule.NOTIFICATIONS
                 && m != HudModule.FULLBRIGHT && m != HudModule.HEALTH && m != HudModule.SCREENSHOTS
-                && m != HudModule.SNAPLOOK && m != HudModule.CROSSHAIR && m != HudModule.BOSS_BAR && m != HudModule.TITLES) {
+                && m != HudModule.CHAT && m != HudModule.SNAPLOOK && m != HudModule.CROSSHAIR && m != HudModule.BOSS_BAR && m != HudModule.TITLES) {
             y = note(ctx, x, y, "Ce module n'a pas d'autre option.", a);
         }
 

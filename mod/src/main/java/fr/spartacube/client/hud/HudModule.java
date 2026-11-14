@@ -35,7 +35,7 @@ public enum HudModule {
     SNAPLOOK("Snaplook", "Maintiens une touche pour regarder derrière toi", Category.MECHANIC, "search", Kind.MECHANIC, false, 0, 0),
     NO_HURT_CAM("Sans secousse", "Supprime le tremblement de la caméra quand tu prends des dégâts", Category.MECHANIC, "move", Kind.MECHANIC, false, 0, 0),
     CROSSHAIR("Viseur", "Viseur personnalisé : forme, taille et couleur", Category.MECHANIC, "search", Kind.MECHANIC, false, 0, 0),
-    CHAT("Chat étendu", "Garde 2 000 messages dans le chat au lieu de 100", Category.SERVER, "server", Kind.MECHANIC, true, 0, 0),
+    CHAT("Chat SpartaCube", "Chat modernisé : police, heure des messages, barre de couleur, 2 000 messages gardés", Category.SERVER, "server", Kind.MECHANIC, true, 0, 0),
     TAB_PING("Ping en chiffres", "Liste des joueurs (Tab) : ping en millisecondes à la place des barres", Category.SERVER, "ping", Kind.MECHANIC, true, 0, 0),
     BOSS_BAR("Barre de boss", "Redimensionne ou masque la barre de vie des boss", Category.SERVER, "scoreboard", Kind.MECHANIC, false, 0, 0),
     TITLES("Titres", "Réduit ou agrandit les grands textes au centre de l'écran", Category.SERVER, "scoreboard", Kind.MECHANIC, false, 0, 0),
