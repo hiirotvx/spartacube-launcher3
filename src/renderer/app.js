@@ -69,7 +69,7 @@ function goto(page) {
   if (page === 'skin') initSkinPage();
   if (page === 'settings') fillSettings();
 }
-document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', () => goto(b.dataset.page)));
+document.querySelectorAll('.nav-btn[data-page]').forEach(b => b.addEventListener('click', () => goto(b.dataset.page)));
 document.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => goto(b.dataset.goto)));
 
 $('btnMin').onclick = () => L.minimize();
@@ -158,43 +158,11 @@ function focusNews(id) {
 
 $('btnNewsSite').onclick = () => L.openUrl(state.website || 'https://spartacube.fr');
 
-/* ===================== Console du jeu ===================== */
+/* ===================== Console du jeu (fenêtre séparée) ===================== */
 
-const consoleOut = $('consoleOut');
-let consoleLines = 0;
-
-function consoleAppend(lines) {
-  if (!lines || !lines.length) return;
-  if (!consoleLines) consoleOut.replaceChildren();
-  const frag = document.createDocumentFragment();
-  for (const l of lines) {
-    const cls = /\/(ERROR|FATAL)\]|Exception|\tat /.test(l) ? 'ln err' : /\/WARN\]/.test(l) ? 'ln warn' : /\/DEBUG\]/.test(l) ? 'ln dim' : 'ln';
-    frag.append(el('div', { class: cls, text: l }));
-    consoleLines++;
-  }
-  consoleOut.append(frag);
-  while (consoleLines > 2000 && consoleOut.firstChild) { consoleOut.firstChild.remove(); consoleLines--; }
-  if ($('consoleFollow').checked) consoleOut.scrollTop = consoleOut.scrollHeight;
-}
-
-function consoleClear(message) {
-  consoleLines = 0;
-  consoleOut.replaceChildren(el('div', { class: 'empty', text: message }));
-}
-
-L.onGameLog(consoleAppend);
-L.onGameLogReset(() => consoleClear('Démarrage du jeu…'));
-L.onGameStarted(() => { $('consoleDot').classList.remove('hidden'); $('consoleState').textContent = 'Jeu en cours — messages en direct'; });
-L.onGameClosed(() => { $('consoleDot').classList.add('hidden'); $('consoleState').textContent = 'Jeu fermé — derniers messages'; });
-L.getGameLog().then(consoleAppend).catch(() => {});
-$('btnConsoleClear').onclick = () => consoleClear('Console vidée.');
-$('btnConsoleFolder').onclick = () => L.openLogs();
-$('btnConsoleCopy').onclick = async () => {
-  try {
-    await navigator.clipboard.writeText([...consoleOut.querySelectorAll('.ln')].map(n => n.textContent).join('\n'));
-    toast('Console copiée', 'ok');
-  } catch { toast('Copie impossible', 'err'); }
-};
+$('btnConsole').onclick = () => L.openConsole();
+L.onGameStarted(() => $('consoleDot').classList.remove('hidden'));
+L.onGameClosed(() => $('consoleDot').classList.add('hidden'));
 
 /* ===================== Avis ===================== */
 

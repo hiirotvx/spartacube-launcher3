@@ -52,7 +52,7 @@
         <button class="nav-btn" data-page="shots" title="Captures">
           <svg viewBox="0 0 24 24"><path d="M4 5h3l2-2h6l2 2h3a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm8 3.5A4.5 4.5 0 1 0 12 17.5 4.5 4.5 0 0 0 12 8.5zm0 2a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg><span>Captures</span>
         </button>
-        <button class="nav-btn" data-page="console" title="Console du jeu">
+        <button class="nav-btn" id="btnConsole" title="Ouvrir la console du jeu dans une fenêtre">
           <svg viewBox="0 0 24 24"><path d="M3 4h18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm3.3 4.3-1.4 1.4L7.2 12l-2.3 2.3 1.4 1.4L10 12zM11 14v2h7v-2z"/></svg><span>Console</span><i id="consoleDot" class="live-dot hidden"></i>
         </button>
         <button class="nav-btn" data-page="skin" title="Skin">
@@ -159,20 +159,6 @@
         </div>
         <p class="hint">Chaque vote soutient le serveur et te rapporte des récompenses en jeu. Le site s'ouvre dans une fenêtre du launcher, au-dessus du jeu.</p>
         <div id="voteSites" class="vote-grid"></div>
-      </div>
-
-      <!-- ---------- Console du jeu ---------- -->
-      <div class="page" id="page-console">
-        <div class="page-head">
-          <h1>Console <small id="consoleState">Le jeu n'est pas lancé</small></h1>
-          <div class="head-actions">
-            <label class="check small"><input type="checkbox" id="consoleFollow" checked> Suivre</label>
-            <button id="btnConsoleCopy" class="btn-secondary">Copier</button>
-            <button id="btnConsoleClear" class="btn-secondary">Vider</button>
-            <button id="btnConsoleFolder" class="btn-secondary">Dossier des logs</button>
-          </div>
-        </div>
-        <div id="consoleOut" class="console-out"><div class="empty">Les messages du jeu s'afficheront ici en direct dès que tu cliques sur JOUER.</div></div>
       </div>
 
       <!-- ---------- Captures ---------- -->

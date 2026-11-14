@@ -82,8 +82,43 @@ function liveWin() {
   return win && !win.isDestroyed() ? win : null;
 }
 
+const CONSOLE_CHANNELS = ['game-log', 'game-log-reset', 'game-started', 'game-closed'];
+let consoleWin = null;
+
 function send(channel, data) {
   if (win && !win.isDestroyed()) win.webContents.send(channel, data);
+  if (consoleWin && !consoleWin.isDestroyed() && CONSOLE_CHANNELS.includes(channel)) consoleWin.webContents.send(channel, data);
+}
+
+/** Console du jeu dans sa propre fenêtre. */
+function openConsoleWindow() {
+  if (consoleWin && !consoleWin.isDestroyed()) {
+    if (consoleWin.isMinimized()) consoleWin.restore();
+    consoleWin.show();
+    consoleWin.focus();
+    return;
+  }
+  consoleWin = new BrowserWindow({
+    width: 900,
+    height: 520,
+    minWidth: 560,
+    minHeight: 300,
+    backgroundColor: '#100a0f',
+    autoHideMenuBar: true,
+    title: 'Console du jeu — SpartaCube',
+    icon: path.join(__dirname, '../renderer/assets/icon.png'),
+    webPreferences: {
+      preload: path.join(__dirname, '../preload-console.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true
+    }
+  });
+  consoleWin.setMenuBarVisibility(false);
+  consoleWin.loadFile(path.join(__dirname, '../renderer/console.html'));
+  consoleWin.webContents.on('will-navigate', e => e.preventDefault());
+  consoleWin.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  consoleWin.on('closed', () => { consoleWin = null; });
 }
 
 /* ---------- Console du jeu : lignes gardées en mémoire et envoyées par paquets ---------- */
@@ -140,6 +175,7 @@ function hideToTray() {
 function quitFully() {
   allowClose = true;
   if (tray) { try { tray.destroy(); } catch { /* déjà détruite */ } tray = null; }
+  if (consoleWin && !consoleWin.isDestroyed()) consoleWin.close();
   const w = liveWin();
   if (w) w.close();
   // Le jeu continue de tourner tout seul si une partie est en cours
@@ -383,6 +419,8 @@ function registerIpc() {
 
   ipcMain.handle('install-update', async () => { allowClose = true; autoUpdater.quitAndInstall(); });
   ipcMain.handle('logs:get', async () => gameLog.slice());
+  ipcMain.handle('logs:running', async () => game.isRunning());
+  ipcMain.handle('console:open', async () => { openConsoleWindow(); return true; });
 
   // Avis des joueurs : envoyé sur le salon Discord du staff (webhook de la config intégrée uniquement)
   let lastFeedback = 0;

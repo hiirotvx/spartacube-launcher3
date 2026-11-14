@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Console du jeu — SpartaCube</title>
+  <link rel="stylesheet" href="console.css">
+</head>
+<body>
+  <header>
+    <span class="dot" id="dot"></span>
+    <strong>Console du jeu</strong>
+    <span id="state" class="state">Le jeu n'est pas lancé</span>
+    <span class="spacer"></span>
+    <input type="text" id="filter" placeholder="Filtrer…" spellcheck="false">
+    <label><input type="checkbox" id="follow" checked> Suivre</label>
+    <button id="copy">Copier</button>
+    <button id="clear">Vider</button>
+    <button id="folder">Dossier des logs</button>
+  </header>
+  <main id="out"><div class="empty">Les messages du jeu s'afficheront ici en direct dès que tu cliques sur JOUER.</div></main>
+  <script src="console.js"></script>
+</body>
+</html>

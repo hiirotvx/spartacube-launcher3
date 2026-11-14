@@ -69,10 +69,8 @@ contextBridge.exposeInMainWorld('launcher', {
   onGameStarted: listen('game-started'),
   onGameClosed: listen('game-closed'),
   onUpdate: listen('update'),
-  onGameLog: listen('game-log'),
-  onGameLogReset: listen('game-log-reset'),
   onAskClose: listen('ask-close'),
-  getGameLog: () => call('logs:get'),
+  openConsole: () => call('console:open'),
   sendFeedback: (kind, text) => call('feedback:send', kind, text),
   closeChoice: choice => call('close-choice', choice)
 });
