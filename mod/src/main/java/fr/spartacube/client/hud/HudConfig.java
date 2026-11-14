@@ -44,6 +44,8 @@ public final class HudConfig {
         /** Mode d'affichage propre au module (ex. armure : 0 icônes, 1 %, 2 barre, 3 restant). */
         public int mode = 0;
         public boolean horizontal = false;
+        /** Couleurs selon l'état (ex. effets : vert = positif, rouge = négatif). */
+        public boolean stateColors = true;
 
         public int textColor() {
             return textColor(0);
@@ -79,6 +81,13 @@ public final class HudConfig {
         int fullbrightKey = 0;  // aucune
         int healthMode = 0;
         boolean healthTargetOnly = true;
+        boolean shotCopy = true;
+        boolean shotToast = true;
+        int themePreset = 0;
+        float themeHue = 0.58f;
+        float themeSat = 0.55f;
+        boolean themeChroma = false;
+        boolean themeNeutral = false;
     }
 
     private final Map<HudModule, ModuleSettings> modules = new EnumMap<>(HudModule.class);
@@ -96,6 +105,15 @@ public final class HudConfig {
     /** 0 : « ❤ 9.5 », 1 : « 19 / 20 PV », 2 : barre de cœurs. */
     public int healthMode = 0;
     public boolean healthTargetOnly = true;
+    /** Captures d'écran : copie automatique et notification. */
+    public boolean shotCopy = true;
+    public boolean shotToast = true;
+    /** Thème du menu : préréglage, couleur perso (teinte / intensité), arc-en-ciel, fond neutre. */
+    public int themePreset = 0;
+    public float themeHue = 0.58f;
+    public float themeSat = 0.55f;
+    public boolean themeChroma = false;
+    public boolean themeNeutral = false;
 
     public static HudConfig get() {
         if (instance == null) instance = load();
@@ -139,6 +157,13 @@ public final class HudConfig {
             cfg.fullbrightKey = Math.max(0, data.fullbrightKey);
             cfg.healthMode = Math.floorMod(data.healthMode, 3);
             cfg.healthTargetOnly = data.healthTargetOnly;
+            cfg.shotCopy = data.shotCopy;
+            cfg.shotToast = data.shotToast;
+            cfg.themePreset = Math.max(0, data.themePreset);
+            cfg.themeHue = Math.max(0f, Math.min(1f, data.themeHue));
+            cfg.themeSat = Math.max(0.1f, Math.min(1f, data.themeSat == 0 ? 0.55f : data.themeSat));
+            cfg.themeChroma = data.themeChroma;
+            cfg.themeNeutral = data.themeNeutral;
             cfg.flyBoostMult = Math.max(1f, Math.min(5f, data.flyBoostMult == 0 ? 2.5f : data.flyBoostMult));
         }
         return cfg;
@@ -159,6 +184,13 @@ public final class HudConfig {
         data.fullbrightKey = fullbrightKey;
         data.healthMode = healthMode;
         data.healthTargetOnly = healthTargetOnly;
+        data.shotCopy = shotCopy;
+        data.shotToast = shotToast;
+        data.themePreset = themePreset;
+        data.themeHue = themeHue;
+        data.themeSat = themeSat;
+        data.themeChroma = themeChroma;
+        data.themeNeutral = themeNeutral;
         data.flyBoostMult = flyBoostMult;
         try {
             Files.createDirectories(FILE.getParent());

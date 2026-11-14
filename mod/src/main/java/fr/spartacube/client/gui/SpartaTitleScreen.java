@@ -130,6 +130,7 @@ public class SpartaTitleScreen extends Screen {
 
     @Override
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
+        Ui.applyTheme();
         long now = Util.getMeasuringTimeMs();
         float dt = this.lastFrame == 0 ? 0f : Math.min(0.1f, (now - this.lastFrame) / 1000f);
         this.lastFrame = now;
@@ -169,7 +170,7 @@ public class SpartaTitleScreen extends Screen {
             int w = Ui.width(hovered.label) + 12;
             int x = hovered.x + hovered.w / 2 - w / 2;
             int y = hovered.y - 18;
-            Ui.round(ctx, x, y, x + w, y + 14, 4, 0xE0140B12);
+            Ui.round(ctx, x, y, x + w, y + 14, 4, Ui.panel(0xE0));
             Ui.centered(ctx, hovered.label, x + w / 2, y + 3, Ui.TEXT);
         }
 
@@ -180,7 +181,7 @@ public class SpartaTitleScreen extends Screen {
         if (this.client.getSession() != null) {
             Text name = Ui.t(this.client.getSession().getUsername());
             int w = Ui.width(name) + 26;
-            Ui.round(ctx, 8, 8, 8 + w, 26, 6, Ui.alpha(0xB0140B12, footIn));
+            Ui.round(ctx, 8, 8, 8 + w, 26, 6, Ui.alpha(Ui.panel(0xB0), footIn));
             Ui.icon(ctx, "solo", 13, 12, 10);
             Ui.text(ctx, name, 27, 13, Ui.alpha(Ui.TEXT, footIn));
         }
@@ -198,12 +199,12 @@ public class SpartaTitleScreen extends Screen {
         int x1 = b.x, y1 = b.y + dy, x2 = b.x + b.w, y2 = b.y + b.h + dy;
         float h = b.hover;
         if (b.primary) {
-            Ui.round(ctx, x1 - 2, y1 - 2, x2 + 2, y2 + 2, 8, Ui.alpha(0xFFFF8C2E, 0.3f * h * in));
-            Ui.round(ctx, x1, y1, x2, y2, 6, Ui.alpha(Ui.mix(0xFFE8731C, 0xFFFF9A3C, h), in));
+            Ui.round(ctx, x1 - 2, y1 - 2, x2 + 2, y2 + 2, 8, Ui.alpha(Ui.ACCENT, 0.3f * h * in));
+            Ui.round(ctx, x1, y1, x2, y2, 6, Ui.alpha(Ui.mix(Ui.ACCENT_DARK, Ui.ACCENT_LIGHT, h), in));
             ctx.fillGradient(x1 + 3, y1 + (y2 - y1) / 2, x2 - 3, y2 - 1, 0x00000000, Ui.alpha(0x40A0101F, in));
         } else {
-            Ui.round(ctx, x1, y1, x2, y2, 6, Ui.alpha(Ui.mix(0xC8140B12, 0xE8301620, h), in));
-            Ui.outline(ctx, x1, y1, x2, y2, 6, Ui.alpha(Ui.mix(0x30FFFFFF, 0xC0FF8C2E, h), in));
+            Ui.round(ctx, x1, y1, x2, y2, 6, Ui.alpha(Ui.mix(Ui.panel(0xC8), Ui.mix(Ui.panel(0xE8), 0xE8FFFFFF, 0.08f), h), in));
+            Ui.outline(ctx, x1, y1, x2, y2, 6, Ui.alpha(Ui.mix(0x30FFFFFF, Ui.accent(0xC0), h), in));
         }
         int textColor = Ui.alpha(Ui.TEXT, in);
         if (b.iconOnly) {

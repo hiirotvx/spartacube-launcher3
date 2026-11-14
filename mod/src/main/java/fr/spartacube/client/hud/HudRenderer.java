@@ -12,7 +12,12 @@ import net.minecraft.client.network.ServerInfo;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
@@ -108,16 +113,26 @@ public final class HudRenderer {
             case BIOME:
                 if (p == null || mc.world == null) return "Plaines";
                 return mc.world.getBiome(p.getBlockPos()).getKey().map(k -> prettify(k.getValue().getPath())).orElse("?");
+            case SATURATION: {
+                float sat = p == null ? 5f : p.getHungerManager().getSaturationLevel();
+                int food = p == null ? 18 : p.getHungerManager().getFoodLevel();
+                String v = String.format(java.util.Locale.ROOT, "%.1f", sat);
+                return HudConfig.get().settings(HudModule.SATURATION).mode == 1 ? "Faim " + food + "/20 · Sat " + v : "Saturation " + v;
+            }
             case DAY: return "Jour " + (mc.world == null ? 1 : mc.world.getTimeOfDay() / 24000L + 1);
             default: return null;
         }
     }
 
-    private static List<String> effectLines(MinecraftClient mc) {
-        List<String> out = new ArrayList<>();
+    /* ---------- Effets de potion : 0 icône + nom + durée, 1 icône + durée, 2 texte seul ---------- */
+
+    private record Fx(RegistryEntry<StatusEffect> type, String name, String time, boolean good, boolean ending) {}
+
+    private static List<Fx> effects(MinecraftClient mc) {
+        List<Fx> out = new ArrayList<>();
         if (mc.player == null) {
-            out.add("Force II  1:30");
-            out.add("Vitesse  3:00");
+            out.add(new Fx(StatusEffects.STRENGTH, "Force II", "1:30", true, false));
+            out.add(new Fx(StatusEffects.POISON, "Poison", "0:08", false, true));
             return out;
         }
         for (StatusEffectInstance e : mc.player.getStatusEffects()) {
@@ -125,14 +140,34 @@ public final class HudRenderer {
             int amp = e.getAmplifier() + 1;
             String lvl = amp < ROMAN.length ? ROMAN[amp] : " " + amp;
             String time;
+            boolean ending = false;
             if (e.isInfinite()) time = "∞";
             else {
-                int s = e.getDuration() / 20;
-                time = (s / 60) + ":" + String.format("%02d", s % 60);
+                int sec = e.getDuration() / 20;
+                time = (sec / 60) + ":" + String.format("%02d", sec % 60);
+                ending = sec < 10;
             }
-            out.add(name + lvl + "  " + time);
+            out.add(new Fx(e.getEffectType(), name + lvl, time, e.getEffectType().value().isBeneficial(), ending));
         }
         return out;
+    }
+
+    private static String fxLabel(Fx fx, int mode) {
+        return mode == 1 ? fx.time() : fx.name() + "  " + fx.time();
+    }
+
+    private static int[] effectsSize(MinecraftClient mc, ModuleSettings st) {
+        List<Fx> list = effects(mc);
+        if (list.isEmpty()) return new int[]{0, 0};
+        int icon = st.mode == 2 ? 0 : 12;
+        if (st.horizontal) {
+            int w = PAD;
+            for (Fx fx : list) w += icon + mc.textRenderer.getWidth(fxLabel(fx, st.mode)) + 8;
+            return new int[]{w + PAD - 8, 11 + PAD * 2 - 2};
+        }
+        int w = 0;
+        for (Fx fx : list) w = Math.max(w, mc.textRenderer.getWidth(fxLabel(fx, st.mode)));
+        return new int[]{icon + w + PAD * 2, list.size() * 11 + PAD * 2 - 2};
     }
 
     /** Texte affiché (avec crochets si l'option est activée). */
@@ -148,12 +183,7 @@ public final class HudRenderer {
         switch (m) {
             case KEYSTROKES: return new int[]{KEY * 3 + GAP * 2, KEY * 2 + GAP * 3 + 10 + 14};
             case ARMOR: return armorSize(mc, HudConfig.get().settings(HudModule.ARMOR));
-            case EFFECTS: {
-                List<String> lines = effectLines(mc);
-                int w = 0;
-                for (String l : lines) w = Math.max(w, tr.getWidth(l));
-                return new int[]{lines.isEmpty() ? 0 : w + PAD * 2, lines.isEmpty() ? 0 : lines.size() * 11 + PAD * 2 - 2};
-            }
+            case EFFECTS: return effectsSize(mc, HudConfig.get().settings(HudModule.EFFECTS));
             default: {
                 String t = display(m, mc);
                 if (t == null) return new int[]{0, 0};
@@ -225,14 +255,22 @@ public final class HudRenderer {
     }
 
     private static void renderEffects(DrawContext ctx, MinecraftClient mc, ModuleSettings st) {
-        List<String> lines = effectLines(mc);
-        if (lines.isEmpty()) return;
-        int[] s = baseSize(HudModule.EFFECTS, mc);
+        List<Fx> list = effects(mc);
+        if (list.isEmpty()) return;
+        int[] s = effectsSize(mc, st);
         if (st.background) Ui.round(ctx, 0, 0, s[0], s[1], 3, st.bgColor());
-        int y = PAD;
-        for (String l : lines) {
-            ctx.drawText(mc.textRenderer, l, PAD, y, st.textColor(), st.shadow);
-            y += 11;
+        int icon = st.mode == 2 ? 0 : 12;
+        boolean blink = (System.currentTimeMillis() / 400L) % 2 == 0;
+        int x = PAD, y = PAD;
+        for (Fx fx : list) {
+            int color;
+            if (st.stateColors) color = fx.ending() ? (blink ? 0xFFFF5555 : 0xFFFFB4B4) : fx.good() ? 0xFF7BE0A0 : 0xFFFF7B7B;
+            else color = st.textColor(x + y);
+            if (icon > 0) ctx.drawGuiTexture(RenderPipelines.GUI_TEXTURED, InGameHud.getEffectTexture(fx.type()), x, y - 1, 10, 10);
+            String label = fxLabel(fx, st.mode);
+            ctx.drawText(mc.textRenderer, label, x + icon, y, color, st.shadow);
+            if (st.horizontal) x += icon + mc.textRenderer.getWidth(label) + 8;
+            else y += 11;
         }
     }
 

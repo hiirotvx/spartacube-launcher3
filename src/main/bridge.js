@@ -58,6 +58,14 @@ function start(iconPath) {
         res.end(JSON.stringify(voteStatusProvider() || {}));
         return;
       }
+      // Capture d'écran prise en jeu : copie dans le presse-papiers (nom de fichier validé par screenshots.js)
+      if (authed && req.method === 'POST' && req.url.startsWith('/screenshot-copy?') && lastGameDir) {
+        const name = new URL(req.url, 'http://127.0.0.1').searchParams.get('name');
+        Promise.resolve().then(() => require('./screenshots').copy(lastGameDir, name))
+          .then(() => { res.writeHead(204); res.end(); })
+          .catch(() => { res.writeHead(400); res.end(); });
+        return;
+      }
       if (!ok) { res.writeHead(403); res.end(); return; }
       openVoteWindow(iconPath);
       res.writeHead(204);
@@ -76,8 +84,11 @@ function setVoteUrl(url) {
 }
 
 /** Écrit les infos du pont dans le dossier de l'instance (lu par le mod). */
+let lastGameDir = null;
+
 async function writeBridgeFile(gameDir, extra = {}) {
   if (!port) return;
+  lastGameDir = gameDir;
   const file = path.join(gameDir, '.spartacube-bridge.json');
   await fsp.writeFile(file, JSON.stringify({ port, token, voteUrl, ...extra }), { mode: 0o600 });
 }

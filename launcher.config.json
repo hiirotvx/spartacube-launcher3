@@ -40,6 +40,16 @@
       "name": "Xaero's Minimap",
       "project": "1bokaNcj",
       "fabricId": "xaerominimap"
+    },
+    {
+      "name": "3D Skin Layers",
+      "project": "zV5r3pPn",
+      "fabricId": "skinlayers3d"
+    },
+    {
+      "name": "Shulker Box Tooltip",
+      "project": "2M01OLQq",
+      "fabricId": "shulkerboxtooltip"
     }
   ],
   "modpackManifestUrl": "",

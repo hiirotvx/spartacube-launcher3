@@ -18,7 +18,8 @@ public enum HudModule {
     HEALTH("Vie des joueurs", "Affiche les cœurs d'un joueur au-dessus de sa tête quand tu le vises", Category.PLAYER, "armor", Kind.MECHANIC, true, 0, 0),
     NAMETAG_STYLE("Nametags SpartaCube", "Nametags aux couleurs de SpartaCube + pastille launcher", Category.PLAYER, "multi", Kind.MECHANIC, false, 0, 0),
     NAMETAG("Pseudo en F5", "Affiche ton pseudo au-dessus de ta tête en vue F5", Category.PLAYER, "solo", Kind.MECHANIC, true, 0, 0),
-    EFFECTS("Effets", "Effets de potion actifs et durée", Category.PLAYER, "fps", Kind.SPECIAL, false, -110, 40),
+    EFFECTS("Effets de potion", "Effets actifs avec icône, durée et couleurs", Category.PLAYER, "fps", Kind.SPECIAL, false, -110, 40),
+    SATURATION("Saturation", "Ta saturation (la réserve cachée derrière la barre de faim)", Category.PLAYER, "day", Kind.TEXT, false, 4, 158),
     // ---- Mécaniques ----
     TOGGLE_SPRINT("Toggle Sprint", "Sprint sans maintenir la touche", Category.MECHANIC, "speed", Kind.MECHANIC, false, 0, 0),
     FLY_BOOST("Fly Boost", "Vole plus vite (créatif ou /fly)", Category.MECHANIC, "join", Kind.MECHANIC, true, 0, 0),
@@ -26,6 +27,7 @@ public enum HudModule {
     TOGGLE_SNEAK("Toggle Sneak", "S'accroupir reste activé sans maintenir la touche", Category.MECHANIC, "solo", Kind.MECHANIC, false, 0, 0),
     ZOOM("Zoom", "Maintiens une touche pour zoomer (C par défaut)", Category.MECHANIC, "search", Kind.MECHANIC, true, 0, 0),
     FREELOOK("Freelook", "Regarde autour de toi sans tourner (Alt par défaut)", Category.MECHANIC, "direction", Kind.MECHANIC, true, 0, 0),
+    SCREENSHOTS("Captures d'écran", "F2 : capture copiée dans le presse-papiers, avec une notification", Category.MECHANIC, "hud", Kind.MECHANIC, true, 0, 0),
     LOADING_SCREEN("Écran de chargement", "Écran SpartaCube avec astuces pendant la connexion", Category.MECHANIC, "server", Kind.MECHANIC, true, 0, 0),
     NOTIFICATIONS("Notifications", "Notifications animées du serveur et rappels de vote", Category.SERVER, "join", Kind.MECHANIC, true, 0, 0),
     // ---- Cosmétiques (exclusifs au launcher) ----

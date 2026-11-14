@@ -33,6 +33,12 @@ public class SpartaModsScreen extends Screen {
     private TextFieldWidget search;
     private Category category = Category.ALL;
     private HudModule optionsFor;
+    /** Panneau « Couleurs du menu » ouvert. */
+    private boolean themeOpen;
+
+    private boolean panelOpen() {
+        return this.optionsFor != null || this.themeOpen;
+    }
     private float optionsAnim;
     private long openedAt;
     private long lastFrame;
@@ -82,7 +88,7 @@ public class SpartaModsScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        if (this.optionsFor != null) this.optScrollTarget -= (float) verticalAmount * 30f;
+        if (panelOpen()) this.optScrollTarget -= (float) verticalAmount * 30f;
         else this.scrollTarget -= (float) verticalAmount * 30f;
         return true;
     }
@@ -100,6 +106,7 @@ public class SpartaModsScreen extends Screen {
 
     @Override
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
+        Ui.applyTheme();
         long now = Util.getMeasuringTimeMs();
         float dt = this.lastFrame == 0 ? 0f : Math.min(0.1f, (now - this.lastFrame) / 1000f);
         this.lastFrame = now;
@@ -120,7 +127,7 @@ public class SpartaModsScreen extends Screen {
         ctx.getMatrices().scale(s, s);
         ctx.getMatrices().translate(-this.width / 2f, -this.height / 2f);
 
-        Ui.round(ctx, this.px1, this.py1, this.px2, this.py2, 10, Ui.alpha(0xE6140B12, open));
+        Ui.round(ctx, this.px1, this.py1, this.px2, this.py2, 10, Ui.alpha(Ui.panel(0xE6), open));
         Ui.outline(ctx, this.px1, this.py1, this.px2, this.py2, 10, Ui.alpha(0x22FFFFFF, open));
 
         // En-tête
@@ -139,13 +146,13 @@ public class SpartaModsScreen extends Screen {
             int x1 = this.px1 + 8, x2 = this.px1 + SIDEBAR - 4;
             boolean over = Ui.inside(mouseX, mouseY, x1, sy, x2, sy + 20);
             float hv = hover("cat" + c.name(), over || c == this.category, dt);
-            Ui.round(ctx, x1, sy, x2, sy + 20, 5, Ui.mix(0x00000000, c == this.category ? 0xFFE8731C : 0x30FFFFFF, hv));
+            Ui.round(ctx, x1, sy, x2, sy + 20, 5, Ui.mix(0x00000000, c == this.category ? Ui.ACCENT_DARK : 0x30FFFFFF, hv));
             Ui.text(ctx, Ui.t(c.label), x1 + 8, sy + 6, c == this.category ? 0xFFFFFFFF : Ui.TEXT);
             int count = 0;
             for (HudModule m : HudModule.values()) if ((c == Category.ALL || m.category == c) && cfg.isEnabled(m)) count++;
             Text n = Ui.t(String.valueOf(count));
             Ui.text(ctx, n, x2 - 8 - Ui.width(n), sy + 6, c == this.category ? 0xFFFFE2C4 : Ui.MUTED);
-            if (click && over) { Ui.click(); this.category = c; this.optionsFor = null; this.scrollTarget = 0; }
+            if (click && over) { Ui.click(); this.category = c; this.optionsFor = null; this.themeOpen = false; this.capturing = null; this.scrollTarget = 0; }
             sy += 23;
         }
 
@@ -154,7 +161,7 @@ public class SpartaModsScreen extends Screen {
         int by = this.py2 - 30;
         boolean overEdit = Ui.inside(mouseX, mouseY, bx1, by, bx2, by + 22);
         float he = hover("edit", overEdit, dt);
-        Ui.round(ctx, bx1, by, bx2, by + 22, 6, Ui.mix(0xFFE8731C, 0xFFFF9A3C, he));
+        Ui.round(ctx, bx1, by, bx2, by + 22, 6, Ui.mix(Ui.ACCENT_DARK, Ui.ACCENT_LIGHT, he));
         Ui.icon(ctx, "move", bx1 + 7, by + 6, 10);
         Ui.text(ctx, Ui.b("Éditer l'HUD"), bx1 + 21, by + 7, 0xFFFFFFFF);
         if (click && overEdit) { Ui.click(); this.client.setScreen(new HudEditorScreen(this)); ctx.getMatrices().popMatrix(); return; }
@@ -167,22 +174,31 @@ public class SpartaModsScreen extends Screen {
         toggle(ctx, bx2 - 27, by + 6, cfg.customTitleScreen, hover("titleSw", cfg.customTitleScreen, dt));
         if (click && overTitle) { Ui.click(); cfg.customTitleScreen = !cfg.customTitleScreen; cfg.save(); }
 
+        by -= 26;
+        boolean overTheme = Ui.inside(mouseX, mouseY, bx1, by, bx2, by + 22);
+        float hth = hover("theme", overTheme || this.themeOpen, dt);
+        Ui.round(ctx, bx1, by, bx2, by + 22, 6, Ui.mix(0x30FFFFFF, 0x50FFFFFF, hth));
+        Ui.round(ctx, bx1 + 7, by + 6, bx1 + 17, by + 16, 5, Ui.ACCENT);
+        Ui.text(ctx, Ui.t("Couleurs du menu"), bx1 + 22, by + 7, Ui.TEXT);
+        if (click && overTheme) { Ui.click(); this.optionsFor = null; this.capturing = null; this.themeOpen = true; this.optScroll = 0; this.optScrollTarget = 0; }
+
         // Recherche
         int sx1 = this.px1 + SIDEBAR + 14, sx2 = this.px2 - 14;
         Ui.round(ctx, sx1, this.py1 + 32, sx2, this.py1 + 52, 6, 0x60000000);
-        Ui.outline(ctx, sx1, this.py1 + 32, sx2, this.py1 + 52, 6, this.search.isFocused() ? 0xC0FF8C2E : 0x30FFFFFF);
+        Ui.outline(ctx, sx1, this.py1 + 32, sx2, this.py1 + 52, 6, this.search.isFocused() ? Ui.accent(0xC0) : 0x30FFFFFF);
         Ui.icon(ctx, "search", sx1 + 6, this.py1 + 37, 10);
 
         // Contenu : grille ou options
-        this.optionsAnim = Ui.approach(this.optionsAnim, this.optionsFor != null ? 1f : 0f, 12f, dt);
+        this.optionsAnim = Ui.approach(this.optionsAnim, panelOpen() ? 1f : 0f, 12f, dt);
         int gx1 = sx1, gy1 = this.py1 + 60, gx2 = sx2, gy2 = this.py2 - 10;
         ctx.enableScissor(gx1, gy1, gx2, gy2);
-        if (this.optionsFor == null || this.optionsAnim < 0.99f) drawGrid(ctx, mouseX, mouseY, gx1, gy1, gx2, gy2, dt, click && this.optionsFor == null);
+        if (!panelOpen() || this.optionsAnim < 0.99f) drawGrid(ctx, mouseX, mouseY, gx1, gy1, gx2, gy2, dt, click && !panelOpen());
         if (this.optionsFor != null) drawOptions(ctx, mouseX, mouseY, gx1, gy1, gx2, gy2, dt, click);
+        else if (this.themeOpen) drawTheme(ctx, mouseX, mouseY, gx1, gy1, gx2, gy2, dt, click);
         ctx.disableScissor();
 
         ctx.getMatrices().popMatrix();
-        String foot = this.hoveredModule != null && this.optionsFor == null
+        String foot = this.hoveredModule != null && !panelOpen()
                 ? this.hoveredModule.description + "  ·  clic : activer  ·  ⚙ : options"
                 : "Shift droit : ouvrir / fermer  ·  Molette : défiler";
         Ui.centered(ctx, Ui.t(foot), this.width / 2, this.py2 + 5, Ui.alpha(this.hoveredModule != null ? 0xFFE8DED8 : 0xFF9A8578, open));
@@ -237,13 +253,13 @@ public class SpartaModsScreen extends Screen {
 
             boolean locked = !Cosmetics.isAllowed(m);
             if (locked) {
-                Ui.round(ctx, x1, y1, x2, y2, 7, Ui.alpha(0x90140B12, fade));
+                Ui.round(ctx, x1, y1, x2, y2, 7, Ui.alpha(Ui.panel(0x90), fade));
                 Ui.icon(ctx, "armor", (x1 + x2) / 2 - 7, y1 + 44, 14, Ui.alpha(0xFFB3A39A, fade));
             }
             if (click && overCard && locked) {
                 Ui.click();
                 Toasts.show("info", "Cosmétique verrouillé", "Ce cosmétique n'est pas encore disponible pour ton compte.");
-            } else if (click && overGear) { Ui.click(); this.optionsFor = m; this.optScroll = 0; this.optScrollTarget = 0; }
+            } else if (click && overGear) { Ui.click(); this.themeOpen = false; this.optionsFor = m; this.optScroll = 0; this.optScrollTarget = 0; }
             else if (click && overCard) {
                 Ui.click();
                 cfg.toggle(m);
@@ -255,11 +271,77 @@ public class SpartaModsScreen extends Screen {
             int trackH = gy2 - gy1;
             int barH = Math.max(20, trackH * trackH / contentH);
             int barY = gy1 + Math.round((trackH - barH) * (this.scroll / maxScroll));
-            Ui.round(ctx, gx2 - 3, barY, gx2, barY + barH, 1, 0x80FF8C2E);
+            Ui.round(ctx, gx2 - 3, barY, gx2, barY + barH, 1, Ui.accent(0x80));
         }
     }
 
     private float optScroll, optScrollTarget;
+
+    /** Panneau « Couleurs du menu » : préréglages, couleur perso, arc-en-ciel, fond neutre. */
+    private void drawTheme(DrawContext ctx, int mouseX, int mouseY, int gx1, int gy1, int gx2, int gy2, float dt, boolean click) {
+        HudConfig cfg = HudConfig.get();
+        int off = Math.round((1 - this.optionsAnim) * 40);
+        int x = gx1 + off;
+        int x2 = gx2 - 6;
+        float a = this.optionsAnim;
+        boolean inArea = Ui.inside(mouseX, mouseY, gx1, gy1, gx2, gy2);
+        click = click && inArea;
+        this.optScroll = Ui.approach(this.optScroll, this.optScrollTarget, 16f, dt);
+        int top = gy1 - Math.round(this.optScroll);
+        int y = top;
+
+        boolean overBack = inArea && Ui.inside(mouseX, mouseY, x, y, x + 60, y + 16);
+        Ui.round(ctx, x, y, x + 60, y + 16, 4, Ui.alpha(overBack ? 0x50FFFFFF : 0x30FFFFFF, a));
+        Ui.text(ctx, Ui.t("‹ Retour"), x + 9, y + 4, Ui.alpha(Ui.TEXT, a));
+        if (click && overBack) { Ui.click(); this.themeOpen = false; this.optScrollTarget = 0; this.optScroll = 0; cfg.save(); return; }
+
+        y += 24;
+        Ui.round(ctx, x, y, x + 20, y + 20, 10, Ui.alpha(Ui.ACCENT, a));
+        Ui.text(ctx, Ui.b("Couleurs du menu"), x + 28, y + 1, Ui.alpha(0xFFFFFFFF, a));
+        Ui.text(ctx, Ui.t("Menu des modules, éditeur d'HUD et écran titre"), x + 28, y + 12, Ui.alpha(Ui.MUTED, a));
+        y += 32;
+
+        y = section(ctx, x, y, "Thème", a);
+        // Pastilles des préréglages
+        int n = Ui.THEME_NAMES.length;
+        int cell = Math.max(48, (x2 - x) / 4);
+        for (int i = 0; i < n; i++) {
+            int cx = x + (i % 4) * cell, cy = y + (i / 4) * 26;
+            boolean sel = !cfg.themeChroma && Math.min(cfg.themePreset, Ui.THEME_CUSTOM) == i;
+            boolean over = inArea && Ui.inside(mouseX, mouseY, cx, cy, cx + cell - 4, cy + 22);
+            Ui.round(ctx, cx, cy, cx + cell - 4, cy + 22, 5, Ui.alpha(sel ? 0x50FFFFFF : over ? 0x30FFFFFF : 0x18FFFFFF, a));
+            if (sel) Ui.outline(ctx, cx, cy, cx + cell - 4, cy + 22, 5, Ui.alpha(Ui.ACCENT, a));
+            int sw = i == Ui.THEME_CUSTOM
+                    ? 0xFF000000 | (java.awt.Color.HSBtoRGB(cfg.themeHue, cfg.themeSat, 1f) & 0xFFFFFF)
+                    : Ui.themeColor(i);
+            Ui.round(ctx, cx + 5, cy + 6, cx + 15, cy + 16, 5, Ui.alpha(sw, a));
+            Ui.text(ctx, Ui.t(Ui.THEME_NAMES[i]), cx + 20, cy + 7, Ui.alpha(Ui.TEXT, a));
+            if (click && over) { Ui.click(); cfg.themePreset = i; cfg.themeChroma = false; cfg.save(); }
+        }
+        y += ((n + 3) / 4) * 26 + 4;
+
+        if (!cfg.themeChroma && Math.min(cfg.themePreset, Ui.THEME_CUSTOM) == Ui.THEME_CUSTOM) {
+            ModuleSettings tmp = new ModuleSettings();
+            tmp.customColor = true;
+            tmp.hue = cfg.themeHue;
+            tmp.sat = cfg.themeSat;
+            tmp.bri = 1f;
+            y = colorSlider(ctx, mouseX, mouseY, x, x2, y, "Teinte", cfg.themeHue, v -> cfg.themeHue = v, 0, tmp, a);
+            y = colorSlider(ctx, mouseX, mouseY, x, x2, y, "Intensité", cfg.themeSat, v -> cfg.themeSat = Math.max(0.1f, v), 1, tmp, a);
+        }
+
+        y = section(ctx, x, y, "Options", a);
+        y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Arc-en-ciel (la couleur change doucement)", cfg.themeChroma, click,
+                () -> { cfg.themeChroma = !cfg.themeChroma; cfg.save(); }, dt, a);
+        y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Fond neutre (gris foncé, plus sobre)", cfg.themeNeutral, click,
+                () -> { cfg.themeNeutral = !cfg.themeNeutral; cfg.save(); }, dt, a);
+        y = note(ctx, x, y, "Les couleurs de chaque module HUD se règlent dans sa roue crantée.", a);
+
+        int contentH = y - top;
+        float max = Math.max(0, contentH - (gy2 - gy1) + 6);
+        this.optScrollTarget = Math.max(0, Math.min(max, this.optScrollTarget));
+        if (this.mouse.released && this.dragging != null) { this.dragging = null; cfg.save(); }
+    }
 
     private void drawOptions(DrawContext ctx, int mouseX, int mouseY, int gx1, int gy1, int gx2, int gy2, float dt, boolean click) {
         HudConfig cfg = HudConfig.get();
@@ -328,6 +410,33 @@ public class SpartaModsScreen extends Screen {
                 y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Seulement le joueur visé", cfg.healthTargetOnly, click,
                         () -> { cfg.healthTargetOnly = !cfg.healthTargetOnly; cfg.save(); }, dt, a);
                 y = note(ctx, x, y, "Les cœurs s'affichent à côté du pseudo, au-dessus de la tête.", a);
+            }
+            case EFFECTS -> {
+                y = section(ctx, x, y, "Effets", a);
+                y = choiceRow(ctx, mouseX, mouseY, x, x2, y, "Affichage", new String[]{"Icône + nom + durée", "Icône + durée", "Texte seul"}, st.mode,
+                        i -> { st.mode = i; cfg.save(); }, click, a);
+                y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Couleurs selon l'effet (vert / rouge)", st.stateColors, click,
+                        () -> { st.stateColors = !st.stateColors; cfg.save(); }, dt, a);
+                y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Horizontal", st.horizontal, click, () -> { st.horizontal = !st.horizontal; cfg.save(); }, dt, a);
+                y = note(ctx, x, y, "Un effet qui se termine clignote en rouge. Sans les couleurs d'effet, la couleur ci-dessous s'applique.", a);
+            }
+            case SATURATION -> {
+                y = section(ctx, x, y, "Affichage", a);
+                y = choiceRow(ctx, mouseX, mouseY, x, x2, y, "Format", new String[]{"Saturation 5.0", "Faim 18/20 · Sat 5.0"}, st.mode,
+                        i -> { st.mode = i; cfg.save(); }, click, a);
+            }
+            case SCREENSHOTS -> {
+                y = section(ctx, x, y, "Captures (touche F2)", a);
+                y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Copier dans le presse-papiers", cfg.shotCopy, click,
+                        () -> { cfg.shotCopy = !cfg.shotCopy; cfg.save(); }, dt, a);
+                y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Notification après la capture", cfg.shotToast, click,
+                        () -> { cfg.shotToast = !cfg.shotToast; cfg.save(); }, dt, a);
+                boolean overDir = inArea && Ui.inside(mouseX, mouseY, x, y, x + 150, y + 16);
+                Ui.round(ctx, x, y, x + 150, y + 16, 4, Ui.alpha(overDir ? 0x50FFFFFF : 0x30FFFFFF, a));
+                Ui.text(ctx, Ui.t("Ouvrir le dossier des captures"), x + 7, y + 4, Ui.alpha(Ui.TEXT, a));
+                if (click && overDir) { Ui.click(); fr.spartacube.client.hud.Screenshots.openFolder(); }
+                y += 22;
+                y = note(ctx, x, y, "La copie passe par le launcher : il doit rester ouvert en arrière-plan.", a);
             }
             case ARMOR -> {
                 y = section(ctx, x, y, "Armure", a);
@@ -409,7 +518,7 @@ public class SpartaModsScreen extends Screen {
             if (click && overReset) { Ui.click(); cfg.resetModule(m); }
             y += 22;
         } else if (m != HudModule.ZOOM && m != HudModule.FLY_BOOST && m != HudModule.FREELOOK && m != HudModule.NOTIFICATIONS
-                && m != HudModule.FULLBRIGHT && m != HudModule.HEALTH) {
+                && m != HudModule.FULLBRIGHT && m != HudModule.HEALTH && m != HudModule.SCREENSHOTS) {
             y = note(ctx, x, y, "Ce module n'a pas d'autre option.", a);
         }
 
@@ -421,7 +530,7 @@ public class SpartaModsScreen extends Screen {
             int trackH = gy2 - gy1;
             int barH = Math.max(20, trackH * trackH / Math.max(1, contentH));
             int barY = gy1 + Math.round((trackH - barH) * (this.optScroll / max));
-            Ui.round(ctx, gx2 - 3, barY, gx2, barY + barH, 1, 0x80FF8C2E);
+            Ui.round(ctx, gx2 - 3, barY, gx2, barY + barH, 1, Ui.accent(0x80));
         }
         if (this.mouse.released && this.dragging != null) { this.dragging = null; cfg.save(); }
     }
@@ -440,7 +549,7 @@ public class SpartaModsScreen extends Screen {
         int bw = Math.max(54, Ui.width(t) + 14);
         int bx = x2 - bw - 4;
         boolean over = Ui.inside(mx, my, bx, y + 2, x2 - 4, y + 16);
-        Ui.round(ctx, bx, y + 2, x2 - 4, y + 16, 4, Ui.alpha(cap ? 0xFFE8731C : over ? 0x50FFFFFF : 0x30FFFFFF, a));
+        Ui.round(ctx, bx, y + 2, x2 - 4, y + 16, 4, Ui.alpha(cap ? Ui.ACCENT_DARK : over ? 0x50FFFFFF : 0x30FFFFFF, a));
         Ui.text(ctx, t, bx + (bw - Ui.width(t)) / 2, y + 5, Ui.alpha(0xFFFFFFFF, a));
         if (click && over) {
             Ui.click();

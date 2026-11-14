@@ -51,6 +51,7 @@ public class HudEditorScreen extends Screen {
 
     @Override
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
+        Ui.applyTheme();
         long now = Util.getMeasuringTimeMs();
         float dt = this.lastFrame == 0 ? 0f : Math.min(0.1f, (now - this.lastFrame) / 1000f);
         this.lastFrame = now;
@@ -110,17 +111,17 @@ public class HudEditorScreen extends Screen {
             cfg.save();
         }
 
-        if (this.guideX >= 0) ctx.fill(this.guideX, 0, this.guideX + 1, this.height, 0xC0FF8C2E);
-        if (this.guideY >= 0) ctx.fill(0, this.guideY, this.width, this.guideY + 1, 0xC0FF8C2E);
+        if (this.guideX >= 0) ctx.fill(this.guideX, 0, this.guideX + 1, this.height, Ui.accent(0xC0));
+        if (this.guideY >= 0) ctx.fill(0, this.guideY, this.width, this.guideY + 1, Ui.accent(0xC0));
 
         for (HudModule m : HudModule.values()) {
             if (!m.movable() || !cfg.isEnabled(m)) continue;
             int[] p = HudRenderer.clampedPos(m, this.client);
             int[] s = HudRenderer.size(m, this.client);
             boolean active = m == this.dragging || m == this.hovered;
-            Ui.round(ctx, p[0] - 2, p[1] - 2, p[0] + s[0] + 2, p[1] + s[1] + 2, 3, active ? 0x30FF8C2E : 0x18FFFFFF);
+            Ui.round(ctx, p[0] - 2, p[1] - 2, p[0] + s[0] + 2, p[1] + s[1] + 2, 3, active ? Ui.accent(0x30) : 0x18FFFFFF);
             HudRenderer.render(ctx, this.client, m, p[0], p[1]);
-            Ui.outline(ctx, p[0] - 2, p[1] - 2, p[0] + s[0] + 2, p[1] + s[1] + 2, 3, active ? 0xFFFF8C2E : 0x50FFFFFF);
+            Ui.outline(ctx, p[0] - 2, p[1] - 2, p[0] + s[0] + 2, p[1] + s[1] + 2, 3, active ? Ui.ACCENT : 0x50FFFFFF);
             if (m == this.hovered && this.dragging == null) {
                 int[] c = closeRect(m);
                 boolean overX = overClose(m, mouseX, mouseY);
@@ -131,7 +132,7 @@ public class HudEditorScreen extends Screen {
                 Text label = Ui.t(m.label + "  " + Math.round(cfg.settings(m).scale * 100) + " %");
                 int lw = Ui.width(label) + 8;
                 int ly = p[1] > 16 ? p[1] - 15 : p[1] + s[1] + 4;
-                Ui.round(ctx, p[0] - 2, ly, p[0] - 2 + lw, ly + 12, 3, 0xE0140B12);
+                Ui.round(ctx, p[0] - 2, ly, p[0] - 2 + lw, ly + 12, 3, Ui.panel(0xE0));
                 Ui.text(ctx, label, p[0] + 2, ly + 2, Ui.ACCENT);
             }
         }
@@ -139,10 +140,10 @@ public class HudEditorScreen extends Screen {
         // Aide + bouton Terminé
         Text help = Ui.t("Glisse pour déplacer  ·  Molette : taille  ·  ✕ : désactiver  ·  Échap pour terminer");
         int hw = Ui.width(help) + 16;
-        Ui.round(ctx, cx - hw / 2, 8, cx + hw / 2, 24, 6, Ui.alpha(0xD0140B12, open));
+        Ui.round(ctx, cx - hw / 2, 8, cx + hw / 2, 24, 6, Ui.alpha(Ui.panel(0xD0), open));
         Ui.centered(ctx, help, cx, 12, Ui.alpha(Ui.TEXT, open));
         this.doneHover = Ui.approach(this.doneHover, overDone ? 1f : 0f, 14f, dt);
-        Ui.round(ctx, bx, by, bx + bw, by + 20, 6, Ui.alpha(Ui.mix(0xFFE8731C, 0xFFFF9A3C, this.doneHover), open));
+        Ui.round(ctx, bx, by, bx + bw, by + 20, 6, Ui.alpha(Ui.mix(Ui.ACCENT_DARK, Ui.ACCENT_LIGHT, this.doneHover), open));
         Ui.centered(ctx, Ui.b("Terminé"), cx, by + 6, 0xFFFFFFFF);
 
         super.render(ctx, mouseX, mouseY, delta);

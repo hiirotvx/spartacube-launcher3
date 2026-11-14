@@ -16,8 +16,63 @@ public final class Ui {
     public static final Identifier FONT = Identifier.of("spartacube", "ui");
     public static final Identifier FONT_BOLD = Identifier.of("spartacube", "ui_bold");
 
-    public static final int ACCENT = 0xFFFF8C2E;
+    /** Couleurs du thème (modifiables : voir applyTheme). */
+    public static int ACCENT = 0xFFFF8C2E;
+    public static int ACCENT_DARK = 0xFFE8731C;
+    public static int ACCENT_LIGHT = 0xFFFF9A3C;
+    /** Couleur de fond des panneaux (RVB, sans alpha). */
+    public static int PANEL = 0x140B12;
     public static final int ACCENT_2 = 0xFFC4122F;
+
+    public static final String[] THEME_NAMES = {"SpartaCube", "Braise douce", "Ardoise", "Océan", "Émeraude", "Lavande", "Rose", "Personnalisé"};
+    private static final int[][] THEMES = {
+            {0xFF8C2E, 0x140B12}, {0xE0A27A, 0x17120F}, {0x9FB0C8, 0x12141A}, {0x58A6F0, 0x0D1420},
+            {0x4CC38A, 0x0D1612}, {0xA994F5, 0x14101F}, {0xF07BB0, 0x1A1016}
+    };
+    public static final int THEME_CUSTOM = THEMES.length;
+
+    /** Recalcule les couleurs du menu depuis les réglages (appelé à chaque image des écrans SpartaCube). */
+    public static void applyTheme() {
+        fr.spartacube.client.hud.HudConfig cfg = fr.spartacube.client.hud.HudConfig.get();
+        int preset = Math.min(cfg.themePreset, THEME_CUSTOM);
+        int acc, panel;
+        if (cfg.themeChroma) {
+            float h = (System.currentTimeMillis() % 20000L) / 20000f;
+            acc = java.awt.Color.HSBtoRGB(h, 0.6f, 1f) & 0xFFFFFF;
+            panel = 0x121318;
+        } else if (preset == THEME_CUSTOM) {
+            acc = java.awt.Color.HSBtoRGB(cfg.themeHue, cfg.themeSat, 1f) & 0xFFFFFF;
+            panel = mix(0xFF121318, 0xFF000000 | acc, 0.05f) & 0xFFFFFF;
+        } else {
+            acc = THEMES[preset][0];
+            panel = THEMES[preset][1];
+        }
+        if (cfg.themeNeutral) panel = 0x121318;
+        ACCENT = 0xFF000000 | acc;
+        if (preset == 0 && !cfg.themeChroma) {
+            ACCENT_DARK = 0xFFE8731C;
+            ACCENT_LIGHT = 0xFFFF9A3C;
+        } else {
+            ACCENT_DARK = mix(ACCENT, 0xFF000000, 0.14f);
+            ACCENT_LIGHT = mix(ACCENT, 0xFFFFFFFF, 0.16f);
+        }
+        PANEL = panel;
+    }
+
+    /** Couleur d'un préréglage (pour l'aperçu dans le sélecteur). */
+    public static int themeColor(int preset) {
+        return 0xFF000000 | THEMES[Math.max(0, Math.min(THEMES.length - 1, preset))][0];
+    }
+
+    /** Couleur d'accent avec l'alpha donné (0 à 255). */
+    public static int accent(int a) {
+        return (a << 24) | (ACCENT & 0xFFFFFF);
+    }
+
+    /** Fond de panneau avec l'alpha donné (0 à 255). */
+    public static int panel(int a) {
+        return (a << 24) | PANEL;
+    }
     public static final int GREEN = 0xFF22A55B;
     public static final int RED = 0xFFC4253F;
     public static final int TEXT = 0xFFF5ECE6;
