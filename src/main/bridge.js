@@ -66,6 +66,20 @@ function start(iconPath) {
           .catch(() => { res.writeHead(400); res.end(); });
         return;
       }
+      // Comptes : liste, et changement de compte demandé depuis l'écran titre du jeu
+      if (authed && req.method === 'GET' && req.url === '/accounts' && accountProvider) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(accountProvider.list()));
+        return;
+      }
+      if (authed && req.method === 'POST' && req.url.startsWith('/account-switch?') && accountProvider) {
+        const uuid = String(new URL(req.url, 'http://127.0.0.1').searchParams.get('uuid') || '');
+        if (!/^[0-9a-f]{32}$/i.test(uuid)) { res.writeHead(400); res.end(); return; }
+        accountProvider.switchTo(uuid)
+          .then(a => { res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(a)); })
+          .catch(e => { res.writeHead(409, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: (e && e.message) || 'Changement impossible' })); });
+        return;
+      }
       if (!ok) { res.writeHead(403); res.end(); return; }
       openVoteWindow(iconPath);
       res.writeHead(204);
@@ -85,6 +99,8 @@ function setVoteUrl(url) {
 
 /** Écrit les infos du pont dans le dossier de l'instance (lu par le mod). */
 let lastGameDir = null;
+let accountProvider = null;
+function setAccountProvider(p) { accountProvider = p; }
 
 async function writeBridgeFile(gameDir, extra = {}) {
   if (!port) return;
@@ -96,4 +112,4 @@ async function writeBridgeFile(gameDir, extra = {}) {
 let voteStatusProvider = () => null;
 function setVoteStatusProvider(fn) { voteStatusProvider = fn; }
 
-module.exports = { start, setVoteUrl, writeBridgeFile, openVoteWindow, setVoteStatusProvider };
+module.exports = { start, setVoteUrl, writeBridgeFile, openVoteWindow, setVoteStatusProvider, setAccountProvider };

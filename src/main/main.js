@@ -516,6 +516,17 @@ app.whenReady().then(() => {
   if (embedded.voteUrl) bridge.setVoteUrl(embedded.voteUrl);
   bridge.start(path.join(__dirname, '../renderer/assets/icon.png')).then(p => log.info(`Pont de vote local sur le port ${p}`));
   bridge.setVoteStatusProvider(() => votes.nextAvailable(cfg.voteSites));
+  // Changement de compte depuis le jeu : le launcher rafraîchit le compte choisi et transmet sa session au jeu
+  bridge.setAccountProvider({
+    list: () => auth.list(),
+    switchTo: async uuid => {
+      const p = await auth.switchTo(cfg, uuid);
+      const a = await auth.getLaunchAuth();
+      send('account-changed', p);
+      refreshDiscord();
+      return { name: p.name, uuid: p.uuid, accessToken: a.access_token };
+    }
+  });
   loadRemoteConfig().finally(() => { discord.init(cfg.discordClientId); refreshDiscord(); });
   registerIpc();
   createWindow();

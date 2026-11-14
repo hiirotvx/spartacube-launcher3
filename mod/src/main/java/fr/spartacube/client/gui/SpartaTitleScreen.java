@@ -90,6 +90,7 @@ public class SpartaTitleScreen extends Screen {
         bar.add(new Btn("move", "Modifier l'HUD", null, false, true, 5, () -> this.client.setScreen(new HudEditorScreen(this))));
         if (modMenuScreen() != null) bar.add(new Btn("mods", "Mods installés", null, false, true, 5, () -> this.client.setScreen(modMenuScreen())));
         bar.add(new Btn("web", "spartacube.fr", null, false, true, 5, () -> Util.getOperatingSystem().open(java.net.URI.create("https://spartacube.fr"))));
+        bar.add(new Btn("solo", "Comptes", null, false, true, 5, () -> this.client.setScreen(new AccountsScreen(this))));
         bar.add(new Btn("quit", "Quitter le jeu", null, false, true, 5, () -> this.client.scheduleStop()));
         int size = 24, gap = 6;
         int total = bar.size() * size + (bar.size() - 1) * gap;

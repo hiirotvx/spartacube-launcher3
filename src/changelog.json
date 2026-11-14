@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.3.28",
+    "date": "14/11/2026",
+    "title": "Changer de compte depuis le jeu",
+    "items": [
+      "Écran titre du jeu : bouton « Comptes » pour passer d'un compte à l'autre sans relancer",
+      "Le launcher doit rester ouvert (ou réduit) pour que ça fonctionne"
+    ]
+  },
+  {
     "version": "1.3.27",
     "date": "14/11/2026",
     "title": "Effet holographique",

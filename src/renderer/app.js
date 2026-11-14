@@ -121,6 +121,8 @@ $('btnLogout').onclick = async () => {
   if (r && r.profile) toast(`Déconnecté. Tu es maintenant sur ${r.profile.name}.`, 'ok');
 };
 
+L.onAccountChanged(p => { afterAccountChange(p); toast(`Compte actif : ${p.name} (changé depuis le jeu)`, 'ok'); });
+
 /* ---------- Plusieurs comptes ---------- */
 
 async function renderAccounts() {

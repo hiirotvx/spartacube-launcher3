@@ -70,6 +70,7 @@ contextBridge.exposeInMainWorld('launcher', {
   onGameClosed: listen('game-closed'),
   onUpdate: listen('update'),
   onAskClose: listen('ask-close'),
+  onAccountChanged: listen('account-changed'),
   openConsole: () => call('console:open'),
   accounts: {
     list: () => call('accounts:list'),

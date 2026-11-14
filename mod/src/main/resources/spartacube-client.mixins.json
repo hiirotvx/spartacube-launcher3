@@ -14,7 +14,8 @@
     "MixinLightmap",
     "MixinHudExtras",
     "MixinBossBarHud",
-    "MixinChatHud"
+    "MixinChatHud",
+    "AccessorMinecraftClient"
   ],
   "injectors": {
     "defaultRequire": 0
