@@ -15,25 +15,31 @@ async function baseUrl(apiUrl) {
   const u = new URL(apiUrl);
   if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error('URL d\'API invalide');
   if (resolved.has(u.origin)) return resolved.get(u.origin);
+  // Sans port explicite : l'API est sur le port du serveur Minecraft (SRV si présent, sinon 25565)
   let origin = u.origin;
   try {
     const srv = await dns.resolveSrv(`_minecraft._tcp.${u.hostname}`);
     if (srv && srv[0] && srv[0].name) {
       const v = new URL(u.origin);
       v.hostname = srv[0].name.replace(/\.$/, '');
+      if (!u.port) v.port = String(srv[0].port);
       origin = v.origin;
+    } else if (!u.port) {
+      const v = new URL(u.origin); v.port = '25565'; origin = v.origin;
     }
-  } catch { /* pas de SRV : adresse telle quelle */ }
+  } catch {
+    if (!u.port) { const v = new URL(u.origin); v.port = '25565'; origin = v.origin; }
+  }
   resolved.set(u.origin, origin);
   return origin;
 }
 
 function friendly(e) {
   if (e && (e.name === 'AbortError' || /abort/i.test(e.message || ''))) {
-    return new Error('Le serveur des actualités ne répond pas. Vérifie que le plugin SpartaCubeBadge 1.3.0 tourne et que le port 8765 (TCP) est ouvert chez ton hébergeur.');
+    return new Error('Le serveur des actualités ne répond pas. Vérifie que le plugin SpartaCubeBadge 1.3.1 tourne sur le serveur (Paper requis).');
   }
   if (e && /fetch failed|ECONNREFUSED|ENOTFOUND|EHOSTUNREACH/i.test(`${e.message} ${e.cause && e.cause.code}`)) {
-    return new Error('Connexion au serveur des actualités impossible (port 8765 fermé ou plugin pas démarré).');
+    return new Error('Connexion au serveur des actualités impossible (serveur éteint ou plugin pas à jour).');
   }
   return e;
 }

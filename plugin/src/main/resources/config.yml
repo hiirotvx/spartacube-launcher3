@@ -16,8 +16,11 @@ cosmetics:
 admins:
   - 6eb277d7-48c3-41c8-a3ba-bf5339f59cd4   # Hiirowh
 
-# API HTTP des actualités lue par le launcher (port à ouvrir chez ton hébergeur, en TCP).
+# API des actualités lue par le launcher.
+#   mode: minecraft -> sur le port du serveur Minecraft (rien à ouvrir, serveur Paper requis)
+#   mode: port      -> sur un port dédié (port ci-dessous, à ouvrir en TCP chez l'hébergeur)
 news-api:
   enabled: true
+  mode: minecraft
   bind: 0.0.0.0
   port: 8765

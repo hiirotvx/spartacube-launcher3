@@ -81,7 +81,7 @@
   ],
   "theme": "auto",
   "discordClientId": "1570893669568090252",
-  "newsApiUrl": "http://play.spartacube.fr:8765",
+  "newsApiUrl": "http://play.spartacube.fr",
   "admins": [
     "6eb277d7-48c3-41c8-a3ba-bf5339f59cd4"
   ]

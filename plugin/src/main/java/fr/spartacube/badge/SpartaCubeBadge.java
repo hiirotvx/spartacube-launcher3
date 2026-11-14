@@ -59,14 +59,23 @@ public final class SpartaCubeBadge extends JavaPlugin implements PluginMessageLi
         java.util.Set<String> admins = new java.util.HashSet<>();
         for (String a : getConfig().getStringList("admins")) admins.add(a.trim().toLowerCase(java.util.Locale.ROOT));
         newsApi = new NewsApi(getLogger(), getDataFolder().toPath(), admins);
-        int port = getConfig().getInt("news-api.port", 8765);
-        try {
-            newsApi.start(getConfig().getString("news-api.bind", "0.0.0.0"), port);
-        } catch (Exception e) {
-            getLogger().warning("Impossible de démarrer l'API des actualités sur le port " + port + " : " + e.getMessage());
-            newsApi = null;
+        newsApi.init();
+        String mode = getConfig().getString("news-api.mode", "minecraft");
+        if ("port".equalsIgnoreCase(mode)) {
+            int port = getConfig().getInt("news-api.port", 8765);
+            try {
+                newsApi.start(getConfig().getString("news-api.bind", "0.0.0.0"), port);
+            } catch (Exception e) {
+                getLogger().warning("Impossible de démarrer l'API des actualités sur le port " + port + " : " + e.getMessage());
+            }
+        } else {
+            sharedHttp = new SharedPortHttp(newsApi, getLogger());
+            if (sharedHttp.register()) getLogger().info("API des actualités du launcher active sur le port du serveur Minecraft.");
+            else sharedHttp = null;
         }
     }
+
+    private SharedPortHttp sharedHttp;
 
     @Override
     public void onDisable() {
@@ -74,6 +83,7 @@ public final class SpartaCubeBadge extends JavaPlugin implements PluginMessageLi
         getServer().getMessenger().unregisterOutgoingPluginChannel(this);
         users.clear();
         if (newsApi != null) newsApi.stop();
+        if (sharedHttp != null) sharedHttp.unregister();
     }
 
     @Override

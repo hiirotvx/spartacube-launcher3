@@ -67,8 +67,15 @@ public final class NewsApi {
         this.admins = admins;
     }
 
-    public void start(String bind, int port) throws IOException {
+    /** Charge news.json (à appeler une fois au démarrage). */
+    public void init() {
         load();
+    }
+
+    public static final int MAX_REQUEST = MAX_BODY + 8192;
+
+    /** Serveur HTTP sur un port dédié (optionnel). */
+    public void start(String bind, int port) throws IOException {
         server = HttpServer.create(new InetSocketAddress(bind, port), 16);
         server.setExecutor(Executors.newFixedThreadPool(2, r -> {
             Thread t = new Thread(r, "SpartaCube-NewsApi");
@@ -93,15 +100,28 @@ public final class NewsApi {
         }
     }
 
+    /** Réponse HTTP minimale. */
+    public record Resp(int code, String json) {}
+
     private void handle(HttpExchange ex) throws IOException {
         try {
-            String path = ex.getRequestURI().getPath();
-            String method = ex.getRequestMethod();
-            String ip = ex.getRemoteAddress().getAddress().getHostAddress();
-            if ("GET".equals(method) && "/news".equals(path)) {
-                send(ex, 200, cached);
-            } else if ("GET".equals(method) && "/news/challenge".equals(path)) {
-                if (!allow(ip, 10)) { send(ex, 429, error("Trop de demandes, réessaie dans une minute.")); return; }
+            byte[] body;
+            try (InputStream in = ex.getRequestBody()) {
+                body = in.readNBytes(MAX_BODY + 1);
+            }
+            Resp r = handle(ex.getRequestMethod(), ex.getRequestURI().getPath(), ex.getRemoteAddress().getAddress().getHostAddress(), body);
+            send(ex, r.code(), r.json());
+        } finally {
+            ex.close();
+        }
+    }
+
+    /** Traite une requête (serveur HTTP dédié ou port Minecraft partagé). Peut bloquer (appel Mojang). */
+    public Resp handle(String method, String path, String ip, byte[] body) {
+        try {
+            if ("GET".equals(method) && "/news".equals(path)) return new Resp(200, cached);
+            if ("GET".equals(method) && "/news/challenge".equals(path)) {
+                if (!allow(ip, 10)) return new Resp(429, error("Trop de demandes, réessaie dans une minute."));
                 cleanNonces();
                 byte[] b = new byte[16];
                 random.nextBytes(b);
@@ -109,38 +129,29 @@ public final class NewsApi {
                 nonces.put(nonce, System.currentTimeMillis());
                 JsonObject o = new JsonObject();
                 o.addProperty("nonce", nonce);
-                send(ex, 200, o.toString());
-            } else if ("POST".equals(method) && "/news/publish".equals(path)) {
-                if (!allow(ip, 10)) { send(ex, 429, error("Trop de demandes, réessaie dans une minute.")); return; }
-                publish(ex, ip);
-            } else {
-                send(ex, 404, error("Introuvable"));
+                return new Resp(200, o.toString());
             }
+            if ("POST".equals(method) && "/news/publish".equals(path)) {
+                if (!allow(ip, 10)) return new Resp(429, error("Trop de demandes, réessaie dans une minute."));
+                return publish(body, ip);
+            }
+            return new Resp(404, error("Introuvable"));
         } catch (Exception e) {
             log.warning("API actualités : " + e.getMessage());
-            send(ex, 500, error("Erreur interne"));
-        } finally {
-            ex.close();
+            return new Resp(500, error("Erreur interne"));
         }
     }
 
-    private void publish(HttpExchange ex, String ip) throws Exception {
-        byte[] body;
-        try (InputStream in = ex.getRequestBody()) {
-            body = in.readNBytes(MAX_BODY + 1);
-        }
-        if (body.length > MAX_BODY) { send(ex, 413, error("Contenu trop volumineux.")); return; }
+    private Resp publish(byte[] body, String ip) throws Exception {
+        if (body.length > MAX_BODY) return new Resp(413, error("Contenu trop volumineux."));
         JsonObject req = JsonParser.parseString(new String(body, StandardCharsets.UTF_8)).getAsJsonObject();
         String username = req.get("username").getAsString();
         String nonce = req.get("nonce").getAsString();
         String payload = req.get("payload").getAsString();
-        if (!username.matches("[A-Za-z0-9_]{1,16}")) { send(ex, 400, error("Pseudo invalide.")); return; }
+        if (!username.matches("[A-Za-z0-9_]{1,16}")) return new Resp(400, error("Pseudo invalide."));
 
         Long issued = nonces.remove(nonce); // usage unique
-        if (issued == null || System.currentTimeMillis() - issued > 60_000) {
-            send(ex, 401, error("Demande expirée, réessaie."));
-            return;
-        }
+        if (issued == null || System.currentTimeMillis() - issued > 60_000) return new Resp(401, error("Demande expirée, réessaie."));
 
         String serverId = hex(sha1((nonce + ":" + hex(sha256(payload.getBytes(StandardCharsets.UTF_8)))).getBytes(StandardCharsets.UTF_8)));
         String url = "https://sessionserver.mojang.com/session/minecraft/hasJoined?username="
@@ -149,15 +160,13 @@ public final class NewsApi {
                 HttpResponse.BodyHandlers.ofString());
         if (res.statusCode() != 200 || res.body().isBlank()) {
             log.warning("Publication d'actualités refusée (session Mojang non vérifiée) pour " + username + " depuis " + ip);
-            send(ex, 401, error("Ton compte Microsoft n'a pas pu être vérifié. Reconnecte-toi dans le launcher."));
-            return;
+            return new Resp(401, error("Ton compte Microsoft n'a pas pu être vérifié. Reconnecte-toi dans le launcher."));
         }
         String id = JsonParser.parseString(res.body()).getAsJsonObject().get("id").getAsString().toLowerCase();
         String dashed = id.replaceFirst("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})", "$1-$2-$3-$4-$5");
         if (!admins.contains(dashed)) {
             log.warning("Publication d'actualités refusée : " + username + " (" + dashed + ") n'est pas admin.");
-            send(ex, 403, error("Ton compte n'a pas les droits d'administration."));
-            return;
+            return new Resp(403, error("Ton compte n'a pas les droits d'administration."));
         }
 
         JsonArray clean = sanitize(JsonParser.parseString(payload));
@@ -173,7 +182,7 @@ public final class NewsApi {
         JsonObject ok = new JsonObject();
         ok.addProperty("ok", true);
         ok.addProperty("count", clean.size());
-        send(ex, 200, ok.toString());
+        return new Resp(200, ok.toString());
     }
 
     /** Ne garde que les champs connus, en texte brut, longueurs limitées, liens HTTPS uniquement. */
