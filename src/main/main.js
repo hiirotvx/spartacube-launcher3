@@ -231,6 +231,7 @@ function registerIpc() {
       website: cfg.website,
       message: typeof cfg.message === 'string' ? cfg.message.slice(0, 500) : '',
       news: cleanNews(cfg.news),
+      hasFeedback: String(embedded.feedbackWebhook || '').startsWith('https://discord.com/api/webhooks/'),
       totalRamMb: Math.floor(os.totalmem() / 1024 / 1024),
       destinations: cleanDestinations(cfg.destinations),
       hasVoteSites: votes.cleanSites(cfg.voteSites).length > 0,
@@ -382,6 +383,40 @@ function registerIpc() {
 
   ipcMain.handle('install-update', async () => { allowClose = true; autoUpdater.quitAndInstall(); });
   ipcMain.handle('logs:get', async () => gameLog.slice());
+
+  // Avis des joueurs : envoyé sur le salon Discord du staff (webhook de la config intégrée uniquement)
+  let lastFeedback = 0;
+  handle('feedback:send', async (kind, text) => {
+    const url = String(embedded.feedbackWebhook || '');
+    if (!url.startsWith('https://discord.com/api/webhooks/')) throw new Error('Envoi d\'avis non configuré');
+    const message = String(text || '').trim().slice(0, 1500);
+    if (message.length < 5) throw new Error('Ton message est trop court.');
+    if (Date.now() - lastFeedback < 60_000) throw new Error('Attends une minute avant d\'envoyer un autre avis.');
+    const p = auth.publicProfile();
+    const label = { bug: 'Bug', idea: 'Idée', other: 'Autre' }[kind] || 'Autre';
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: 'SpartaCube Launcher',
+        allowed_mentions: { parse: [] }, // aucun @everyone / @rôle possible depuis un avis
+        embeds: [{
+          title: `Avis — ${label}`,
+          description: message,
+          color: kind === 'bug' ? 0xC4253F : kind === 'idea' ? 0xFF8C2E : 0x9CA3AF,
+          fields: [
+            { name: 'Joueur', value: p && p.name ? String(p.name).slice(0, 32) : 'Non connecté', inline: true },
+            { name: 'Launcher', value: app.getVersion(), inline: true },
+            { name: 'Système', value: `${process.platform} ${process.arch}`, inline: true }
+          ],
+          timestamp: new Date().toISOString()
+        }]
+      })
+    });
+    if (!res.ok) throw new Error(`Envoi impossible (${res.status}). Réessaie plus tard.`);
+    lastFeedback = Date.now();
+    return true;
+  });
   ipcMain.handle('close-choice', async (_e, choice) => {
     const action = choice && choice.action === 'tray' ? 'tray' : 'quit';
     if (choice && choice.remember) {

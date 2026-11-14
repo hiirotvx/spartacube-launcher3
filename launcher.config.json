@@ -107,5 +107,6 @@
   "destinations": [],
   "theme": "auto",
   "discordClientId": "1570893669568090252",
-  "newsFeedUrl": "https://spartacube.fr/api/rss"
+  "newsFeedUrl": "https://spartacube.fr/api/rss",
+  "feedbackWebhook": "https://discord.com/api/webhooks/1571167843146403951/_zdh85GBeOh1Hz6FzTlUZ1O3VGM2DD4bmkznRRafsj0OEXV-BIwQ8ZmUwq_jcyvHX-9W"
 }

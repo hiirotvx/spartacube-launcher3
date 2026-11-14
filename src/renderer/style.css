@@ -355,3 +355,10 @@ body.theme-halloween .bg { filter: hue-rotate(-25deg) saturate(1.2) brightness(.
 @keyframes livePulse { 50% { opacity: .35; } }
 .close-card { width: min(460px, 92vw); display: flex; flex-direction: column; gap: 12px; padding: 20px; }
 .spacer { flex: 1; }
+
+/* ---------- Avis ---------- */
+.feedback-link { background: none; border: none; color: var(--muted); font: inherit; font-size: 11px; padding: 6px 4px; cursor: pointer; opacity: .7; }
+.feedback-link:hover { opacity: 1; color: var(--text); }
+.feedback-link.hidden { display: none; }
+.feedback-text { min-height: 120px; resize: vertical; padding: 8px 11px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,.4); color: var(--text); font: inherit; outline: none; }
+.feedback-text:focus { border-color: var(--fire-1); }
