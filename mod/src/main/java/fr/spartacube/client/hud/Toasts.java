@@ -44,8 +44,15 @@ public final class Toasts {
     private Toasts() {}
 
     public static synchronized void show(String type, String title, String text) {
-        String t = title == null ? "" : title.length() > 60 ? title.substring(0, 60) : title;
-        String b = text == null ? "" : text.length() > 140 ? text.substring(0, 140) : text;
+        String t = title == null ? "" : title.trim();
+        String b = text == null ? "" : text.trim();
+        if (b.isEmpty() && t.length() > 40) {
+            // Pas de « | » : le premier mot sert de titre, le reste devient le message
+            int sp = t.indexOf(' ');
+            if (sp > 0 && sp <= 30) { b = t.substring(sp + 1); t = t.substring(0, sp); }
+        }
+        if (t.length() > 60) t = t.substring(0, 60);
+        if (b.length() > 200) b = b.substring(0, 200);
         TOASTS.add(new Toast(Type.of(type), t, b, 6000));
         while (TOASTS.size() > 4) TOASTS.remove(0);
     }
@@ -56,7 +63,8 @@ public final class Toasts {
         float dt = lastFrame == 0 ? 0f : Math.min(0.1f, (System.nanoTime() - lastFrame) / 1_000_000_000f);
         lastFrame = System.nanoTime();
         int sw = mc.getWindow().getScaledWidth();
-        int w = 190;
+        // Largeur adaptée à l'écran : 45 % de la largeur, entre 150 et 280 px (GUI scale)
+        int maxW = Math.max(150, Math.min(280, Math.round(sw * 0.45f)));
         float target = 8;
         Iterator<Toast> it = TOASTS.iterator();
         while (it.hasNext()) {
@@ -66,18 +74,31 @@ public final class Toasts {
             float in = Ui.easeOut(age / 300f);
             float out = age > t.duration ? Ui.easeOut((age - t.duration) / 400f) : 0f;
             float a = in * (1f - out);
-            List<net.minecraft.text.OrderedText> lines = mc.textRenderer.wrapLines(Ui.t(t.text), w - 36);
-            int h = 20 + Math.max(1, Math.min(3, lines.size())) * 10;
+
+            // Largeur au plus juste du contenu, puis retour à la ligne si ça dépasse
+            int natural = Math.max(Ui.width(t.title), t.text.isEmpty() ? 0 : Ui.width(Ui.t(t.text)));
+            int w = Math.max(120, Math.min(maxW, natural + 40));
+            int textW = w - 38;
+            List<net.minecraft.text.OrderedText> titleLines = mc.textRenderer.wrapLines(t.title, textW);
+            List<net.minecraft.text.OrderedText> lines = t.text.isEmpty() ? List.of() : mc.textRenderer.wrapLines(Ui.t(t.text), textW);
+            int tl = Math.max(1, Math.min(2, titleLines.size()));
+            int bl = Math.min(4, lines.size());
+            int h = Math.max(28, 10 + tl * 10 + bl * 10 + (bl > 0 ? 2 : 0));
+
             if (t.y < 0) t.y = target;
             t.y = Ui.approach(t.y, target, 14f, dt);
             int x = sw - w - 8 + Math.round((1f - in + out) * 40);
             int y = Math.round(t.y);
             Ui.round(ctx, x, y, x + w, y + h, 6, Ui.alpha(0xE8140B12, a));
             Ui.round(ctx, x, y + 5, x + 2, y + h - 5, 1, Ui.alpha(t.type.color, a));
-            Ui.icon(ctx, t.type.icon, x + 9, y + 8, 14, Ui.alpha(t.type.color, a));
-            Ui.text(ctx, t.title, x + 30, y + 6, Ui.alpha(0xFFFFFFFF, a));
-            int ly = y + 17;
-            for (int i = 0; i < Math.min(3, lines.size()); i++) {
+            Ui.icon(ctx, t.type.icon, x + 9, y + (h - 14) / 2, 14, Ui.alpha(t.type.color, a));
+            int ly = y + 6;
+            for (int i = 0; i < tl; i++) {
+                ctx.drawText(mc.textRenderer, titleLines.get(i), x + 30, ly, Ui.alpha(0xFFFFFFFF, a), false);
+                ly += 10;
+            }
+            if (bl > 0) ly += 2;
+            for (int i = 0; i < bl; i++) {
                 ctx.drawText(mc.textRenderer, lines.get(i), x + 30, ly, Ui.alpha(0xFFD9C8BE, a), false);
                 ly += 10;
             }
