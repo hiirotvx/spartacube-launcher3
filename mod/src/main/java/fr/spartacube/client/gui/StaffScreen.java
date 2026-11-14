@@ -221,7 +221,7 @@ public class StaffScreen extends Screen {
 
         // ----- Colonne de gauche : joueurs -----
         List<PlayerListEntry> list = players();
-        Ui.icon(ctx, "solo", x1 + 12, y1 + 11, 14, Ui.alpha(Ui.ACCENT, open));
+        Ui.icon(ctx, "shield", x1 + 12, y1 + 11, 14, Ui.alpha(Ui.ACCENT, open));
         Ui.text(ctx, Ui.b("Panel staff"), x1 + 31, y1 + 10, Ui.alpha(0xFFFFFFFF, open));
         Ui.text(ctx, Ui.t(list.size() + " joueur" + (list.size() > 1 ? "s" : "") + " en ligne"), x1 + 31, y1 + 22, Ui.alpha(Ui.MUTED, open));
         inputBox(ctx, this.search, x1 + 10, y1 + 40, LIST_W - 20);

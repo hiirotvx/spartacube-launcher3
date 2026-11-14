@@ -59,6 +59,26 @@ public final class Ui {
         PANEL = panel;
     }
 
+    /** Texte coupé avec « … » s'il dépasse la largeur donnée. */
+    public static MutableText fit(String s, int maxW) {
+        if (width(t(s)) <= maxW) return t(s);
+        String cut = s;
+        while (cut.length() > 1 && width(t(cut + "…")) > maxW) cut = cut.substring(0, cut.length() - 1);
+        return t(cut.trim() + "…");
+    }
+
+    /** Texte sur plusieurs lignes (retour à la ligne automatique), limité à maxLines. Renvoie le nombre de lignes dessinées. */
+    public static int wrapped(DrawContext ctx, String s, int x, int y, int maxW, int maxLines, int lineH, int color) {
+        var tr = net.minecraft.client.MinecraftClient.getInstance().textRenderer;
+        var lines = tr.wrapLines(t(s), maxW);
+        int n = Math.min(maxLines, lines.size());
+        for (int i = 0; i < n; i++) {
+            ctx.drawText(tr, lines.get(i), x, y + i * lineH, color, false);
+            if (i == n - 1 && lines.size() > n) text(ctx, t("…"), x + Math.min(maxW - 6, tr.getWidth(lines.get(i)) + 1), y + i * lineH, color);
+        }
+        return n;
+    }
+
     /** Couleur irisée (holographique) : teinte qui dépend de la position et du temps, alpha de 0 à 255. */
     public static int holo(float pos, int a) {
         float h = pos + (System.currentTimeMillis() % 6000L) / 6000f;

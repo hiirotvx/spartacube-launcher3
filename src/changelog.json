@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.3.33",
+    "date": "14/11/2026",
+    "title": "Menu des modules redessiné",
+    "items": [
+      "Cartes plus lisibles : icône en pastille, état, description du module",
+      "Nouvelles icônes (chat, émojis, viseur, staff, captures…)",
+      "Les textes trop longs ne débordent plus des boutons"
+    ]
+  },
+  {
     "version": "1.3.32",
     "date": "14/11/2026",
     "title": "Panel staff redessiné",

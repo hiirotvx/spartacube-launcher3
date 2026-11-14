@@ -21,9 +21,9 @@ import java.util.Map;
 /** Menu SpartaCube (Shift droit) : modules en cartes, catégories, recherche, options par module. */
 public class SpartaModsScreen extends Screen {
     private static final int COLS = 3;
-    private static final int CARD_H = 64;
+    private static final int CARD_H = 78;
     private static final int GAP = 6;
-    private static final int SIDEBAR = 112;
+    private static final int SIDEBAR = 128;
 
     private final Screen parent;
     private final Ui.Mouse mouse = new Ui.Mouse();
@@ -188,7 +188,7 @@ public class SpartaModsScreen extends Screen {
                 int bh = Math.round(12 * sel);
                 Ui.round(ctx, x1 + 1, sy + 10 - bh / 2, x1 + 3, sy + 10 + (bh + 1) / 2, 1, Ui.alpha(Ui.ACCENT, sel));
             }
-            Ui.text(ctx, Ui.t(c.label), x1 + 8 + Math.round(hv * 2), sy + 6, c == this.category ? 0xFFFFFFFF : Ui.TEXT);
+            Ui.text(ctx, Ui.fit(c.label, x2 - x1 - 30), x1 + 8 + Math.round(hv * 2), sy + 6, c == this.category ? 0xFFFFFFFF : Ui.TEXT);
             int count = 0;
             for (HudModule m : HudModule.values()) if ((c == Category.ALL || m.category == c) && cfg.isEnabled(m)) count++;
             Text n = Ui.t(String.valueOf(count));
@@ -211,7 +211,7 @@ public class SpartaModsScreen extends Screen {
         boolean overTitle = Ui.inside(mouseX, mouseY, bx1, by, bx2, by + 22);
         float ht = hover("title", overTitle, dt);
         Ui.round(ctx, bx1, by, bx2, by + 22, 6, Ui.mix(0x30FFFFFF, 0x50FFFFFF, ht));
-        Ui.text(ctx, Ui.t("Écran titre"), bx1 + 8, by + 7, Ui.TEXT);
+        Ui.text(ctx, Ui.fit("Écran titre", bx2 - bx1 - 40), bx1 + 8, by + 7, Ui.TEXT);
         toggle(ctx, bx2 - 27, by + 6, cfg.customTitleScreen, hover("titleSw", cfg.customTitleScreen, dt));
         if (click && overTitle) { Ui.click(); cfg.customTitleScreen = !cfg.customTitleScreen; cfg.save(); }
 
@@ -220,14 +220,15 @@ public class SpartaModsScreen extends Screen {
         float hth = hover("theme", overTheme || this.themeOpen, dt);
         Ui.round(ctx, bx1, by, bx2, by + 22, 6, Ui.mix(0x30FFFFFF, 0x50FFFFFF, hth));
         Ui.round(ctx, bx1 + 7, by + 6, bx1 + 17, by + 16, 5, Ui.ACCENT);
-        Ui.text(ctx, Ui.t("Couleurs du menu"), bx1 + 22, by + 7, Ui.TEXT);
+        Ui.text(ctx, Ui.fit("Couleurs du menu", bx2 - bx1 - 28), bx1 + 22, by + 7, Ui.TEXT);
         if (click && overTheme) { Ui.click(); this.optionsFor = null; this.capturing = null; this.themeOpen = true; this.optScroll = 0; this.optScrollTarget = 0; }
 
         by -= 26;
         boolean overMacros = Ui.inside(mouseX, mouseY, bx1, by, bx2, by + 22);
         float hmc = hover("macros", overMacros, dt);
         Ui.round(ctx, bx1, by, bx2, by + 22, 6, Ui.mix(0x30FFFFFF, 0x50FFFFFF, hmc));
-        Ui.text(ctx, Ui.t("Macros (touches → commandes)"), bx1 + 8, by + 7, Ui.TEXT);
+        Ui.icon(ctx, "keys", bx1 + 7, by + 6, 10, Ui.TEXT);
+        Ui.text(ctx, Ui.fit("Macros", bx2 - bx1 - 28), bx1 + 22, by + 7, Ui.TEXT);
         if (click && overMacros) { Ui.click(); this.client.setScreen(new MacrosScreen(this)); return; }
 
         // Recherche
@@ -249,7 +250,7 @@ public class SpartaModsScreen extends Screen {
         String foot = this.hoveredModule != null && !panelOpen()
                 ? this.hoveredModule.description + "  ·  clic : activer  ·  ⚙ : options"
                 : "Shift droit : ouvrir / fermer  ·  Molette : défiler";
-        Ui.centered(ctx, Ui.t(foot), this.width / 2, this.py2 + 5, Ui.alpha(this.hoveredModule != null ? 0xFFE8DED8 : 0xFF9A8578, open));
+        Ui.centered(ctx, Ui.fit(foot, this.px2 - this.px1), this.width / 2, this.py2 + 5, Ui.alpha(this.hoveredModule != null ? 0xFFE8DED8 : 0xFF9A8578, open));
         super.render(ctx, mouseX, mouseY, delta);
     }
 
@@ -308,9 +309,13 @@ public class SpartaModsScreen extends Screen {
             if (cfg.themeHolo && hv > 0.02f) Ui.holoSheen(ctx, x1 + 2, y1 + 2, x2 - 2, y2 - 2, hv * fade);
             if (cfg.themeHolo && onAnim > 0.02f) Ui.outline(ctx, x1, y1, x2, y2, 7, Ui.alpha(Ui.holo((x1 + y1) / 400f, 70), fade * onAnim));
             if (overCard) this.hoveredModule = m;
-            int iy = y1 + 9 - Math.round(hv * 1.5f);
-            Ui.icon(ctx, m.icon, (x1 + x2) / 2 - 9, iy, 18, Ui.alpha(on ? Ui.ACCENT : 0xFF8F8079, fade));
-            Ui.centered(ctx, Ui.t(m.label), (x1 + x2) / 2, y1 + 32, Ui.alpha(on ? 0xFFFFFFFF : 0xFFB3A39A, fade));
+            // En-tête : icône dans une pastille, titre à côté ; description sur deux lignes en dessous
+            Ui.round(ctx, x1 + 8, y1 + 8, x1 + 30, y1 + 30, 6, Ui.alpha(Ui.mix(0x20FFFFFF, Ui.accent(0x55), onAnim), fade));
+            Ui.icon(ctx, m.icon, x1 + 12, y1 + 12, 14, Ui.alpha(Ui.mix(0xFFB3A39A, 0xFFFFFFFF, onAnim), fade));
+            Ui.text(ctx, Ui.fit(m.label, x2 - 8 - (x1 + 36)), x1 + 36, y1 + 10, Ui.alpha(on ? 0xFFFFFFFF : 0xFFD0C4BC, fade));
+            Text state = Ui.t(on ? "Activé" : "Désactivé");
+            Ui.text(ctx, state, x1 + 36, y1 + 21, Ui.alpha(on ? Ui.ACCENT : 0xFF8F8079, fade));
+            Ui.wrapped(ctx, m.description, x1 + 9, y1 + 36, x2 - x1 - 18, 2, 9, Ui.alpha(0xFFA39489, fade));
 
             // Bas de carte : engrenage (options) à gauche, interrupteur à droite
             int by = y2 - 17;
@@ -323,7 +328,7 @@ public class SpartaModsScreen extends Screen {
             boolean locked = !Cosmetics.isAllowed(m);
             if (locked) {
                 Ui.round(ctx, x1, y1, x2, y2, 7, Ui.alpha(Ui.panel(0x90), fade));
-                Ui.icon(ctx, "armor", (x1 + x2) / 2 - 7, y1 + 44, 14, Ui.alpha(0xFFB3A39A, fade));
+                Ui.icon(ctx, "armor", (x1 + x2) / 2 - 7, (y1 + y2) / 2 - 7, 14, Ui.alpha(0xFFB3A39A, fade));
             }
             if (click && overCard && locked) {
                 Ui.click();
