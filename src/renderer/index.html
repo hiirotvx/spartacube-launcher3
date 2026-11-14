@@ -52,6 +52,9 @@
         <button class="nav-btn" data-page="shots" title="Captures">
           <svg viewBox="0 0 24 24"><path d="M4 5h3l2-2h6l2 2h3a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm8 3.5A4.5 4.5 0 1 0 12 17.5 4.5 4.5 0 0 0 12 8.5zm0 2a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg><span>Captures</span>
         </button>
+        <button class="nav-btn" data-page="console" title="Console du jeu">
+          <svg viewBox="0 0 24 24"><path d="M3 4h18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm3.3 4.3-1.4 1.4L7.2 12l-2.3 2.3 1.4 1.4L10 12zM11 14v2h7v-2z"/></svg><span>Console</span><i id="consoleDot" class="live-dot hidden"></i>
+        </button>
         <button class="nav-btn" data-page="skin" title="Skin">
           <svg viewBox="0 0 24 24"><path d="M8 2h8l5 4-3 4-2-1v13H8V9l-2 1-3-4z"/></svg><span>Skin</span>
         </button>
@@ -157,6 +160,20 @@
         <div id="voteSites" class="vote-grid"></div>
       </div>
 
+      <!-- ---------- Console du jeu ---------- -->
+      <div class="page" id="page-console">
+        <div class="page-head">
+          <h1>Console <small id="consoleState">Le jeu n'est pas lancé</small></h1>
+          <div class="head-actions">
+            <label class="check small"><input type="checkbox" id="consoleFollow" checked> Suivre</label>
+            <button id="btnConsoleCopy" class="btn-secondary">Copier</button>
+            <button id="btnConsoleClear" class="btn-secondary">Vider</button>
+            <button id="btnConsoleFolder" class="btn-secondary">Dossier des logs</button>
+          </div>
+        </div>
+        <div id="consoleOut" class="console-out"><div class="empty">Les messages du jeu s'afficheront ici en direct dès que tu cliques sur JOUER.</div></div>
+      </div>
+
       <!-- ---------- Captures ---------- -->
       <div class="page" id="page-shots">
         <div class="page-head">
@@ -255,6 +272,13 @@
           </label>
           <label class="check"><input type="checkbox" id="autoConnect"> Rejoindre SpartaCube automatiquement au lancement (version officielle)</label>
           <label class="check"><input type="checkbox" id="closeOnStart"> Cacher le launcher pendant que je joue</label>
+          <label>Quand je ferme le launcher
+            <select id="closeAction">
+              <option value="ask">Me demander à chaque fois</option>
+              <option value="tray">Le réduire (il reste actif près de l'horloge Windows)</option>
+              <option value="quit">Le fermer complètement</option>
+            </select>
+          </label>
           <label>Arguments JVM avancés (optionnel)
             <input type="text" id="jvmArgs" placeholder="-XX:+UseG1GC">
           </label>
@@ -279,6 +303,21 @@
   <div id="updateBar" class="update-bar hidden">
     <span id="updateText"></span>
     <button id="btnUpdate" class="btn-primary hidden">Redémarrer et mettre à jour</button>
+  </div>
+
+  <!-- Fermeture : réduire ou quitter -->
+  <div id="closeDialog" class="onboarding hidden">
+    <div class="card close-card">
+      <h2>Fermer le launcher ?</h2>
+      <p class="ne-hint">Réduit, le launcher reste actif près de l'horloge Windows : un clic sur son icône le rouvre. Il continue de gérer le bouton Voter et la copie des captures pendant que tu joues.</p>
+      <label class="check"><input type="checkbox" id="closeRemember"> Se souvenir de mon choix</label>
+      <div class="modal-actions">
+        <button id="closeCancel" class="btn-secondary">Annuler</button>
+        <span class="spacer"></span>
+        <button id="closeQuit" class="btn-secondary">Fermer complètement</button>
+        <button id="closeTray" class="btn-primary">Réduire</button>
+      </div>
+    </div>
   </div>
 
   <div id="lightbox" class="lightbox hidden">

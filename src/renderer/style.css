@@ -341,3 +341,17 @@ body.theme-halloween .bg { filter: hue-rotate(-25deg) saturate(1.2) brightness(.
   100% { transform: translate(var(--dx, 30px), 110vh); opacity: 0; }
 }
 
+
+/* ---------- Console du jeu ---------- */
+.console-out { flex: 1; min-height: 0; overflow-y: auto; background: rgba(0,0,0,.45); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font: 12px/1.5 Consolas, "Cascadia Mono", "DejaVu Sans Mono", monospace; color: #d9cfc9; white-space: pre-wrap; word-break: break-word; user-select: text; }
+.console-out .ln.warn { color: #ffcf6b; }
+.console-out .ln.err { color: #ff7b7b; }
+.console-out .ln.dim { color: #8f8079; }
+#page-console.active { display: flex; flex-direction: column; height: 100%; }
+.check.small { font-size: 12px; }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; position: absolute; top: 8px; right: 10px; box-shadow: 0 0 6px #4ade80; animation: livePulse 1.6s ease-in-out infinite; }
+.live-dot.hidden { display: none; }
+.nav-btn { position: relative; }
+@keyframes livePulse { 50% { opacity: .35; } }
+.close-card { width: min(460px, 92vw); display: flex; flex-direction: column; gap: 12px; padding: 20px; }
+.spacer { flex: 1; }

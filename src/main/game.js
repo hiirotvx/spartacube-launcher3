@@ -104,7 +104,7 @@ async function launch(cfg, settings, emit) {
 
   const client = new Client();
   client.on('debug', m => log.debug(m));
-  client.on('data', m => log.info(`[MC] ${String(m).trimEnd()}`));
+  client.on('data', m => { const line = String(m).trimEnd(); log.info(`[MC] ${line}`); emit('game-log', line); });
   client.on('progress', p => progress({ step: 'game', label: `Téléchargement de Minecraft (${p.type})…`, done: p.task, total: p.total }));
 
   progress({ step: 'game', label: 'Téléchargement de Minecraft…', done: 0, total: 1 });

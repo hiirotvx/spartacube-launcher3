@@ -73,7 +73,8 @@
     "skipDefaultMods": [],
     "destination": "",
     "onboarded": false,
-    "theme": "auto"
+    "theme": "auto",
+    "closeAction": "ask"
   },
   "voteUrl": "https://spartacube.fr/vote",
   "voteSites": [

@@ -1,7 +1,7 @@
 'use strict';
 const path = require('path');
 const os = require('os');
-const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, dialog, Tray, Menu } = require('electron');
 const newsApi = require('./news');
 const log = require('electron-log/main');
 const { autoUpdater } = require('electron-updater');
@@ -86,6 +86,66 @@ function send(channel, data) {
   if (win && !win.isDestroyed()) win.webContents.send(channel, data);
 }
 
+/* ---------- Console du jeu : lignes gardées en mémoire et envoyées par paquets ---------- */
+const gameLog = [];
+let logBatch = [];
+let logTimer = null;
+
+function pushGameLog(chunk) {
+  // Par prudence, aucun jeton ne doit apparaître dans la console
+  const text = String(chunk).replace(/(--accessToken\s+|accessToken["=: ]+)[\w.\-]+/gi, '$1***');
+  for (const line of text.split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    const l = line.slice(0, 2000);
+    gameLog.push(l);
+    logBatch.push(l);
+  }
+  if (gameLog.length > 2000) gameLog.splice(0, gameLog.length - 2000);
+  if (!logTimer) {
+    logTimer = setTimeout(() => {
+      logTimer = null;
+      const batch = logBatch;
+      logBatch = [];
+      send('game-log', batch);
+    }, 150);
+  }
+}
+
+/* ---------- Fermeture : réduire dans la zone de notification ou quitter ---------- */
+let tray = null;
+let allowClose = false;
+
+function hideToTray() {
+  const w = liveWin();
+  if (!w) return;
+  try {
+    if (!tray) {
+      tray = new Tray(path.join(__dirname, '../renderer/assets/icon.png'));
+      tray.setToolTip('SpartaCube Launcher');
+      const show = () => { const x = liveWin(); if (x) { x.show(); x.focus(); } else createWindow(); };
+      tray.setContextMenu(Menu.buildFromTemplate([
+        { label: 'Ouvrir le launcher', click: show },
+        { type: 'separator' },
+        { label: 'Quitter', click: () => quitFully() }
+      ]));
+      tray.on('click', show);
+    }
+    w.hide();
+  } catch (e) {
+    log.warn('Zone de notification indisponible :', e);
+    w.minimize();
+  }
+}
+
+function quitFully() {
+  allowClose = true;
+  if (tray) { try { tray.destroy(); } catch { /* déjà détruite */ } tray = null; }
+  const w = liveWin();
+  if (w) w.close();
+  // Le jeu continue de tourner tout seul si une partie est en cours
+  if (!game.isRunning()) app.quit();
+}
+
 function createWindow() {
   win = new BrowserWindow({
     width: 1200,
@@ -105,6 +165,16 @@ function createWindow() {
   });
   win.loadFile(path.join(__dirname, '../renderer/index.html'));
   win.once('ready-to-show', () => win.show());
+
+  // Croix, Alt+F4… : on applique le choix du joueur (demander, réduire, quitter)
+  win.on('close', e => {
+    if (allowClose) return;
+    const action = settings && settings.closeAction;
+    if (action === 'quit') { quitFully(); return; }
+    e.preventDefault();
+    if (action === 'tray') hideToTray();
+    else { win.show(); send('ask-close'); }
+  });
 
   // Interdit toute navigation / ouverture de fenêtre depuis l'interface
   win.webContents.on('will-navigate', e => e.preventDefault());
@@ -198,7 +268,8 @@ function registerIpc() {
       skipDefaultMods: Array.isArray(s.skipDefaultMods) ? s.skipDefaultMods.filter(x => /^[A-Za-z0-9]{1,16}$/.test(x)).slice(0, 20) : [],
       destination: cleanDestinations(cfg.destinations).some(d => d.command === s.destination) ? s.destination : '',
       onboarded: !!s.onboarded,
-      theme: ['auto', 'fire', 'snow', 'halloween'].includes(s.theme) ? s.theme : 'auto'
+      theme: ['auto', 'fire', 'snow', 'halloween'].includes(s.theme) ? s.theme : 'auto',
+      closeAction: ['ask', 'tray', 'quit'].includes(s.closeAction) ? s.closeAction : 'ask'
     };
     if (clean.ramMinMb > clean.ramMaxMb) clean.ramMinMb = clean.ramMaxMb;
     settings = clean;
@@ -209,6 +280,8 @@ function registerIpc() {
   ipcMain.handle('play', async () => {
     try {
       await game.launch(cfg, settings, (ev, data) => {
+        if (ev === 'game-log') { pushGameLog(data); return; }
+        if (ev === 'game-started') { gameLog.length = 0; send('game-log-reset'); }
         send(ev, data);
         if (ev === 'game-started') refreshDiscord({ playing: true, startedAt: Date.now() });
         if (ev === 'game-closed') refreshDiscord({ playing: false });
@@ -307,7 +380,17 @@ function registerIpc() {
   ipcMain.handle('open-game-folder', async () => shell.openPath(game.gameDirFor(cfg, game.selectedVersion(cfg, settings))));
   ipcMain.handle('open-logs', async () => shell.showItemInFolder(log.transports.file.getFile().path));
 
-  ipcMain.handle('install-update', async () => autoUpdater.quitAndInstall());
+  ipcMain.handle('install-update', async () => { allowClose = true; autoUpdater.quitAndInstall(); });
+  ipcMain.handle('logs:get', async () => gameLog.slice());
+  ipcMain.handle('close-choice', async (_e, choice) => {
+    const action = choice && choice.action === 'tray' ? 'tray' : 'quit';
+    if (choice && choice.remember) {
+      settings = { ...settings, closeAction: action };
+      store.writeSettings(settings);
+    }
+    if (action === 'tray') hideToTray(); else quitFully();
+    return settings;
+  });
 
   ipcMain.on('win', (_e, action) => {
     const w = liveWin();
@@ -338,6 +421,8 @@ app.whenReady().then(() => {
   createWindow();
   setupUpdater();
 });
+
+app.on('before-quit', () => { allowClose = true; });
 
 app.on('window-all-closed', () => {
   // La fenêtre de vote peut se fermer pendant que le jeu tourne : on ne quitte que si le jeu est fermé

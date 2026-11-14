@@ -158,6 +158,56 @@ function focusNews(id) {
 
 $('btnNewsSite').onclick = () => L.openUrl(state.website || 'https://spartacube.fr');
 
+/* ===================== Console du jeu ===================== */
+
+const consoleOut = $('consoleOut');
+let consoleLines = 0;
+
+function consoleAppend(lines) {
+  if (!lines || !lines.length) return;
+  if (!consoleLines) consoleOut.replaceChildren();
+  const frag = document.createDocumentFragment();
+  for (const l of lines) {
+    const cls = /\/(ERROR|FATAL)\]|Exception|\tat /.test(l) ? 'ln err' : /\/WARN\]/.test(l) ? 'ln warn' : /\/DEBUG\]/.test(l) ? 'ln dim' : 'ln';
+    frag.append(el('div', { class: cls, text: l }));
+    consoleLines++;
+  }
+  consoleOut.append(frag);
+  while (consoleLines > 2000 && consoleOut.firstChild) { consoleOut.firstChild.remove(); consoleLines--; }
+  if ($('consoleFollow').checked) consoleOut.scrollTop = consoleOut.scrollHeight;
+}
+
+function consoleClear(message) {
+  consoleLines = 0;
+  consoleOut.replaceChildren(el('div', { class: 'empty', text: message }));
+}
+
+L.onGameLog(consoleAppend);
+L.onGameLogReset(() => consoleClear('Démarrage du jeu…'));
+L.onGameStarted(() => { $('consoleDot').classList.remove('hidden'); $('consoleState').textContent = 'Jeu en cours — messages en direct'; });
+L.onGameClosed(() => { $('consoleDot').classList.add('hidden'); $('consoleState').textContent = 'Jeu fermé — derniers messages'; });
+L.getGameLog().then(consoleAppend).catch(() => {});
+$('btnConsoleClear').onclick = () => consoleClear('Console vidée.');
+$('btnConsoleFolder').onclick = () => L.openLogs();
+$('btnConsoleCopy').onclick = async () => {
+  try {
+    await navigator.clipboard.writeText([...consoleOut.querySelectorAll('.ln')].map(n => n.textContent).join('\n'));
+    toast('Console copiée', 'ok');
+  } catch { toast('Copie impossible', 'err'); }
+};
+
+/* ===================== Fermeture du launcher ===================== */
+
+L.onAskClose(() => { $('closeRemember').checked = false; $('closeDialog').classList.remove('hidden'); });
+$('closeCancel').onclick = () => $('closeDialog').classList.add('hidden');
+async function closeWith(action) {
+  $('closeDialog').classList.add('hidden');
+  const s = await L.closeChoice({ action, remember: $('closeRemember').checked });
+  if (s) state.settings = s;
+}
+$('closeTray').onclick = () => closeWith('tray');
+$('closeQuit').onclick = () => closeWith('quit');
+
 /* ===================== Versions ===================== */
 
 async function loadVersions() {
@@ -674,6 +724,7 @@ function fillSettings() {
   $('ramMin').value = Math.min(s.ramMinMb, max);
   $('autoConnect').checked = s.autoConnect;
   $('closeOnStart').checked = s.closeLauncherOnStart;
+  $('closeAction').value = s.closeAction || 'ask';
   $('jvmArgs').value = s.jvmArgs || '';
   $('graphicsPreset').value = s.graphicsPreset || 'medium';
   $('themeSelect').value = s.theme || 'auto';
@@ -692,6 +743,7 @@ $('btnSaveSettings').onclick = async () => {
     ramMinMb: +$('ramMin').value,
     autoConnect: $('autoConnect').checked,
     closeLauncherOnStart: $('closeOnStart').checked,
+    closeAction: $('closeAction').value,
     jvmArgs: $('jvmArgs').value,
     graphicsPreset: $('graphicsPreset').value,
     theme: $('themeSelect').value
