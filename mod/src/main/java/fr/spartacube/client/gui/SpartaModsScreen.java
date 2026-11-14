@@ -95,8 +95,12 @@ public class SpartaModsScreen extends Screen {
 
     @Override
     public void renderBackground(DrawContext ctx, int mouseX, int mouseY, float delta) {
-        // fond dessiné dans render()
+        // En jeu : flou du monde derrière le menu (effet verre). Le reste du fond est dessiné dans render().
+        if (this.client != null && this.client.world != null) this.applyBlur(ctx);
     }
+
+    /** Moment du dernier changement de liste (ouverture, catégorie) : relance l'apparition en cascade des cartes. */
+    private long gridAt;
 
     private float hover(String key, boolean over, float dt) {
         float v = Ui.approach(this.hoverMisc.getOrDefault(key, 0f), over ? 1f : 0f, 14f, dt);
@@ -118,17 +122,36 @@ public class SpartaModsScreen extends Screen {
 
         // Fond
         if (this.client.world == null) SpartaDraw.background(ctx, this.width, this.height);
-        ctx.fill(0, 0, this.width, this.height, Ui.alpha(0x99000000, open));
+        ctx.fill(0, 0, this.width, this.height, Ui.alpha(0x70000000, open));
+        if (this.gridAt == 0) this.gridAt = this.openedAt;
 
         // Panneau (apparition : léger zoom)
         float s = 0.94f + 0.06f * open;
         ctx.getMatrices().pushMatrix();
-        ctx.getMatrices().translate(this.width / 2f, this.height / 2f);
+        ctx.getMatrices().translate(this.width / 2f, this.height / 2f + (1f - open) * 14f);
         ctx.getMatrices().scale(s, s);
         ctx.getMatrices().translate(-this.width / 2f, -this.height / 2f);
 
-        Ui.round(ctx, this.px1, this.py1, this.px2, this.py2, 10, Ui.alpha(Ui.panel(0xE6), open));
-        Ui.outline(ctx, this.px1, this.py1, this.px2, this.py2, 10, Ui.alpha(0x22FFFFFF, open));
+        // Ombre portée douce
+        for (int i = 5; i >= 1; i--) {
+            Ui.round(ctx, this.px1 - i * 2, this.py1 - i * 2 + 3, this.px2 + i * 2, this.py2 + i * 2 + 3, 10 + i * 2, Ui.alpha(0x12000000, open));
+        }
+        // Panneau en verre : fond translucide, barre latérale un peu plus sombre, reflet en haut
+        Ui.round(ctx, this.px1, this.py1, this.px2, this.py2, 10, Ui.alpha(Ui.panel(0xC4), open));
+        Ui.round(ctx, this.px1, this.py1, this.px1 + SIDEBAR + 4, this.py2, 10, Ui.alpha(0x30000000, open));
+        for (int i = 0; i < 18; i++) {
+            ctx.fill(this.px1 + 6, this.py1 + 1 + i, this.px2 - 6, this.py1 + 2 + i, Ui.alpha(((int) (14 * (1f - i / 18f)) << 24) | 0xFFFFFF, open));
+        }
+        Ui.outline(ctx, this.px1, this.py1, this.px2, this.py2, 10, Ui.alpha(0x30FFFFFF, open));
+        // Liseré lumineux qui parcourt le haut du panneau
+        int lw = this.px2 - this.px1 - 24;
+        float sweep = (now % 5000L) / 5000f;
+        for (int i = 0; i < lw; i += 2) {
+            float d = Math.abs(i / (float) lw - sweep);
+            d = Math.min(d, 1f - d);
+            float glow = Math.max(0f, 1f - d * 5f);
+            ctx.fill(this.px1 + 12 + i, this.py1, this.px1 + 14 + i, this.py1 + 1, Ui.alpha(Ui.accent((int) (40 + 180 * glow * glow)), open));
+        }
 
         // En-tête
         SpartaDraw.logo(ctx, this.px1 + 52, this.py1 + 6, 70);
@@ -146,13 +169,18 @@ public class SpartaModsScreen extends Screen {
             int x1 = this.px1 + 8, x2 = this.px1 + SIDEBAR - 4;
             boolean over = Ui.inside(mouseX, mouseY, x1, sy, x2, sy + 20);
             float hv = hover("cat" + c.name(), over || c == this.category, dt);
-            Ui.round(ctx, x1, sy, x2, sy + 20, 5, Ui.mix(0x00000000, c == this.category ? Ui.ACCENT_DARK : 0x30FFFFFF, hv));
-            Ui.text(ctx, Ui.t(c.label), x1 + 8, sy + 6, c == this.category ? 0xFFFFFFFF : Ui.TEXT);
+            Ui.round(ctx, x1, sy, x2, sy + 20, 5, Ui.mix(0x00000000, c == this.category ? Ui.accent(0x38) : 0x24FFFFFF, hv));
+            float sel = hover("sel" + c.name(), c == this.category, dt);
+            if (sel > 0.02f) {
+                int bh = Math.round(12 * sel);
+                Ui.round(ctx, x1 + 1, sy + 10 - bh / 2, x1 + 3, sy + 10 + (bh + 1) / 2, 1, Ui.alpha(Ui.ACCENT, sel));
+            }
+            Ui.text(ctx, Ui.t(c.label), x1 + 8 + Math.round(hv * 2), sy + 6, c == this.category ? 0xFFFFFFFF : Ui.TEXT);
             int count = 0;
             for (HudModule m : HudModule.values()) if ((c == Category.ALL || m.category == c) && cfg.isEnabled(m)) count++;
             Text n = Ui.t(String.valueOf(count));
             Ui.text(ctx, n, x2 - 8 - Ui.width(n), sy + 6, c == this.category ? 0xFFFFE2C4 : Ui.MUTED);
-            if (click && over) { Ui.click(); this.category = c; this.optionsFor = null; this.themeOpen = false; this.capturing = null; this.scrollTarget = 0; }
+            if (click && over) { Ui.click(); if (this.category != c) this.gridAt = now; this.category = c; this.optionsFor = null; this.themeOpen = false; this.capturing = null; this.scrollTarget = 0; }
             sy += 23;
         }
 
@@ -206,6 +234,7 @@ public class SpartaModsScreen extends Screen {
     }
 
     private void toggle(DrawContext ctx, int x, int y, boolean on, float anim) {
+        if (anim > 0.02f) Ui.round(ctx, x - 1, y - 1, x + 21, y + 11, 6, Ui.alpha(0x3022A55B, anim));
         Ui.round(ctx, x, y, x + 20, y + 10, 5, Ui.mix(0x40FFFFFF, Ui.GREEN, anim));
         int kx = x + 1 + Math.round(anim * 10);
         Ui.round(ctx, kx, y + 1, kx + 8, y + 9, 4, 0xFFFFFFFF);
@@ -222,7 +251,7 @@ public class SpartaModsScreen extends Screen {
         this.scrollTarget = Math.max(0, Math.min(maxScroll, this.scrollTarget));
         this.scroll = Ui.approach(this.scroll, this.scrollTarget, 16f, dt);
         int slide = Math.round(-this.optionsAnim * 40);
-        float fade = 1f - this.optionsAnim;
+        float fadeAll = 1f - this.optionsAnim;
 
         if (list.isEmpty()) Ui.centered(ctx, Ui.t("Aucun module trouvé"), (gx1 + gx2) / 2, gy1 + 30, Ui.MUTED);
         boolean inArea = Ui.inside(mouseX, mouseY, gx1, gy1, gx2, gy2);
@@ -233,11 +262,29 @@ public class SpartaModsScreen extends Screen {
             int x2 = x1 + cardW, y2 = y1 + CARD_H;
             if (y2 < gy1 || y1 > gy2) continue;
             boolean on = cfg.isEnabled(m);
-            boolean overCard = inArea && Ui.inside(mouseX, mouseY, x1, y1, x2, y2);
+            // Apparition en cascade : chaque carte arrive un peu après la précédente
+            float appear = Ui.easeOut(Math.max(0f, Math.min(1f, (Util.getMeasuringTimeMs() - this.gridAt - Math.min(i, 24) * 16L) / 220f)));
+            float fade = fadeAll * appear;
+            y1 += Math.round((1f - appear) * 10f);
+            y2 += Math.round((1f - appear) * 10f);
+            boolean overCard = inArea && appear > 0.9f && Ui.inside(mouseX, mouseY, x1, y1, x2, y2);
             float hv = Ui.approach(this.hoverCard.getOrDefault(m, 0f), overCard ? 1f : 0f, 14f, dt);
             this.hoverCard.put(m, hv);
 
-            Ui.round(ctx, x1, y1, x2, y2, 7, Ui.alpha(Ui.mix(0x22FFFFFF, 0x36FFFFFF, hv), fade));
+            float onAnim = Ui.approach(this.hoverMisc.getOrDefault("on" + m.name(), on ? 1f : 0f), on ? 1f : 0f, 10f, dt);
+            this.hoverMisc.put("on" + m.name(), onAnim);
+            int lift = Math.round(hv * 2f);
+            y1 -= lift;
+            y2 -= lift;
+            // Ombre au survol, fond en verre, teinte d'accent quand le module est activé
+            if (hv > 0.02f) Ui.round(ctx, x1 + 1, y1 + 3, x2 - 1, y2 + 3 + lift, 7, Ui.alpha(0x40000000, fade * hv));
+            Ui.round(ctx, x1, y1, x2, y2, 7, Ui.alpha(Ui.mix(0x1CFFFFFF, 0x30FFFFFF, hv), fade));
+            if (onAnim > 0.02f) Ui.round(ctx, x1, y1, x2, y2, 7, Ui.alpha(Ui.accent(0x1E), fade * onAnim));
+            Ui.outline(ctx, x1, y1, x2, y2, 7, Ui.alpha(Ui.mix(0x18FFFFFF, Ui.accent(0xB0), Math.max(hv, onAnim * 0.45f)), fade));
+            if (onAnim > 0.02f) {
+                int bw = Math.round((x2 - x1 - 24) * onAnim);
+                Ui.round(ctx, (x1 + x2 - bw) / 2, y2 - 2, (x1 + x2 + bw) / 2, y2 - 1, 1, Ui.alpha(Ui.ACCENT, fade * onAnim));
+            }
             if (overCard) this.hoveredModule = m;
             int iy = y1 + 9 - Math.round(hv * 1.5f);
             Ui.icon(ctx, m.icon, (x1 + x2) / 2 - 9, iy, 18, Ui.alpha(on ? Ui.ACCENT : 0xFF8F8079, fade));
