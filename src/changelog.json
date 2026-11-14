@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.3.30",
+    "date": "14/11/2026",
+    "title": "Pack de ressources sans question",
+    "items": [
+      "Le pack de ressources de SpartaCube est accepté automatiquement : plus de fenêtre « Proceed / Disconnect » à chaque connexion",
+      "Réglable dans le menu Shift droit, module « Pack du serveur »"
+    ]
+  },
+  {
     "version": "1.3.29",
     "date": "14/11/2026",
     "title": "Émojis dans le chat",

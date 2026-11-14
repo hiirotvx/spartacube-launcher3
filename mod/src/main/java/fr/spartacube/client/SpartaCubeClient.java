@@ -149,6 +149,13 @@ public class SpartaCubeClient implements ClientModInitializer {
             }
 
             Mechanics.tick(client);
+            // Pack de ressources de SpartaCube : accepté d'office (uniquement pour ce serveur)
+            net.minecraft.client.network.ServerInfo srv = client.getCurrentServerEntry();
+            if (srv != null && srv.address != null && srv.address.toLowerCase(java.util.Locale.ROOT).contains("spartacube.fr")
+                    && HudConfig.get().isEnabled(HudModule.AUTO_PACK)
+                    && srv.getResourcePackPolicy() != net.minecraft.client.network.ServerInfo.ResourcePackPolicy.ENABLED) {
+                srv.setResourcePackPolicy(net.minecraft.client.network.ServerInfo.ResourcePackPolicy.ENABLED);
+            }
             fr.spartacube.client.hud.Combat.tick(client);
             fr.spartacube.client.hud.Skin3D.tick();
             fr.spartacube.client.hud.Screenshots.tick(client);
