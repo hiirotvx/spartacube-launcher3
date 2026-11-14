@@ -13,4 +13,4 @@ jobs:
           mkdir -p .selftest/src/main/java/fr/spartacube/badge
           cp plugin/src/main/java/fr/spartacube/badge/NewsApi.java plugin/src/main/java/fr/spartacube/badge/SharedPortHttp.java .selftest/src/main/java/fr/spartacube/badge/
           cd .selftest && gradle -q run 2>&1 | tee out.txt
-          while IFS= read -r l; do echo "::notice::$l"; done < out.txt
+          tail -n 12 out.txt | tr '\n' '~' | sed 's/^/::notice::/'; echo
