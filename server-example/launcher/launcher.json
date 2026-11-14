@@ -52,7 +52,7 @@
     }
   ],
   "voteUrl": "https://spartacube.fr/vote",
-  "newsApiUrl": "http://play.spartacube.fr",
+  "newsApiUrl": "",
   "admins": [
     "6eb277d7-48c3-41c8-a3ba-bf5339f59cd4"
   ]
