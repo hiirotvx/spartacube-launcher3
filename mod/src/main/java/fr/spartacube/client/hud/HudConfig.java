@@ -88,6 +88,7 @@ public final class HudConfig {
         float themeSat = 0.55f;
         boolean themeChroma = false;
         boolean themeNeutral = false;
+        boolean themeHolo = true;
     }
 
     private final Map<HudModule, ModuleSettings> modules = new EnumMap<>(HudModule.class);
@@ -114,6 +115,8 @@ public final class HudConfig {
     public float themeSat = 0.55f;
     public boolean themeChroma = false;
     public boolean themeNeutral = false;
+    /** Reflets holographiques dans le menu. */
+    public boolean themeHolo = true;
 
     public static HudConfig get() {
         if (instance == null) instance = load();
@@ -164,6 +167,7 @@ public final class HudConfig {
             cfg.themeSat = Math.max(0.1f, Math.min(1f, data.themeSat == 0 ? 0.55f : data.themeSat));
             cfg.themeChroma = data.themeChroma;
             cfg.themeNeutral = data.themeNeutral;
+            cfg.themeHolo = data.themeHolo;
             cfg.flyBoostMult = Math.max(1f, Math.min(5f, data.flyBoostMult == 0 ? 2.5f : data.flyBoostMult));
         }
         return cfg;
@@ -191,6 +195,7 @@ public final class HudConfig {
         data.themeSat = themeSat;
         data.themeChroma = themeChroma;
         data.themeNeutral = themeNeutral;
+        data.themeHolo = themeHolo;
         data.flyBoostMult = flyBoostMult;
         try {
             Files.createDirectories(FILE.getParent());

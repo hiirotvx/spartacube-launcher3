@@ -152,6 +152,18 @@ public class SpartaModsScreen extends Screen {
             float glow = Math.max(0f, 1f - d * 5f);
             ctx.fill(this.px1 + 12 + i, this.py1, this.px1 + 14 + i, this.py1 + 1, Ui.alpha(Ui.accent((int) (40 + 180 * glow * glow)), open));
         }
+        if (cfg.themeHolo) {
+            // Bords irisés en haut et en bas, fines lignes de balayage, reflet sur l'en-tête
+            for (int i = 0; i < lw; i += 2) {
+                float p = i / (float) lw;
+                ctx.fill(this.px1 + 12 + i, this.py1 + 1, this.px1 + 14 + i, this.py1 + 2, Ui.alpha(Ui.holo(p, 70), open));
+                ctx.fill(this.px1 + 12 + i, this.py2 - 1, this.px1 + 14 + i, this.py2, Ui.alpha(Ui.holo(1f - p, 90), open));
+            }
+            for (int yy = this.py1 + 6; yy < this.py2 - 6; yy += 3) {
+                ctx.fill(this.px1 + 6, yy, this.px2 - 6, yy + 1, Ui.alpha(0x05FFFFFF, open));
+            }
+            Ui.holoSheen(ctx, this.px1 + 8, this.py1 + 4, this.px2 - 8, this.py1 + 28, 0.35f * open);
+        }
 
         // En-tête
         SpartaDraw.logo(ctx, this.px1 + 52, this.py1 + 6, 70);
@@ -285,6 +297,8 @@ public class SpartaModsScreen extends Screen {
                 int bw = Math.round((x2 - x1 - 24) * onAnim);
                 Ui.round(ctx, (x1 + x2 - bw) / 2, y2 - 2, (x1 + x2 + bw) / 2, y2 - 1, 1, Ui.alpha(Ui.ACCENT, fade * onAnim));
             }
+            if (cfg.themeHolo && hv > 0.02f) Ui.holoSheen(ctx, x1 + 2, y1 + 2, x2 - 2, y2 - 2, hv * fade);
+            if (cfg.themeHolo && onAnim > 0.02f) Ui.outline(ctx, x1, y1, x2, y2, 7, Ui.alpha(Ui.holo((x1 + y1) / 400f, 70), fade * onAnim));
             if (overCard) this.hoveredModule = m;
             int iy = y1 + 9 - Math.round(hv * 1.5f);
             Ui.icon(ctx, m.icon, (x1 + x2) / 2 - 9, iy, 18, Ui.alpha(on ? Ui.ACCENT : 0xFF8F8079, fade));
@@ -380,6 +394,8 @@ public class SpartaModsScreen extends Screen {
         y = section(ctx, x, y, "Options", a);
         y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Arc-en-ciel (la couleur change doucement)", cfg.themeChroma, click,
                 () -> { cfg.themeChroma = !cfg.themeChroma; cfg.save(); }, dt, a);
+        y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Effet holographique (reflets irisés)", cfg.themeHolo, click,
+                () -> { cfg.themeHolo = !cfg.themeHolo; cfg.save(); }, dt, a);
         y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Fond neutre (gris foncé, plus sobre)", cfg.themeNeutral, click,
                 () -> { cfg.themeNeutral = !cfg.themeNeutral; cfg.save(); }, dt, a);
         y = note(ctx, x, y, "Les couleurs de chaque module HUD se règlent dans sa roue crantée.", a);

@@ -59,6 +59,33 @@ public final class Ui {
         PANEL = panel;
     }
 
+    /** Couleur irisée (holographique) : teinte qui dépend de la position et du temps, alpha de 0 à 255. */
+    public static int holo(float pos, int a) {
+        float h = pos + (System.currentTimeMillis() % 6000L) / 6000f;
+        return (Math.max(0, Math.min(255, a)) << 24) | (java.awt.Color.HSBtoRGB(h - (float) Math.floor(h), 0.55f, 1f) & 0xFFFFFF);
+    }
+
+    /** Reflet holographique : bandes irisées en diagonale qui glissent dans le rectangle. */
+    public static void holoSheen(DrawContext ctx, int x1, int y1, int x2, int y2, float strength) {
+        if (strength <= 0.01f) return;
+        int w = x2 - x1, h = y2 - y1;
+        if (w <= 0 || h <= 0) return;
+        float t = (System.currentTimeMillis() % 2600L) / 2600f;
+        int rows = Math.max(1, h / 3);
+        for (int r = 0; r < rows; r++) {
+            int ry1 = y1 + r * h / rows, ry2 = y1 + (r + 1) * h / rows;
+            // la bande est décalée à chaque ligne : effet diagonal
+            float center = (t * 1.6f - 0.3f) + (r / (float) rows) * 0.35f;
+            for (int x = 0; x < w; x += 3) {
+                float p = x / (float) w;
+                float d = Math.abs(p - center);
+                float band = Math.max(0f, 1f - d * 4.5f);
+                int a = Math.round((10 + 70 * band * band) * strength);
+                ctx.fill(x1 + x, ry1, Math.min(x2, x1 + x + 3), ry2, holo(p * 0.8f + r * 0.02f, a));
+            }
+        }
+    }
+
     /** Couleur d'un préréglage (pour l'aperçu dans le sélecteur). */
     public static int themeColor(int preset) {
         return 0xFF000000 | THEMES[Math.max(0, Math.min(THEMES.length - 1, preset))][0];

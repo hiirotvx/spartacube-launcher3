@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.3.27",
+    "date": "14/11/2026",
+    "title": "Effet holographique",
+    "items": [
+      "Menu des modules : reflets irisés sur les cartes survolées, bords irisés, lignes de balayage",
+      "L'effet se coupe dans « Couleurs du menu »"
+    ]
+  },
+  {
     "version": "1.3.26",
     "date": "14/11/2026",
     "title": "Plusieurs comptes, mises à jour automatiques et notes de version",
