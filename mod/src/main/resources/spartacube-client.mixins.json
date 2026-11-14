@@ -11,7 +11,10 @@
     "MixinGameOptions",
     "MixinEntity",
     "MixinCamera",
-    "MixinLightmap"
+    "MixinLightmap",
+    "MixinHudExtras",
+    "MixinBossBarHud",
+    "MixinChatHud"
   ],
   "injectors": {
     "defaultRequire": 0

@@ -15,4 +15,10 @@ public abstract class MixinGameRenderer {
         float f = Mechanics.fovFactor();
         if (f < 0.999f) cir.setReturnValue(cir.getReturnValue() * f);
     }
+
+    /** Sans secousse : pas de tremblement de caméra quand on prend des dégâts. */
+    @Inject(method = "tiltViewWhenHurt", at = @At("HEAD"), cancellable = true, require = 0)
+    private void spartacube$noHurtCam(org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        if (fr.spartacube.client.hud.HudConfig.get().isEnabled(fr.spartacube.client.hud.HudModule.NO_HURT_CAM)) ci.cancel();
+    }
 }

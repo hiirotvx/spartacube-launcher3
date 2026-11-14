@@ -438,6 +438,43 @@ public class SpartaModsScreen extends Screen {
                 y += 22;
                 y = note(ctx, x, y, "La copie passe par le launcher : il doit rester ouvert en arrière-plan.", a);
             }
+            case STOPWATCH -> {
+                y = section(ctx, x, y, "Chronomètre", a);
+                y = keyRow(ctx, mouseX, mouseY, x, x2, y, "Touche démarrer / pause", "stopwatch", st.mode, k -> st.mode = k, click, a);
+                boolean overRz = inArea && Ui.inside(mouseX, mouseY, x, y, x + 100, y + 16);
+                Ui.round(ctx, x, y, x + 100, y + 16, 4, Ui.alpha(overRz ? 0x50FFFFFF : 0x30FFFFFF, a));
+                Ui.text(ctx, Ui.t("Remettre à zéro"), x + 7, y + 4, Ui.alpha(Ui.TEXT, a));
+                if (click && overRz) { Ui.click(); fr.spartacube.client.hud.Combat.resetStopwatch(); }
+                y += 22;
+            }
+            case SNAPLOOK -> {
+                y = section(ctx, x, y, "Touche", a);
+                y = keyRow(ctx, mouseX, mouseY, x, x2, y, "Touche (maintenir)", "snaplook", st.mode, k -> st.mode = k, click, a);
+                y = note(ctx, x, y, "Choisis une touche, puis maintiens-la en jeu pour regarder derrière toi.", a);
+            }
+            case CROSSHAIR -> {
+                y = section(ctx, x, y, "Viseur", a);
+                y = choiceRow(ctx, mouseX, mouseY, x, x2, y, "Forme", new String[]{"Croix", "Point", "Croix ouverte", "Carré"}, st.mode,
+                        i -> { st.mode = i; cfg.save(); }, click, a);
+                y = slider(ctx, mouseX, mouseY, x, x2, y, "Taille", (st.scale - 0.5f) / 1.5f,
+                        v -> st.scale = Math.round((0.5f + v * 1.5f) * 20f) / 20f, Math.round(st.scale * 100) + " %", a);
+                y = choiceRow(ctx, mouseX, mouseY, x, x2, y, "Couleur", new String[]{"Blanc", "Couleur 2", "Couleur 3", "Couleur 4", "Couleur 5", "Couleur 6"}, Math.floorMod(st.color, Math.min(6, HudConfig.COLORS.length)),
+                        i -> { st.color = i; st.customColor = false; cfg.save(); }, click, a);
+                y = optionRow(ctx, mouseX, mouseY, x, x2, y, "Arc-en-ciel", st.chroma, click, () -> { st.chroma = !st.chroma; cfg.save(); }, dt, a);
+                y = note(ctx, x, y, "Le viseur personnalisé remplace celui du jeu (sans l'indicateur de recharge d'attaque).", a);
+            }
+            case BOSS_BAR -> {
+                y = section(ctx, x, y, "Barre de boss", a);
+                y = choiceRow(ctx, mouseX, mouseY, x, x2, y, "Affichage", new String[]{"Redimensionnée", "Masquée"}, st.mode,
+                        i -> { st.mode = i; cfg.save(); }, click, a);
+                y = slider(ctx, mouseX, mouseY, x, x2, y, "Taille", (st.scale - 0.5f) / 1.5f,
+                        v -> st.scale = Math.round((0.5f + v * 1.5f) * 20f) / 20f, Math.round(st.scale * 100) + " %", a);
+            }
+            case TITLES -> {
+                y = section(ctx, x, y, "Titres", a);
+                y = slider(ctx, mouseX, mouseY, x, x2, y, "Taille", (st.scale - 0.5f) / 1.5f,
+                        v -> st.scale = Math.round((0.5f + v * 1.5f) * 20f) / 20f, Math.round(st.scale * 100) + " %", a);
+            }
             case ARMOR -> {
                 y = section(ctx, x, y, "Armure", a);
                 y = choiceRow(ctx, mouseX, mouseY, x, x2, y, "État", new String[]{"Icônes", "Pourcentage", "Barre d'usure", "Durabilité restante"}, st.mode,
@@ -518,7 +555,8 @@ public class SpartaModsScreen extends Screen {
             if (click && overReset) { Ui.click(); cfg.resetModule(m); }
             y += 22;
         } else if (m != HudModule.ZOOM && m != HudModule.FLY_BOOST && m != HudModule.FREELOOK && m != HudModule.NOTIFICATIONS
-                && m != HudModule.FULLBRIGHT && m != HudModule.HEALTH && m != HudModule.SCREENSHOTS) {
+                && m != HudModule.FULLBRIGHT && m != HudModule.HEALTH && m != HudModule.SCREENSHOTS
+                && m != HudModule.SNAPLOOK && m != HudModule.CROSSHAIR && m != HudModule.BOSS_BAR && m != HudModule.TITLES) {
             y = note(ctx, x, y, "Ce module n'a pas d'autre option.", a);
         }
 

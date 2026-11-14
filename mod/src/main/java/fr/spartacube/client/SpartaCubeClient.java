@@ -50,6 +50,7 @@ public class SpartaCubeClient implements ClientModInitializer {
         HudConfig.get();
         LauncherUsers.init();
         Cosmetics.init();
+        fr.spartacube.client.hud.Combat.init();
 
         // HUD (FPS, ping, CPS, minimap…)
         HudElementRegistry.addLast(Identifier.of("spartacube", "hud"), (ctx, tickCounter) -> {
@@ -107,6 +108,34 @@ public class SpartaCubeClient implements ClientModInitializer {
                     b -> VoteBridge.openVote()).dimensions(w / 2 - 102, maxY + 8, 204, 20).build());
         });
 
+        // Viseur personnalisé (forme, taille, couleur)
+        HudElementRegistry.replaceElement(VanillaHudElements.CROSSHAIR, original -> (ctx, tickCounter) -> {
+            HudConfig cfg = HudConfig.get();
+            MinecraftClient mc = MinecraftClient.getInstance();
+            if (!cfg.isEnabled(HudModule.CROSSHAIR)) { original.render(ctx, tickCounter); return; }
+            if (mc.options.hudHidden || !mc.options.getPerspective().isFirstPerson()) return;
+            var st = cfg.settings(HudModule.CROSSHAIR);
+            int cx = ctx.getScaledWindowWidth() / 2, cy = ctx.getScaledWindowHeight() / 2;
+            int col = st.textColor();
+            int len = Math.max(2, Math.round(4 * st.scale)), gap = st.mode == 2 ? 2 : 0;
+            if (st.mode == 1 || st.mode == 2) ctx.fill(cx - 1, cy - 1, cx + 1, cy + 1, col);
+            if (st.mode == 0 || st.mode == 2) {
+                ctx.fill(cx - gap - len - 1, cy - 1, cx - gap - 1, cy + 1, col);
+                ctx.fill(cx + gap + 1, cy - 1, cx + gap + len + 1, cy + 1, col);
+                ctx.fill(cx - 1, cy - gap - len - 1, cx + 1, cy - gap - 1, col);
+                ctx.fill(cx - 1, cy + gap + 1, cx + 1, cy + gap + len + 1, col);
+                if (st.mode == 0) ctx.fill(cx - 1, cy - 1, cx + 1, cy + 1, col);
+            }
+            if (st.mode == 3) {
+                int r = len + 1;
+                ctx.fill(cx - r, cy - r, cx + r, cy - r + 1, col);
+                ctx.fill(cx - r, cy + r - 1, cx + r, cy + r, col);
+                ctx.fill(cx - r, cy - r, cx - r + 1, cy + r, col);
+                ctx.fill(cx + r - 1, cy - r, cx + r, cy + r, col);
+                ctx.fill(cx - 1, cy - 1, cx + 1, cy + 1, col);
+            }
+        });
+
         // Scoreboard affichable / masquable
         HudElementRegistry.replaceElement(VanillaHudElements.SCOREBOARD, original -> (ctx, tickCounter) -> {
             if (HudConfig.get().isEnabled(HudModule.SCOREBOARD)) original.render(ctx, tickCounter);
@@ -119,6 +148,7 @@ public class SpartaCubeClient implements ClientModInitializer {
             }
 
             Mechanics.tick(client);
+            fr.spartacube.client.hud.Combat.tick(client);
             fr.spartacube.client.hud.Skin3D.tick();
             fr.spartacube.client.hud.Screenshots.tick(client);
             fr.spartacube.client.gui.Ui.applyTheme();

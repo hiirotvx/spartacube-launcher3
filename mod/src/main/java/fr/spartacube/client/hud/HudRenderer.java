@@ -100,6 +100,21 @@ public final class HudRenderer {
                     default: return "";
                 }
             case CLOCK: return LocalTime.now().format(CLOCK);
+            case PLAYTIME: return "Session " + Combat.playtime();
+            case STOPWATCH: return Combat.stopwatch();
+            case COMBO: return Combat.combo > 0 ? Combat.combo + " combo" : (p == null ? "3 combo" : "0 combo");
+            case REACH: return Combat.reach >= 0 ? String.format(java.util.Locale.ROOT, "%.2f blocs", Combat.reach) : (p == null ? "2.94 blocs" : "— blocs");
+            case ITEM_COUNTER: {
+                if (p == null) return "Flèches : 64";
+                ItemStack held = p.getMainHandStack();
+                if (held.isEmpty()) return null;
+                int n = 0;
+                for (int i = 0; i < p.getInventory().size(); i++) {
+                    ItemStack it = p.getInventory().getStack(i);
+                    if (it.isOf(held.getItem())) n += it.getCount();
+                }
+                return held.getName().getString() + " : " + n;
+            }
             case SERVER: {
                 ServerInfo info = mc.getCurrentServerEntry();
                 return info != null ? info.address : "Solo";
@@ -184,6 +199,10 @@ public final class HudRenderer {
             case KEYSTROKES: return new int[]{KEY * 3 + GAP * 2, KEY * 2 + GAP * 3 + 10 + 14};
             case ARMOR: return armorSize(mc, HudConfig.get().settings(HudModule.ARMOR));
             case EFFECTS: return effectsSize(mc, HudConfig.get().settings(HudModule.EFFECTS));
+            case COOLDOWNS: {
+                int n = cooldowns(mc).size();
+                return n == 0 ? new int[]{0, 0} : new int[]{n * 20 + 2, 30};
+            }
             default: {
                 String t = display(m, mc);
                 if (t == null) return new int[]{0, 0};
@@ -230,6 +249,7 @@ public final class HudRenderer {
             case KEYSTROKES -> renderKeystrokes(ctx, mc, st);
             case ARMOR -> renderArmor(ctx, mc, st);
             case EFFECTS -> renderEffects(ctx, mc, st);
+            case COOLDOWNS -> renderCooldowns(ctx, mc, st);
             default -> {
                 String t = display(m, mc);
                 if (t != null) {
@@ -271,6 +291,46 @@ public final class HudRenderer {
             ctx.drawText(mc.textRenderer, label, x + icon, y, color, st.shadow);
             if (st.horizontal) x += icon + mc.textRenderer.getWidth(label) + 8;
             else y += 11;
+        }
+    }
+
+    /* ---------- Temps de recharge des objets (barre de raccourcis + seconde main) ---------- */
+
+    private record Cd(ItemStack stack, float progress) {}
+
+    private static List<Cd> cooldowns(MinecraftClient mc) {
+        List<Cd> out = new ArrayList<>();
+        ClientPlayerEntity p = mc.player;
+        if (p == null) {
+            out.add(new Cd(new ItemStack(net.minecraft.item.Items.ENDER_PEARL), 0.6f));
+            return out;
+        }
+        List<net.minecraft.item.Item> seen = new ArrayList<>();
+        for (int i = 0; i <= 9; i++) {
+            ItemStack it = i == 9 ? p.getOffHandStack() : p.getInventory().getStack(i);
+            if (it.isEmpty() || seen.contains(it.getItem())) continue;
+            float f = p.getItemCooldownManager().getCooldownProgress(it, 0f);
+            if (f > 0f) { seen.add(it.getItem()); out.add(new Cd(it, f)); }
+        }
+        return out;
+    }
+
+    private static void renderCooldowns(DrawContext ctx, MinecraftClient mc, ModuleSettings st) {
+        List<Cd> list = cooldowns(mc);
+        if (list.isEmpty()) return;
+        if (st.background) Ui.round(ctx, 0, 0, list.size() * 20 + 2, 30, 3, st.bgColor());
+        int x = 3;
+        for (Cd cd : list) {
+            ctx.drawItem(cd.stack(), x, 2);
+            String pct = Math.round(cd.progress() * 100) + "%";
+            Ui.round(ctx, x, 19, x + 16, 21, 1, 0x60000000);
+            Ui.round(ctx, x, 19, x + Math.max(1, Math.round(16 * cd.progress())), 21, 1, st.textColor(x));
+            ctx.getMatrices().pushMatrix();
+            ctx.getMatrices().translate(x + 8 - mc.textRenderer.getWidth(pct) * 0.3f, 23f);
+            ctx.getMatrices().scale(0.6f, 0.6f);
+            ctx.drawText(mc.textRenderer, pct, 0, 0, 0xFFFFFFFF, st.shadow);
+            ctx.getMatrices().popMatrix();
+            x += 20;
         }
     }
 
