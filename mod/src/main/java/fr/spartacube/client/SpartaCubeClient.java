@@ -119,6 +119,7 @@ public class SpartaCubeClient implements ClientModInitializer {
             }
 
             Mechanics.tick(client);
+            fr.spartacube.client.hud.Skin3D.tick();
             fr.spartacube.client.hud.Screenshots.tick(client);
             fr.spartacube.client.gui.Ui.applyTheme();
             HudRenderer.tick(client);

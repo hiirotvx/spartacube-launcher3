@@ -16,6 +16,7 @@ public enum HudModule {
     DAY("Jour", "Numéro du jour dans le monde", Category.PLAYER, "day", Kind.TEXT, false, 4, 116),
     ARMOR("Armure", "Armure et objet en main, avec leur état (%, barre…)", Category.PLAYER, "armor", Kind.SPECIAL, false, -40, -90),
     HEALTH("Vie des joueurs", "Affiche les cœurs d'un joueur au-dessus de sa tête quand tu le vises", Category.PLAYER, "armor", Kind.MECHANIC, true, 0, 0),
+    SKIN3D("Skins 3D", "Relief sur les skins des joueurs (mod 3D Skin Layers)", Category.PLAYER, "solo", Kind.MECHANIC, false, 0, 0),
     NAMETAG_STYLE("Nametags SpartaCube", "Nametags aux couleurs de SpartaCube + pastille launcher", Category.PLAYER, "multi", Kind.MECHANIC, false, 0, 0),
     NAMETAG("Pseudo en F5", "Affiche ton pseudo au-dessus de ta tête en vue F5", Category.PLAYER, "solo", Kind.MECHANIC, true, 0, 0),
     EFFECTS("Effets de potion", "Effets actifs avec icône, durée et couleurs", Category.PLAYER, "fps", Kind.SPECIAL, false, -110, 40),
