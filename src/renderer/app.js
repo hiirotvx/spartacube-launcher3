@@ -254,23 +254,6 @@ function initNotes(info) {
 $('whatsNewOk').onclick = () => $('whatsNew').classList.add('hidden');
 $('whatsNewAll').onclick = () => { $('whatsNew').classList.add('hidden'); goto('notes'); };
 
-/* ===================== Avis ===================== */
-
-$('btnFeedback').onclick = () => { $('feedbackDialog').classList.remove('hidden'); $('feedbackText').focus(); };
-$('feedbackCancel').onclick = () => $('feedbackDialog').classList.add('hidden');
-$('feedbackSend').onclick = async () => {
-  const text = $('feedbackText').value.trim();
-  if (text.length < 5) { toast('Ton message est trop court.', 'err'); return; }
-  const btn = $('feedbackSend');
-  btn.disabled = true;
-  const ok = await api(L.sendFeedback($('feedbackKind').value, text));
-  btn.disabled = false;
-  if (!ok) return;
-  $('feedbackText').value = '';
-  $('feedbackDialog').classList.add('hidden');
-  toast('Merci, ton avis a été envoyé ✔', 'ok');
-};
-
 /* ===================== Fermeture du launcher ===================== */
 
 L.onAskClose(() => { $('closeRemember').checked = false; $('closeDialog').classList.remove('hidden'); });
@@ -860,7 +843,6 @@ $('btnUpdate').onclick = () => L.installUpdate();
   state.serverTheme = info.theme;
   applyTheme(info.theme);
   state.website = info.website;
-  $('btnFeedback').classList.toggle('hidden', !info.hasFeedback);
   renderNews(info);
   if (info.destinations.length) {
     const sel = $('destSelect');

@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.3.34",
+    "date": "15/11/2026",
+    "title": "Bouton d'avis retiré",
+    "items": [
+      "Le lien « Un avis ? » a été retiré du launcher"
+    ]
+  },
+  {
     "version": "1.3.33",
     "date": "14/11/2026",
     "title": "Menu des modules redessiné",
@@ -93,14 +101,6 @@
     "items": [
       "Chat modernisé : nouvelle police, heure des messages, barre de couleur",
       "Chaque option se coupe dans le menu Shift droit"
-    ]
-  },
-  {
-    "version": "1.3.23",
-    "date": "14/11/2026",
-    "title": "Bouton d'avis",
-    "items": [
-      "Lien « Un avis ? » en bas à gauche pour envoyer une idée ou signaler un bug à l'équipe"
     ]
   },
   {

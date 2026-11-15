@@ -77,6 +77,5 @@ contextBridge.exposeInMainWorld('launcher', {
     switchTo: uuid => call('accounts:switch', uuid),
     remove: uuid => call('accounts:remove', uuid)
   },
-  sendFeedback: (kind, text) => call('feedback:send', kind, text),
   closeChoice: choice => call('close-choice', choice)
 });
